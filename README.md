@@ -20,4 +20,5 @@ Fall 2021 DS
 - We'll make the presentation at the end together
 
 # Schedule
+
 - Every Wednesday at 3pm via zoom
