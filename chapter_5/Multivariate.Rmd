@@ -1,0 +1,46 @@
+---
+title: "Multivariate"
+author: "Alexis"
+date: "10/11/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = F, results = "hide", message = F)
+options(scientific=T, digits = 3) 
+```
+
+Mostly for analysis:
+First, import the pawp-set
+
+
+```{r}
+pawp <- data.frame(read.csv('pawpularity.csv'))
+```
+
+Turn everything except "pawpularity" into a factor
+
+```{r}
+columns <- colnames(pawp)
+pawp$Subject.Focus <- factor(pawp$Subject.Focus)
+pawp$Eyes <- factor(pawp$Eyes)
+pawp$Face <- factor(pawp$Face)
+pawp$Near <- factor(pawp$Near)
+pawp$Action <- factor(pawp$Action)
+pawp$Accessory <- factor(pawp$Group)
+pawp$Group <- factor(pawp$Group)
+pawp$Collage <- factor(pawp$Collage)
+pawp$Human <- factor(pawp$Human)
+pawp$Occlusion <- factor(pawp$Occlusion)
+pawp$Info <- factor(pawp$Info)
+pawp$Blur <- factor(pawp$Blur)
+```
+
+Simple multivariate analysis
+```{r}
+library('MGLM')
+data <- pawp[,1:12]
+mnreg <- MGLMreg(formula = Pawpularity ~ Subject.Focus + Eyes + Face + Near + Action + Accessory + Group + Collage + Human + Occlusion + Info + Blur , data = pawp, display = T)
+```
+
+Anova test 
