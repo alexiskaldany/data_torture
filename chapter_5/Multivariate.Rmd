@@ -10,31 +10,26 @@ knitr::opts_chunk$set(warning = F, results = "hide", message = F)
 options(scientific=T, digits = 3) 
 ```
 
-Mostly for analysis:
-First, import the pawp-set
-
-
+Importing and subsetting datafile
 ```{r}
-pawp <- data.frame(read.csv('pawpularity.csv'))
+data <- data.frame(read.csv('datafile.csv'))
+data_subset <- subset(data, select = -c(State, RescuerID, Description, PetID))
+
 ```
 
-Turn everything except "pawpularity" into a factor
+
+Factorizing the categorical variables
 
 ```{r}
-columns <- colnames(pawp)
-pawp$Subject.Focus <- factor(pawp$Subject.Focus)
-pawp$Eyes <- factor(pawp$Eyes)
-pawp$Face <- factor(pawp$Face)
-pawp$Near <- factor(pawp$Near)
-pawp$Action <- factor(pawp$Action)
-pawp$Accessory <- factor(pawp$Group)
-pawp$Group <- factor(pawp$Group)
-pawp$Collage <- factor(pawp$Collage)
-pawp$Human <- factor(pawp$Human)
-pawp$Occlusion <- factor(pawp$Occlusion)
-pawp$Info <- factor(pawp$Info)
-pawp$Blur <- factor(pawp$Blur)
+data_subset 
 ```
+
+Creating Cat/Dog subsets
+```{r}
+cat_subset <- subset(data_subset, Type== 2)
+dog_subset <- subset(data_subset, Type== 1)
+```
+
 
 Simple multivariate analysis
 ```{r}
