@@ -17,11 +17,26 @@ data_subset <- subset(data, select = -c(State, RescuerID, Description, PetID))
 
 ```
 
+Dropping less useful values in categorical variables:
+MaturitySize: dropping 0 = Not Specified
+FurLength: dropping 0 = Not Specified
+Health: dropping 0 = Not Specified
+
+```{r}
+data_subset <- subset(data_subset, MaturitySize = 0, )
+```
+
+Questionable to Drop
+Vaccinated: dropping 3 = Not Sure
+
 
 Factorizing the categorical variables
 
 ```{r}
-data_subset 
+data_subset$Gender <- factor(data_subset$Gender, select= c("1", "2"))
+data_subset$MaturitySize <- factor(data_subset$MaturitySize, select = c("0", "1", "2", "3", "4"))
+data_subset$FurLength <- factor(data_subset$FurLength, select = c("0","1", "2","3"))
+data_subset$Vaccinated <- factor(data_subset$Vaccinated, select = c("1", "2"))
 ```
 
 Creating Cat/Dog subsets
@@ -33,9 +48,7 @@ dog_subset <- subset(data_subset, Type== 1)
 
 Simple multivariate analysis
 ```{r}
-library('MGLM')
-data <- pawp[,1:12]
-mnreg <- MGLMreg(formula = Pawpularity ~ Subject.Focus + Eyes + Face + Near + Action + Accessory + Group + Collage + Human + Occlusion + Info + Blur , data = pawp, display = T)
+
 ```
 
 Anova test 
