@@ -27,10 +27,166 @@ options(scientific=T, digits = 3)
 ```
 
 ## Loading data
+```{r}
+# dat = read.csv('/Users/sahara/Documents/GW/DataScience/petfinder-adoption-prediction/train/train.csv')
+dat = read.csv('/Users/sahara/Documents/GW/DataScience/data_torture/chapter_5/datafile.csv')
+dat$AdoptionSpeed <- factor(dat$AdoptionSpeed, order=T, levels = c(0,1,2,3,4))
 
-## T-tests
 
-## Chi-Squared
+dat$Type = as.factor(dat$Type)
+dat$Name = as.factor(dat$Name)
+dat$Breed1 = as.factor(dat$Breed1)
+dat$Breed2 = as.factor(dat$Breed2)
+dat$Gender = as.factor(dat$Gender)
+dat$Color1 = as.factor(dat$Color1)
+dat$Color2 = as.factor(dat$Color2)
+dat$Color3 = as.factor(dat$Color3)
+dat$MaturitySize = as.factor(dat$MaturitySize)
+dat$FurLength = as.factor(dat$FurLength)
+dat$Vaccinated = as.factor(dat$Vaccinated)
+dat$Dewormed = as.factor(dat$Dewormed)
+dat$Sterilized = as.factor(dat$Sterilized)
+dat$Health = as.factor(dat$Health)
+dat$State = as.factor(dat$State)
 
-## Anova
+
+# Only looking at profiles with 1 animal
+dat = subset(dat, dat$Quantity == 1)
+dat = subset(dat, ! dat$AdoptionSpeed == 4)
+summary(dat)
+```
+
+```{r}
+# Adding random values
+dat$ASnum = NaN
+dat$ASnum[dat$AdoptionSpeed == 0] = 0
+dat$ASnum[dat$AdoptionSpeed == 1] = runif(sum(dat$AdoptionSpeed == 1), 1, 7)
+dat$ASnum[dat$AdoptionSpeed == 2] = runif(sum(dat$AdoptionSpeed == 2), 8, 30)
+dat$ASnum[dat$AdoptionSpeed == 3] = runif(sum(dat$AdoptionSpeed == 3), 31, 90)
+dat$ASnum[dat$AdoptionSpeed == 4] = 100
+
+summary(dat)
+```
+
+
+```{r}
+histogram(data = dat, x = dat$ASnum)
+```
+
+```{r}
+qqnorm(y = dat$ASnum)
+```
+
+```{r}
+
+```
+
+
+## SMART: Do dogs get adopted quicker than cats?
+```{r}
+library('ggplot2')
+library('lattice')
+
+ggplot(data = dat, aes(y = ASnum, fill = Type)) + 
+  geom_boxplot()
+```
+
+```{r}
+an = anova(aov(data = dat, ASnum ~ Type))
+an
+
+dogs = subset(dat, dat$Type == 1)
+cats = subset(dat, dat$Type == 2)
+dc_t = t.test(dogs$ASnum, cats$ASnum)
+dc_t
+```
+
+
+```{r}
+
+## ORDINAL VARIABLES
+contable = table(dat$AdoptionSpeed, dat$VideoAmt)
+chitest = chisq.test(contable)
+chitest
+```
+
+
+## SMART: Do younger dogs get adopted quicker?
+```{r}
+
+histogram(data = dogs, x = dogs$Age)
+qqnorm(y = dogs$Age)
+ggplot(data = dogs, aes(x = Age, y = ASnum)) + 
+  geom_point() + 
+  geom_smooth(method = lm)
+```
+
+## SMART: Do more expensive dogs get adopted slower?
+```{r}
+
+histogram(data = dogs, x = dogs$Fee)
+qqnorm(y = dogs$Fee)
+ggplot(data = dogs, aes(x = Fee, y = ASnum)) + 
+  geom_point() + 
+  geom_smooth(method = lm)
+```
+
+```{r}
+an2 = anova(aov(data = dogs, ASnum ~ Fee))
+an2
+```
+
+
+ok let's remove that outlier now
+
+```{r}
+dogs_noout = outlierKD2(dogs, var = Fee, rm = TRUE)
+histogram(data = dogs_noout, x = dogs_noout$Fee)
+qqnorm(y = dogs_noout$Fee)
+ggplot(data = dogs_noout, aes(x = Fee, y = ASnum)) + 
+  geom_point() + 
+  geom_smooth(method = lm)
+```
+
+```{r}
+an2_noout = anova(aov(data = dogs_noout, ASnum ~ Fee))
+an2_noout
+```
+
+okay so everything that wasn't 0 was deemed an outlier ...
+
+```{r}
+## ORDINAL
+contable = table(dat$AdoptionSpeed, dat$Age)
+chitest = chisq.test(contable)
+chitest
+contable
+```
+
+## SMART: Do dogs with more pictures get adopted faster?
+
+```{r}
+histogram(data = dogs, x = dogs$PhotoAmt)
+qqnorm(dogs$PhotoAmt)
+```
+
+
+```{r}
+an3 = anova(aov(data = dogs, ASnum ~ PhotoAmt))
+an3
+```
+
+## SMART: Do dogs with more videos get adopted faster?
+
+```{r}
+histogram(data = dogs, x = dogs$VideoAmt)
+qqnorm(dogs$VideoAmt)
+```
+
+
+```{r}
+an3 = anova(aov(data = dogs, ASnum ~ VideoAmt))
+an3
+```
+
 
