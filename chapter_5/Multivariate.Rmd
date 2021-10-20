@@ -12,9 +12,24 @@ options(scientific=T, digits = 3)
 
 Importing and subsetting datafile
 ```{r}
-data <- data.frame(read.csv('datafile.csv'))
-data_subset <- subset(data, select = -c(State, RescuerID, Description, PetID))
+dat <- data.frame(read.csv('datafile.csv'))
+dat$AdoptionSpeed <- factor(dat$AdoptionSpeed, order=T, levels = c(0,1,2,3,4))
 
+dat$Type = as.factor(dat$Type)
+dat$Name = as.factor(dat$Name)
+dat$Breed1 = as.factor(dat$Breed1)
+dat$Breed2 = as.factor(dat$Breed2)
+dat$Gender = as.factor(dat$Gender)
+dat$Color1 = as.factor(dat$Color1)
+dat$Color2 = as.factor(dat$Color2)
+dat$Color3 = as.factor(dat$Color3)
+dat$MaturitySize = as.factor(dat$MaturitySize)
+dat$FurLength = as.factor(dat$FurLength)
+dat$Vaccinated = as.factor(dat$Vaccinated)
+dat$Dewormed = as.factor(dat$Dewormed)
+dat$Sterilized = as.factor(dat$Sterilized)
+dat$Health = as.factor(dat$Health)
+dat$State = as.factor(dat$State)
 ```
 
 Dropping less useful values in categorical variables:
@@ -23,32 +38,39 @@ FurLength: dropping 0 = Not Specified
 Health: dropping 0 = Not Specified
 
 ```{r}
-data_subset <- subset(data_subset, MaturitySize = 0, )
+dat = subset(dat, dat$Quantity == 1)
+dat = subset(dat, ! dat$AdoptionSpeed == 4)
+summary(dat)
 ```
 
-Questionable to Drop
-Vaccinated: dropping 3 = Not Sure
-
-
-Factorizing the categorical variables
+Creating Randomized Dependent Variable
 
 ```{r}
-data_subset$Gender <- factor(data_subset$Gender, select= c("1", "2"))
-data_subset$MaturitySize <- factor(data_subset$MaturitySize, select = c("0", "1", "2", "3", "4"))
-data_subset$FurLength <- factor(data_subset$FurLength, select = c("0","1", "2","3"))
-data_subset$Vaccinated <- factor(data_subset$Vaccinated, select = c("1", "2"))
+# Adding random values
+dat$ASnum = NaN
+dat$ASnum[dat$AdoptionSpeed == 0] = 0
+dat$ASnum[dat$AdoptionSpeed == 1] = runif(sum(dat$AdoptionSpeed == 1), 1, 7)
+dat$ASnum[dat$AdoptionSpeed == 2] = runif(sum(dat$AdoptionSpeed == 2), 8, 30)
+dat$ASnum[dat$AdoptionSpeed == 3] = runif(sum(dat$AdoptionSpeed == 3), 31, 90)
+dat$ASnum[dat$AdoptionSpeed == 4] = 100
+
+summary(dat)
+```
+Dropping Variables:
+``` {r}
+
 ```
 
 Creating Cat/Dog subsets
 ```{r}
-cat_subset <- subset(data_subset, Type== 2)
-dog_subset <- subset(data_subset, Type== 1)
+dogs = subset(dat, dat$Type == 1)
+cats = subset(dat, dat$Type == 2)
 ```
 
 
-Simple multivariate analysis
+Simple multivariate analysis on Dog
 ```{r}
-
+Dog_LM_Simple = lm(ASnum ~ )
 ```
 
 Anova test 
