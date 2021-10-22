@@ -1,0 +1,88 @@
+---
+title: "Independent_Variables_EDA"
+author: "YixiLiang"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    code_folding: hide
+    number_sections: true
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+---
+
+```{r init, include=FALSE}
+# The package "ezids" (EZ Intro to Data Science) includes a lot of the helper functions we developed for the course. 
+# Some of the frequently used functions are loadPkg(), xkabledply(), xkablesummary(), uzscale(), etc.
+library(ezids)
+ 
+# some of common options (and the defaults) are: 
+# include=T, eval=T, echo=T, results='hide'/'asis'/'markup',..., collapse=F, warning=T, message=T, error=T, cache=T, fig.width=6, fig.height=4, fig.dim=c(6,4) #inches, fig.align='left'/'center','right', 
+# knitr::opts_chunk$set(warning = F, results = "markup", message = F)
+knitr::opts_chunk$set(warning = F, results = "hide", message = F)
+options(scientific=T, digits = 3) 
+# options(scipen=9, digits = 3) 
+# ‘scipen’: integer. A penalty to be applied when deciding to print numeric values in fixed or exponential notation.  Positive values bias towards fixed and negative towards scientific notation: fixed notation will be preferred unless it is more than ‘scipen’ digits wider.
+# use scipen=999 to prevent scientific notation at all times
+```
+
+
+## Loading data
+```{r}
+dat = read.csv("E:/Users/REX/RstudioProjects/data_torture/chapter_3/pets_test.csv")
+
+#dat$AdoptionSpeed <- factor(dat$AdoptionSpeed, order=T, levels = c(0,1,2,3,4))
+
+
+dat$Type = as.factor(dat$Type)
+dat$Breed1 = as.factor(dat$Breed1)
+dat$Breed2 = as.factor(dat$Breed2)
+dat$Gender = as.factor(dat$Gender)
+dat$Color1 = as.factor(dat$Color1)
+dat$Color2 = as.factor(dat$Color2)
+dat$Color3 = as.factor(dat$Color3)
+dat$MaturitySize = as.factor(dat$MaturitySize)
+dat$FurLength = as.factor(dat$FurLength)
+dat$Vaccinated = as.factor(dat$Vaccinated)
+dat$Dewormed = as.factor(dat$Dewormed)
+dat$Sterilized = as.factor(dat$Sterilized)
+dat$Health = as.factor(dat$Health)
+dat$State = as.factor(dat$State)
+
+summary(dat)
+```
+```{r}
+dat$ASnum = NaN
+dat$ASnum[dat$AdoptionSpeed == 0] = 0
+dat$ASnum[dat$AdoptionSpeed == 1] = runif(sum(dat$AdoptionSpeed == 1), 1, 7)
+dat$ASnum[dat$AdoptionSpeed == 2] = runif(sum(dat$AdoptionSpeed == 2), 8, 30)
+dat$ASnum[dat$AdoptionSpeed == 3] = runif(sum(dat$AdoptionSpeed == 3), 31, 90)
+dat$ASnum[dat$AdoptionSpeed == 4] = 100
+
+summary(dat)
+```
+
+```{r histogram of AdoptionSpeed}
+loadPkg("ggplot2")
+ggplot(data=dat, aes(dat$AdoptionSpeed)) + 
+  geom_histogram(breaks=seq(0, 4, by=1),
+                 col="red",
+                 aes(fill=..count..)) +
+  labs(title="AdoptionSpeed of pets") + 
+  scale_fill_gradient("Count", low="green", high="red")
+```
+
+```{r histogram of ASnum}
+loadPkg("ggplot2")
+ggplot(data=dat, aes(dat$ASnum)) + 
+  geom_histogram(breaks=seq(0, 100, by=5),
+                 col="red",
+                 aes(fill=..count..)) +
+  labs(title="ASnum of pets") + 
+  scale_fill_gradient("Count", low="green", high="red")
+```
+
+
