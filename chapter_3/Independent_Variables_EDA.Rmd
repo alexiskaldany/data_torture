@@ -35,7 +35,11 @@ options(scientific=T, digits = 3)
 dat = read.csv("E:/Users/REX/RstudioProjects/data_torture/chapter_3/pets_test.csv")
 
 #dat$AdoptionSpeed <- factor(dat$AdoptionSpeed, order=T, levels = c(0,1,2,3,4))
+<<<<<<< Updated upstream
 
+=======
+#data = na.omit(dat) #delete na from data set
+>>>>>>> Stashed changes
 
 dat$Type = as.factor(dat$Type)
 dat$Breed1 = as.factor(dat$Breed1)
