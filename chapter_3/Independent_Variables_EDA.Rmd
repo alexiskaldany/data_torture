@@ -68,7 +68,14 @@ dat$ASnum[dat$AdoptionSpeed == 0] = 0
 dat$ASnum[dat$AdoptionSpeed == 1] = 1 + rgeom(sum(dat$AdoptionSpeed == 1), 0.02)
 dat$ASnum[dat$AdoptionSpeed == 2] = 8 + rgeom(sum(dat$AdoptionSpeed == 2), 0.02)
 dat$ASnum[dat$AdoptionSpeed == 3] = 31 + rgeom(sum(dat$AdoptionSpeed == 3), 0.02)
-dat$ASnum[dat$AdoptionSpeed == 4] = 100 + rgeom(sum(dat$AdoptionSpeed == 4), 0.02) #This function rgeom(n, prob) is Geometric Distribution, random generation for the geometric distribution with parameter prob 
+dat$ASnum[dat$AdoptionSpeed == 4] = 100 + rgeom(sum(dat$AdoptionSpeed == 4), 0.02)
+#The second method 
+dat$ASnum[dat$AdoptionSpeed == 1] = 1 * rgeom(sum(dat$AdoptionSpeed == 1), 0.1)
+dat$ASnum[dat$AdoptionSpeed == 2] = 2 * rgeom(sum(dat$AdoptionSpeed == 2), 0.1)
+dat$ASnum[dat$AdoptionSpeed == 3] = 3 * rgeom(sum(dat$AdoptionSpeed == 3), 0.1)
+dat$ASnum[dat$AdoptionSpeed == 4] = 4 * rgeom(sum(dat$AdoptionSpeed == 4), 0.1)
+
+#This function rgeom(n, prob) is Geometric Distribution, random generation for the geometric distribution with parameter prob 
 summary(dat)
 ```
 
@@ -107,7 +114,7 @@ ggplot(data=dat, aes(dat$Fee)) +
   scale_fill_gradient("Count", low="green", high="red")
 
 #Q-Q plot
-qqnorm(dat$Fee, main="Q-Q plot of Fee of pets", ylab = "days",col="blue")
+qqnorm(dat$Fee, main="Q-Q plot of ASnum of pets", ylab = "days",col="blue")
 qqline(dat$Fee)
 ```
 
