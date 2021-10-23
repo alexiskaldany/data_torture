@@ -32,13 +32,14 @@ options(scientific=T, digits = 3)
 
 ## Loading data
 ```{r}
-dat = read.csv("E:/Users/REX/RstudioProjects/data_torture/chapter_3/pets_test.csv")
-
-#dat$AdoptionSpeed <- factor(dat$AdoptionSpeed, order=T, levels = c(0,1,2,3,4))
+#dat = read.csv("E:/Users/REX/RstudioProjects/data_torture/chapter_3/pets_test.csv")
+dat <- data.frame(read.csv('datafile.csv'))
+dat$AdoptionSpeed <- factor(dat$AdoptionSpeed, order=T, levels = c(0,1,2,3,4))
 #data = na.omit(dat) #delete na from data set
 
 
 dat$Type = as.factor(dat$Type)
+dat$Name = as.factor(dat$Name)
 dat$Breed1 = as.factor(dat$Breed1)
 dat$Breed2 = as.factor(dat$Breed2)
 dat$Gender = as.factor(dat$Gender)
@@ -56,6 +57,12 @@ dat$State = as.factor(dat$State)
 summary(dat)
 ```
 ```{r}
+dat = subset(dat, dat$Quantity == 1)
+dat = subset(dat, ! dat$AdoptionSpeed == 4)
+summary(dat)
+```
+
+```{r}
 dat$ASnum = NaN
 dat$ASnum[dat$AdoptionSpeed == 0] = 0
 # dat$ASnum[dat$AdoptionSpeed == 1] = runif(sum(dat$AdoptionSpeed == 1), 1, 7)
@@ -68,12 +75,15 @@ dat$ASnum[dat$AdoptionSpeed == 0] = 0
 dat$ASnum[dat$AdoptionSpeed == 1] = 1 + rgeom(sum(dat$AdoptionSpeed == 1), 0.02)
 dat$ASnum[dat$AdoptionSpeed == 2] = 8 + rgeom(sum(dat$AdoptionSpeed == 2), 0.02)
 dat$ASnum[dat$AdoptionSpeed == 3] = 31 + rgeom(sum(dat$AdoptionSpeed == 3), 0.02)
-dat$ASnum[dat$AdoptionSpeed == 4] = 100 + rgeom(sum(dat$AdoptionSpeed == 4), 0.02)
+#dat$ASnum[dat$AdoptionSpeed == 4] = 100 + rgeom(sum(dat$AdoptionSpeed == 4), 0.02)
+summary(dat)
+```
+```{r}
 #The second method 
 dat$ASnum[dat$AdoptionSpeed == 1] = 1 * rgeom(sum(dat$AdoptionSpeed == 1), 0.1)
 dat$ASnum[dat$AdoptionSpeed == 2] = 2 * rgeom(sum(dat$AdoptionSpeed == 2), 0.1)
 dat$ASnum[dat$AdoptionSpeed == 3] = 3 * rgeom(sum(dat$AdoptionSpeed == 3), 0.1)
-dat$ASnum[dat$AdoptionSpeed == 4] = 4 * rgeom(sum(dat$AdoptionSpeed == 4), 0.1)
+#dat$ASnum[dat$AdoptionSpeed == 4] = 4 * rgeom(sum(dat$AdoptionSpeed == 4), 0.1)
 
 #This function rgeom(n, prob) is Geometric Distribution, random generation for the geometric distribution with parameter prob 
 summary(dat)
@@ -81,12 +91,17 @@ summary(dat)
 
 ```{r histogram of AdoptionSpeed}
 loadPkg("ggplot2")
-ggplot(data=dat, aes(dat$AdoptionSpeed)) + 
+tmpAdoptionSpeed = as.numeric(dat$AdoptionSpeed)
+ggplot(data=dat, aes(tmpAdoptionSpeed)) + 
   geom_histogram(breaks=seq(0, 4, by=1),
                  col="red",
                  aes(fill=..count..)) +
   labs(title="AdoptionSpeed of pets") + 
   scale_fill_gradient("Count", low="green", high="red")
+
+#Q-Q plot
+qqnorm(tmpAdoptionSpeed, main="Q-Q plot of AdoptionSpeed of pets", ylab = "days",col="blue")
+qqline(tmpAdoptionSpeed)
 ```
 
 ```{r histogram of ASnum}
@@ -106,7 +121,8 @@ qqline(dat$ASnum)
 
 ```{r histogram of Fee}
 loadPkg("ggplot2")
-ggplot(data=dat, aes(dat$Fee)) + 
+tmpFee = as.numeric(dat$Fee)
+ggplot(data=dat, aes(tmpFee)) + 
   geom_histogram(breaks=seq(0, 500, by=100),
                  col="red",
                  aes(fill=..count..)) +
@@ -114,7 +130,7 @@ ggplot(data=dat, aes(dat$Fee)) +
   scale_fill_gradient("Count", low="green", high="red")
 
 #Q-Q plot
-qqnorm(dat$Fee, main="Q-Q plot of ASnum of pets", ylab = "days",col="blue")
-qqline(dat$Fee)
+qqnorm(tmpFee, main="Q-Q plot of ASnum of pets", ylab = "days",col="blue")
+qqline(tmpFee)
 ```
 
