@@ -47,3 +47,23 @@ What are the most significant quantitative (Alexis for numerical variables) and 
 
 ## Third START question:
 What combination of variables generates the best multi-variable models
+
+## Sahara's version:
+Pet rescue websites such as PetFinder have been around for decades and remain a popular method of finding new pets to adopt. 
+We decided to analyze what features of a pet and their respective adoption profiles on PetFinder influenced the speed at which they got adopted. 
+We got our dataset from Kaggle and it contains roughly 8000 observations of 23 variables pertaining to an adoption profile on PetFinder. 
+Our dependent variable is AdoptionSpeed, a variable calculated by the speed at which the animal was (or was not) adopted. 
+The adoption speed variable was given to us as a categorical variable, with each level corresponding to a bucket of a range of values. 
+We transformed these buckets so that we could have a numerical dependent variable, one of the prerequisites for linear modelling.
+
+The SMART Questions we plan to answer are:
+- Do dogs get adopted faster than cats?
+- What categorical variables influence adoption speed?
+- What numerical variables influence adoption speed?
+- What combination of categorical and numerical variables result in the best predictive model?
+ 
+Our data set can be found here:
+Data: https://www.kaggle.com/c/petfinder-adoption-prediction/data
+
+Our github repo can be found here:
+Github: https://github.com/alexiskaldany/data_torture
