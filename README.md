@@ -40,7 +40,10 @@ Is there a significant difference in the adoption speed between cats and dogs? T
 
 ## Second START question
 
-What are the most significant quantitative and categorical variables in determining the speed of adoption for a pet? To answer this question we will:
+What are the most significant quantitative (Alexis for numerical variables) and categorical variables (Sahara for categorical) in determining the speed of adoption for a pet? To answer this question we will:
 
 - Use single variable linear models to test the importance of each numerical variable.
 - Use chi-square tests to find the differences in means for the categorical variables. 
+
+## Third START question:
+What combination of variables generates the best multi-variable models
