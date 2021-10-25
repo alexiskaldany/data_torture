@@ -54,23 +54,31 @@ dat$ASnum[dat$AdoptionSpeed == 2] = runif(sum(dat$AdoptionSpeed == 2), 8, 30)
 dat$ASnum[dat$AdoptionSpeed == 3] = runif(sum(dat$AdoptionSpeed == 3), 31, 90)
 dat$ASnum[dat$AdoptionSpeed == 4] = 100
 
-summary(dat)
-```
-Dropping Variables:
-``` {r}
-
+str(dat)
 ```
 
-Creating Cat/Dog subsets
+### SMART Question 3: What numerical variables influence adoption speed?
+- Making linear models for each numerical variable
+
+Age
+
 ```{r}
-dogs = subset(dat, dat$Type == 1)
-cats = subset(dat, dat$Type == 2)
+lm_age <- lm(ASnum ~ Age, data=dat )
+summary(lm_age)
 ```
+Statistically significant p-value, R-squared remains very low, Age alone does not predicate adoption speed.
 
-
-Simple multivariate analysis on Dog
+Video Amount
 ```{r}
-Dog_LM_Simple = lm(ASnum ~ )
+lm_video <- lm(ASnum ~ VideoAmt, data=dat)
+summary(lm_video)
+```
+Not statistically significant, p-value > alpha. 
+
+Photo Amount
+```{r}
+lm_photo <- lm(ASnum ~ PhotoAmt, data=dat)
+summary(lm_photo)
 ```
 
-Anova test 
+
