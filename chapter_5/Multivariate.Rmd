@@ -110,7 +110,7 @@ corrplot(num_corr, method = "number", type="upper")
 
 Lets try a linear model with the three numerical independent variables against ASnum
 
-```{r include=T}
+```{r results=T}
 lm_num <- lm(ASnum ~ . , data=dat_numerical)
 summary(lm_num)
 xkablevif(lm_num)
@@ -119,8 +119,8 @@ xkablevif(lm_num)
 Ok, so PhotoAmt and Age are statistically relevant, but just using numerical values doesn't really generate much predictive power, as evidence by the rather low adjusted R-squared value.
 
 Lets add in the remaining categorical variables
-```{r include=T}
+```{r results=T}
 lm_all <- lm(ASnum ~ ., data=dat)
 summary(lm_all)
-print(xkablevif(lm_all))
+xkablevif(lm_all)
 ```
