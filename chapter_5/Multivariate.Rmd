@@ -10,6 +10,15 @@ knitr::opts_chunk$set(warning = F, results = "hide", message = F)
 options(scientific=T, digits = 3) 
 ```
 
+```{r}
+library("dplyr")
+library("tidyr")
+library("tidyverse")
+library("ggplot2")
+
+```
+
+
 Importing and subsetting datafile
 ```{r}
 dat <- data.frame(read.csv('datafile.csv'))
@@ -40,6 +49,8 @@ Health: dropping 0 = Not Specified
 ```{r}
 dat = subset(dat, dat$Quantity == 1)
 dat = subset(dat, ! dat$AdoptionSpeed == 4)
+dat = subset(dat, ! dat$MaturitySize == 0)
+dat = subset(dat, select = - c(Health, State, Sterilized, Quantity, Dewormed, Color1, Color2, Color3, Breed1, Breed2, Fee, RescuerID, Name, Description, PetID))
 summary(dat)
 ```
 
@@ -81,4 +92,18 @@ lm_photo <- lm(ASnum ~ PhotoAmt, data=dat)
 summary(lm_photo)
 ```
 
+
+#SMART Question 4:
+What combination of categorical and numerical variables result in the best predictive model?
+
+First, lets look at the correlation plot of all numeric variables:
+
+```{r}
+library("corrplot")
+dat_numerical <- subset(dat, select = c('ASnum','Age','PhotoAmt','VideoAmt'))
+num_corr <- cor(dat_numerical)
+corrplot(num_corr, method = "number", type="upper")
+```
+
+- Super ugly corrplot, alternative might be better
 
