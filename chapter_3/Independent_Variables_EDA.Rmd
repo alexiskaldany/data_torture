@@ -94,7 +94,10 @@ summary(dat)
 dat$ASnum[dat$AdoptionSpeed == 1] = runif(sum(dat$AdoptionSpeed == 1), 1, 7)
 dat$ASnum[dat$AdoptionSpeed == 2] = runif(sum(dat$AdoptionSpeed == 2), 8, 30)
 dat$ASnum[dat$AdoptionSpeed == 3] = runif(sum(dat$AdoptionSpeed == 3), 31, 90)
+<<<<<<< Updated upstream
 #summary(dat)
+=======
+>>>>>>> Stashed changes
 ```
 
 >>>>>>> Stashed changes
