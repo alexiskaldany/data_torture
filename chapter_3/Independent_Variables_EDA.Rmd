@@ -59,48 +59,20 @@ summary(dat)
 ```{r}
 dat = subset(dat, dat$Quantity == 1)
 dat = subset(dat, ! dat$AdoptionSpeed == 4)
-summary(dat)
+#summary(dat)
 ```
 
 ```{r}
 dat$ASnum = NaN
 dat$ASnum[dat$AdoptionSpeed == 0] = 0
-<<<<<<< Updated upstream
-# dat$ASnum[dat$AdoptionSpeed == 1] = runif(sum(dat$AdoptionSpeed == 1), 1, 7)
-# dat$ASnum[dat$AdoptionSpeed == 2] = runif(sum(dat$AdoptionSpeed == 2), 8, 30)
-# dat$ASnum[dat$AdoptionSpeed == 3] = runif(sum(dat$AdoptionSpeed == 3), 31, 90)
-#dat$ASnum[dat$AdoptionSpeed == 4] = runif(sum(dat$AdoptionSpeed == 4), 100, 200)
-#rchisq(sum(dat$AdoptionSpeed == 4), ?, ncp = 0)
-
-#Maybe this one is better
-dat$ASnum[dat$AdoptionSpeed == 1] = 1 + rgeom(sum(dat$AdoptionSpeed == 1), 0.02)
-dat$ASnum[dat$AdoptionSpeed == 2] = 8 + rgeom(sum(dat$AdoptionSpeed == 2), 0.02)
-dat$ASnum[dat$AdoptionSpeed == 3] = 31 + rgeom(sum(dat$AdoptionSpeed == 3), 0.02)
-#dat$ASnum[dat$AdoptionSpeed == 4] = 100 + rgeom(sum(dat$AdoptionSpeed == 4), 0.02)
-summary(dat)
-```
-```{r}
-#The second method 
-dat$ASnum[dat$AdoptionSpeed == 1] = 1 * rgeom(sum(dat$AdoptionSpeed == 1), 0.1)
-dat$ASnum[dat$AdoptionSpeed == 2] = 2 * rgeom(sum(dat$AdoptionSpeed == 2), 0.1)
-dat$ASnum[dat$AdoptionSpeed == 3] = 3 * rgeom(sum(dat$AdoptionSpeed == 3), 0.1)
-#dat$ASnum[dat$AdoptionSpeed == 4] = 4 * rgeom(sum(dat$AdoptionSpeed == 4), 0.1)
-
-#This function rgeom(n, prob) is Geometric Distribution, random generation for the geometric distribution with parameter prob 
-summary(dat)
-```
-=======
-
 dat$ASnum[dat$AdoptionSpeed == 1] = runif(sum(dat$AdoptionSpeed == 1), 1, 7)
 dat$ASnum[dat$AdoptionSpeed == 2] = runif(sum(dat$AdoptionSpeed == 2), 8, 30)
 dat$ASnum[dat$AdoptionSpeed == 3] = runif(sum(dat$AdoptionSpeed == 3), 31, 90)
-<<<<<<< Updated upstream
-#summary(dat)
-=======
->>>>>>> Stashed changes
+
+summary(dat)
 ```
 
->>>>>>> Stashed changes
+
 
 ```{r histogram of AdoptionSpeed}
 loadPkg("ggplot2")
@@ -120,7 +92,7 @@ qqline(tmpAdoptionSpeed)
 ```{r histogram of ASnum}
 loadPkg("ggplot2")
 ggplot(data=dat, aes(dat$ASnum)) + 
-  geom_histogram(breaks=seq(0, 200, by=5),
+  geom_histogram(breaks=seq(0, 100, by=5),
                  col="red",
                  aes(fill=..count..)) +
   labs(title="ASnum of pets") + 
