@@ -65,6 +65,7 @@ summary(dat)
 ```{r}
 dat$ASnum = NaN
 dat$ASnum[dat$AdoptionSpeed == 0] = 0
+<<<<<<< Updated upstream
 # dat$ASnum[dat$AdoptionSpeed == 1] = runif(sum(dat$AdoptionSpeed == 1), 1, 7)
 # dat$ASnum[dat$AdoptionSpeed == 2] = runif(sum(dat$AdoptionSpeed == 2), 8, 30)
 # dat$ASnum[dat$AdoptionSpeed == 3] = runif(sum(dat$AdoptionSpeed == 3), 31, 90)
@@ -88,6 +89,15 @@ dat$ASnum[dat$AdoptionSpeed == 3] = 3 * rgeom(sum(dat$AdoptionSpeed == 3), 0.1)
 #This function rgeom(n, prob) is Geometric Distribution, random generation for the geometric distribution with parameter prob 
 summary(dat)
 ```
+=======
+
+dat$ASnum[dat$AdoptionSpeed == 1] = runif(sum(dat$AdoptionSpeed == 1), 1, 7)
+dat$ASnum[dat$AdoptionSpeed == 2] = runif(sum(dat$AdoptionSpeed == 2), 8, 30)
+dat$ASnum[dat$AdoptionSpeed == 3] = runif(sum(dat$AdoptionSpeed == 3), 31, 90)
+#summary(dat)
+```
+
+>>>>>>> Stashed changes
 
 ```{r histogram of AdoptionSpeed}
 loadPkg("ggplot2")
@@ -123,7 +133,7 @@ qqline(dat$ASnum)
 loadPkg("ggplot2")
 tmpFee = as.numeric(dat$Fee)
 ggplot(data=dat, aes(tmpFee)) + 
-  geom_histogram(breaks=seq(0, 500, by=100),
+  geom_histogram(breaks=seq(0, 500, by=50),
                  col="red",
                  aes(fill=..count..)) +
   labs(title="Feed of pets") + 
