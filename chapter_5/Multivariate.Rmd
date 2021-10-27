@@ -65,7 +65,7 @@ dat$ASnum[dat$AdoptionSpeed == 1] = runif(sum(dat$AdoptionSpeed == 1), 1, 7)
 dat$ASnum[dat$AdoptionSpeed == 2] = runif(sum(dat$AdoptionSpeed == 2), 8, 30)
 dat$ASnum[dat$AdoptionSpeed == 3] = runif(sum(dat$AdoptionSpeed == 3), 31, 90)
 dat$ASnum[dat$AdoptionSpeed == 4] = 100
-
+dat <- subset(dat, select = -c(AdoptionSpeed))
 str(dat)
 ```
 
@@ -121,15 +121,34 @@ Ok, so PhotoAmt and Age are statistically relevant, but just using numerical val
 
 Lets add in the remaining categorical variables
 ```{r results=T}
-lm_all <- lm(ASnum ~ .-AdoptionSpeed, data=dat)
+lm_all <- lm(ASnum ~ ., data=dat)
 summary(lm_all)
 xkablevif(lm_all)
 ```
 
 Now lets eliminate VideoAmt, Vaccinated3(which means "unsure vaccination status" and might not be worth keeping in its own right) and try again.
 ```{r}
-dat_lm <- subset(dat, select = -c(AdoptionSpeed, VideoAmt))
+dat_lm <- subset(dat, select = -c(VideoAmt))
 lm_subset1 <- lm(ASnum ~., data=dat_lm)
 summary(lm_subset1)
 ```
-The fact that our Adjusted R-squared value is a lowly 0.0378 is unsetteling. 
+The fact that our Adjusted R-squared value is a lowly 0.0378 is unsettling. 
+
+### Using feature selection tools to identify best model
+```{r results='markup'}
+loadPkg("leaps")
+reg_model <- regsubsets(ASnum~., data = dat, nbest = 2, method = 'exhaustive')
+plot(reg_model, scale = "adjr2", main = "Adjusted R^2")
+
+```
+
+Plotting best model as determined by Adjusted $R^2$ plot
+Variables to include Age, Gender, MaturitySize, Furlength, Vaccinated, VideoAmt
+
+```{r results='markup'}
+adj_model <- lm(ASnum~ Age + Gender + MaturitySize + FurLength + Vaccinated + VideoAmt, data=dat)
+xkabledply(adj_model, title = paste("Model:", format(formula(adj_model)) ) )
+xkablevif(adj_model)
+```
+
+
