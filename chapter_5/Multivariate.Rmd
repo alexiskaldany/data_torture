@@ -10,6 +10,16 @@ knitr::opts_chunk$set(warning = F, results = "hide", message = F)
 options(scientific=T, digits = 3) 
 ```
 
+```{r}
+library("dplyr")
+library("tidyr")
+library("tidyverse")
+library("ggplot2")
+library("ezids")
+
+```
+
+
 Importing and subsetting datafile
 ```{r}
 dat <- data.frame(read.csv('datafile.csv'))
@@ -40,6 +50,8 @@ Health: dropping 0 = Not Specified
 ```{r}
 dat = subset(dat, dat$Quantity == 1)
 dat = subset(dat, ! dat$AdoptionSpeed == 4)
+dat = subset(dat, ! dat$MaturitySize == 0)
+dat = subset(dat, select = - c(Health, State, Sterilized, Quantity, Dewormed, Color1, Color2, Color3, Breed1, Breed2, Fee, RescuerID, Name, Description, PetID, Type))
 summary(dat)
 ```
 
@@ -53,24 +65,90 @@ dat$ASnum[dat$AdoptionSpeed == 1] = runif(sum(dat$AdoptionSpeed == 1), 1, 7)
 dat$ASnum[dat$AdoptionSpeed == 2] = runif(sum(dat$AdoptionSpeed == 2), 8, 30)
 dat$ASnum[dat$AdoptionSpeed == 3] = runif(sum(dat$AdoptionSpeed == 3), 31, 90)
 dat$ASnum[dat$AdoptionSpeed == 4] = 100
-
-summary(dat)
-```
-Dropping Variables:
-``` {r}
-
+dat <- subset(dat, select = -c(AdoptionSpeed))
+str(dat)
 ```
 
-Creating Cat/Dog subsets
+### SMART Question 3: What numerical variables influence adoption speed?
+- Making linear models for each numerical variable
+
+Age
+
+
 ```{r}
-dogs = subset(dat, dat$Type == 1)
-cats = subset(dat, dat$Type == 2)
+lm_age <- lm(ASnum ~ Age, data=dat )
+summary(lm_age)
 ```
+Statistically significant p-value, R-squared remains very low, Age alone does not predicate adoption speed.
 
-
-Simple multivariate analysis on Dog
+Video Amount
 ```{r}
-Dog_LM_Simple = lm(ASnum ~ )
+lm_video <- lm(ASnum ~ VideoAmt, data=dat)
+summary(lm_video)
+```
+Not statistically significant, p-value > alpha. 
+
+Photo Amount
+```{r}
+lm_photo <- lm(ASnum ~ PhotoAmt, data=dat)
+summary(lm_photo)
 ```
 
-Anova test 
+
+#SMART Question 4:
+What combination of categorical and numerical variables result in the best predictive model?
+
+First, lets look at the correlation plot of all numeric variables:
+
+```{r}
+library("corrplot")
+dat_numerical <- subset(dat, select = c('ASnum','Age','PhotoAmt','VideoAmt'))
+num_corr <- cor(dat_numerical)
+corrplot(num_corr, method = "number", type="upper")
+```
+
+- Super ugly corrplot, it might be the case that numerical variables aren't that important??
+
+Lets try a linear model with the three numerical independent variables against ASnum
+
+```{r results=T}
+lm_num <- lm(ASnum ~ . , data=dat_numerical)
+summary(lm_num)
+xkablevif(lm_num)
+
+```
+Ok, so PhotoAmt and Age are statistically relevant, but just using numerical values doesn't really generate much predictive power, as evidenced by the rather low adjusted R-squared value.
+
+Lets add in the remaining categorical variables
+```{r results=T}
+lm_all <- lm(ASnum ~ ., data=dat)
+summary(lm_all)
+xkablevif(lm_all)
+```
+
+Now lets eliminate VideoAmt, Vaccinated3(which means "unsure vaccination status" and might not be worth keeping in its own right) and try again.
+```{r}
+dat_lm <- subset(dat, select = -c(VideoAmt))
+lm_subset1 <- lm(ASnum ~., data=dat_lm)
+summary(lm_subset1)
+```
+The fact that our Adjusted R-squared value is a lowly 0.0378 is unsettling. 
+
+### Using feature selection tools to identify best model
+```{r results='markup'}
+loadPkg("leaps")
+reg_model <- regsubsets(ASnum~., data = dat, nbest = 2, method = 'exhaustive')
+plot(reg_model, scale = "adjr2", main = "Adjusted R^2")
+
+```
+
+Plotting best model as determined by Adjusted $R^2$ plot
+Variables to include Age, Gender, MaturitySize, Furlength, Vaccinated, VideoAmt
+
+```{r results='markup'}
+adj_model <- lm(ASnum~ Age + Gender + MaturitySize + FurLength + Vaccinated + VideoAmt, data=dat)
+xkabledply(adj_model, title = paste("Model:", format(formula(adj_model)) ) )
+xkablevif(adj_model)
+```
+
+
