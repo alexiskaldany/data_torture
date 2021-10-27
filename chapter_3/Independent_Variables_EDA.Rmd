@@ -69,28 +69,30 @@ dat$ASnum[dat$AdoptionSpeed == 1] = runif(sum(dat$AdoptionSpeed == 1), 1, 7)
 dat$ASnum[dat$AdoptionSpeed == 2] = runif(sum(dat$AdoptionSpeed == 2), 8, 30)
 dat$ASnum[dat$AdoptionSpeed == 3] = runif(sum(dat$AdoptionSpeed == 3), 31, 90)
 
-summary(dat)
+#summary(dat)
 ```
 
 
 
 ```{r histogram of AdoptionSpeed}
 loadPkg("ggplot2")
+#Histogram
 tmpAdoptionSpeed = as.numeric(dat$AdoptionSpeed)
 ggplot(data=dat, aes(tmpAdoptionSpeed)) + 
-  geom_histogram(breaks=seq(0, 4, by=1),
+  geom_bar(breaks=seq(0, 4, by=1),
                  col="red",
                  aes(fill=..count..)) +
   labs(title="AdoptionSpeed of pets") + 
   scale_fill_gradient("Count", low="green", high="red")
 
+
+
 #Q-Q plot
 qqnorm(tmpAdoptionSpeed, main="Q-Q plot of AdoptionSpeed of pets", ylab = "days",col="blue")
 qqline(tmpAdoptionSpeed)
 ```
-
+We transformed AdoptionSpeed to numerical dependent variable ASnum.
 ```{r histogram of ASnum}
-loadPkg("ggplot2")
 ggplot(data=dat, aes(dat$ASnum)) + 
   geom_histogram(breaks=seq(0, 100, by=5),
                  col="red",
@@ -105,17 +107,90 @@ qqline(dat$ASnum)
 ```
 
 ```{r histogram of Fee}
-loadPkg("ggplot2")
-tmpFee = as.numeric(dat$Fee)
+tmpFee = as.numeric(subset(dat$Fee, !is.na(dat$Fee)))
 ggplot(data=dat, aes(tmpFee)) + 
   geom_histogram(breaks=seq(0, 500, by=50),
                  col="red",
                  aes(fill=..count..)) +
-  labs(title="Feed of pets") + 
+  labs(title="Fee of pets") + 
   scale_fill_gradient("Count", low="green", high="red")
 
 #Q-Q plot
-qqnorm(tmpFee, main="Q-Q plot of ASnum of pets", ylab = "days",col="blue")
+qqnorm(tmpFee, main="Q-Q plot of Fee of pets", ylab = "fee",col="blue")
 qqline(tmpFee)
+
+
+```
+```{r barplot of Cat and Dog}
+
+catDog = subset(dat, dat$Type == "1" | dat$Type == "2")
+
+ggplot(data=catDog, aes(Type)) + 
+  geom_bar(breaks=seq(0, 500, by=100),
+                 col="red",
+                 aes(fill=..count..)) +
+  labs(title="Cats and Dogs", x="Dogs and Cats") + 
+  scale_x_discrete(labels= c("Dog","Cat"))
 ```
 
+```{r barplot of PhotoAmt}
+tmpPhotoAmt = dat
+tmpPhotoAmt$PhotoAmt = as.numeric(tmpPhotoAmt$PhotoAmt)
+
+ggplot(data=tmpPhotoAmt, aes(PhotoAmt)) + 
+  geom_histogram(breaks=seq(0, 30, by=2),
+                 col="red",
+                 aes(fill=..count..)) +
+  labs(title="tmpPhotoAmt of pets") + 
+  scale_fill_gradient("Count", low="green", high="red")
+
+#Boxplot
+ggplot(data = tmpPhotoAmt,aes(y = PhotoAmt))+
+  geom_boxplot() + 
+  geom_boxplot( colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+  labs(title="PhotoAmt boxplot using `ggplot`",x="", y = "PhotoAmt")
+
+#Q-Q plot
+qqnorm(tmpPhotoAmt$PhotoAmt, main="Q-Q plot of PhotoAmt of pets", ylab = "PhotoAmt",col="blue")
+qqline(tmpPhotoAmt$PhotoAmt)
+```
+```{r barplot of VideoAmt > 0}
+tmpVideoAmt = dat
+tmpVideoAmt$VideoAmt = as.numeric(tmpVideoAmt$VideoAmt)
+#tmpVideoAmt = subset(tmpVideoAmt, tmpVideoAmt$VideoAmt > 0)
+summary(tmpVideoAmt)
+ggplot(data=tmpVideoAmt, aes(VideoAmt)) + 
+  geom_bar(breaks=seq(0, 30, by=2),
+                 col="red",
+                 aes(fill=..count..)) +
+  labs(title="tmpVideoAmt of pets") + 
+  scale_fill_gradient("Count", low="green", high="red")
+
+#Boxplot
+ggplot(data = tmpVideoAmt,aes(y = VideoAmt))+
+  geom_boxplot() + 
+  geom_boxplot( colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+  labs(title="VideoAmt boxplot using `ggplot`",x="", y = "VideoAmt")
+
+#Q-Q plot
+qqnorm(tmpVideoAmt$VideoAmt, main="Q-Q plot of VideoAmt of pets", ylab = "VideoAmt",col="blue")
+qqline(tmpVideoAmt$VideoAmt)
+```
+
+```{r Age}
+tmpDatAge = dat
+tmpDatAge$Age = as.numeric(dat$Age)
+
+
+ggplot(data=tmpDatAge, aes(Age)) + 
+  geom_histogram(breaks=seq(0, 220, by=10),
+                 col="red",
+                 aes(fill=..count..)) +
+  labs(title="tmpPhotoAmt of pets") + 
+  scale_fill_gradient("Count", low="green", high="red")
+#Boxplot
+ggplot(data = tmpDatAge,aes(y = Age))+
+  geom_boxplot() + 
+  geom_boxplot( colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+  labs(title="Age boxplot using `ggplot`",x="", y = "Age")
+```
