@@ -74,6 +74,7 @@ str(dat)
 
 Age
 
+
 ```{r}
 lm_age <- lm(ASnum ~ Age, data=dat )
 summary(lm_age)
@@ -116,7 +117,7 @@ summary(lm_num)
 xkablevif(lm_num)
 
 ```
-Ok, so PhotoAmt and Age are statistically relevant, but just using numerical values doesn't really generate much predictive power, as evidence by the rather low adjusted R-squared value.
+Ok, so PhotoAmt and Age are statistically relevant, but just using numerical values doesn't really generate much predictive power, as evidenced by the rather low adjusted R-squared value.
 
 Lets add in the remaining categorical variables
 ```{r results=T}
