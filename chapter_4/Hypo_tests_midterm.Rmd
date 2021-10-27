@@ -25,37 +25,33 @@ options(scientific=T, digits = 3)
 # ‘scipen’: integer. A penalty to be applied when deciding to print numeric values in fixed or exponential notation.  Positive values bias towards fixed and negative towards scientific notation: fixed notation will be preferred unless it is more than ‘scipen’ digits wider.
 # use scipen=999 to prevent scientific notation at all times
 ```
-
+AdoptionSpeed - Categorical speed of adoption. Lower is faster. This is the value to predict. See below section for more info.
+Type - Type of animal (1 = Dog, 2 = Cat)
+Age - Age of pet when listed, in months
+Gender - Gender of pet (1 = Male, 2 = Female, 3 = Mixed, if profile represents group of pets)
+MaturitySize - Size at maturity (1 = Small, 2 = Medium, 3 = Large, 4 = Extra Large, 0 = Not Specified)
+FurLength - Fur length (1 = Short, 2 = Medium, 3 = Long, 0 = Not Specified)
+Vaccinated - Pet has been vaccinated (1 = Yes, 2 = No, 3 = Not Sure)
+PhotoAmt - Total uploaded photos for this pet
 ## Loading data
 ```{r}
 # dat = read.csv('/Users/sahara/Documents/GW/DataScience/petfinder-adoption-prediction/train/train.csv')
-dat = read.csv('/Users/sahara/Documents/GW/DataScience/data_torture/chapter_5/datafile.csv')
-dat$AdoptionSpeed <- factor(dat$AdoptionSpeed, order=T, levels = c(0,1,2,3,4))
+data = read.csv('/Users/sahara/Documents/GW/DataScience/data_torture/chapter_5/datafile.csv')
+data$AdoptionSpeed <- factor(data$AdoptionSpeed, order=T, levels = c(0,1,2,3,4))
 
-
-dat$Type = as.factor(dat$Type)
-dat$Name = as.factor(dat$Name)
-dat$Breed1 = as.factor(dat$Breed1)
-dat$Breed2 = as.factor(dat$Breed2)
-dat$Gender = as.factor(dat$Gender)
-dat$Color1 = as.factor(dat$Color1)
-dat$Color2 = as.factor(dat$Color2)
-dat$Color3 = as.factor(dat$Color3)
-dat$MaturitySize = as.factor(dat$MaturitySize)
-dat$FurLength = as.factor(dat$FurLength)
-dat$Vaccinated = as.factor(dat$Vaccinated)
-dat$Dewormed = as.factor(dat$Dewormed)
-dat$Sterilized = as.factor(dat$Sterilized)
-dat$Health = as.factor(dat$Health)
-dat$State = as.factor(dat$State)
-
+# converting the data types we want
+data$Type = as.factor(data$Type)
+data$MaturitySize = as.factor(data$MaturitySize)
+data$FurLength = as.factor(data$FurLength)
+data$Vaccinated = as.factor(data$Vaccinated)
+data$Gender = as.factor(data$Gender)
 
 # Only looking at profiles with 1 animal
-dat = subset(dat, dat$Quantity == 1)
+data = subset(data, data$Quantity == 1)
+data = subset(data, ! data$AdoptionSpeed == 4)
 
-
-dat = subset(dat, ! dat$AdoptionSpeed == 4)
-
+# Only pulling the columns we want to look at
+dat = data[c('Type', 'Age', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt', 'AdoptionSpeed')]
 summary(dat)
 ```
 
@@ -73,34 +69,29 @@ summary(dat)
 
 
 ```{r}
-histogram(data = dat, x = dat$ASnum)
+hist(data = dat, x = dat$ASnum)
 ```
 
 ```{r}
 qqnorm(y = dat$ASnum)
 ```
 
-```{r}
 
-```
-
-
-## SMART: Do dogs get adopted quicker than cats?
+## SMART: Do dogs get adopted faster than cats?
 ```{r}
 library('ggplot2')
-library('lattice')
-
-ggplot(data = dat, aes(y = ASnum, fill = Type)) + 
-  geom_boxplot()
+ggplot(data = dat, aes(y = ASnum, x = Type, fill = Type)) + 
+  geom_boxplot() +
+  labs(title = "Adoption Speed by Animal Type", x = 'Animal Type', y = 'Adoption Speed') + 
+  scale_x_discrete(labels=c("1" = "Dog", "2" = "Cat")) + 
+  scale_fill_discrete(labels = c("Dog", "Cat"))
 ```
 
 ```{r}
-an = anova(aov(data = dat, ASnum ~ Type))
-an
-
+bp_dogscats = bptest(data = dat, formula = ASnum ~ Type)
+bp_dogscats
 dogs = subset(dat, dat$Type == 1)
 cats = subset(dat, dat$Type == 2)
-
 
 dc_t = t.test(dogs$ASnum, cats$ASnum)
 dc_t
@@ -108,14 +99,92 @@ dc_t
 
 
 
-## SMART: Do younger dogs get adopted quicker?
+## SMART: Do physical attributes affect adoption speed?
 ```{r}
+### GENDER
+bp_mf = bptest(data = dat, formula = ASnum ~ Gender)
+bp_mf
+male = subset(dat, dat$Gender == 1)
+female = subset(dat, dat$Gender == 2)
+mf_t = t.test(male$ASnum, female$ASnum)
+mf_t
 
-histogram(data = dogs, x = dogs$Age)
-qqnorm(y = dogs$Age)
-ggplot(data = dogs, aes(x = Age, y = ASnum)) + 
-  geom_point() + 
-  geom_smooth(method = lm)
+
+ggplot(data = dat, aes(y = ASnum, x = Gender, fill = Gender)) + 
+  geom_boxplot() + 
+  labs(title = "Adoption Speed by Animal Gender", x = 'Animal Gender', y = 'Adoption Speed') + 
+  scale_x_discrete(labels=c("1" = "Male", "2" = "Female")) + 
+  scale_fill_discrete(labels = c("Male", "Female"))
+
+```
+
+```{r}
+### SIZE
+bp_size = bptest(data = dat, formula = ASnum ~ MaturitySize)
+bp_size
+
+ggplot(data = dat, aes(y = ASnum, x = MaturitySize, fill = MaturitySize)) + 
+  geom_boxplot() + 
+  labs(title = "Adoption Speed by Maturity Size", x = 'Maturity Size', y = 'Adoption Speed') + 
+  scale_x_discrete(labels=c("1" = "Small", "2" = "Medium", "3" = "Large", "4" = "Extra Large")) + 
+  scale_fill_discrete(labels = c("Small", "Medium", "Large", "Extra Large"))
+
+anova_size = anova(aov(data = dat, ASnum ~ MaturitySize))
+anova_size
+turkey_size = TukeyHSD(aov(data = dat, ASnum ~ MaturitySize))
+turkey_size
+```
+
+```{r}
+### FURLENGTH
+bp_fur = bptest(data = dat, formula = ASnum ~ FurLength)
+bp_fur
+
+ggplot(data = dat, aes(y = ASnum, x = FurLength, fill = FurLength)) + 
+  geom_boxplot() +
+  labs(title = "Adoption Speed by Fur Length", x = 'Fur Length', y = 'Adoption Speed') + 
+  scale_x_discrete(labels=c("1" = "Short", "2" = "Medium", "3" = "Long")) + 
+  scale_fill_discrete(labels = c("Short", "Medium", "Long"))
+
+anova_fur = anova(aov(data = dat, ASnum ~ FurLength))
+anova_fur
+turkey_fur = TukeyHSD(aov(data = dat, ASnum ~ FurLength))
+turkey_fur
+```
+
+
+```{r}
+### VACCINATED
+bp_vac = bptest(data = dat, formula = ASnum ~ Vaccinated)
+bp_vac
+
+ggplot(data = dat, aes(y = ASnum, x = Vaccinated, fill = Vaccinated)) + 
+  geom_boxplot() + 
+  labs(title = "Adoption Speed by Vaccination Status", x = 'Vaccination Status', y = 'Adoption Speed') + 
+  scale_x_discrete(labels=c("1" = "Vaccinated", "2" = "Unvaccinated", "3" = "Not Specified")) + 
+  scale_fill_discrete(labels = c("Vaccinated", "Unvaccinated", "Not Specified"))
+
+anova_vac = anova(aov(data = dat, ASnum ~ Vaccinated))
+anova_vac
+turkey_vac = TukeyHSD(aov(data = dat, ASnum ~ Vaccinated))
+turkey_vac
+```
+
+
+## SMART: Do profile attributes affect adoption speed?
+
+```{r}
+### PHOTOS
+bp_pho = bptest(data = dat, formula = ASnum ~ PhotoAmt)
+bp_pho
+
+ggplot(data = dat, aes(y = ASnum, fill = PhotoAmt)) + 
+  geom_boxplot()
+
+anova_pho = anova(aov(data = dat, ASnum ~ PhotoAmt))
+anova_pho
+turkey_pho = TukeyHSD(aov(data = dat, ASnum ~ PhotoAmt))
+turkey_pho
 ```
 
 ## SMART: Do more expensive dogs get adopted slower?
