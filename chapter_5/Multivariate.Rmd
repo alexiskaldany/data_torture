@@ -24,6 +24,10 @@ Importing and subsetting datafile
 ```{r}
 dat <- data.frame(read.csv('datafile.csv'))
 dat$AdoptionSpeed <- factor(dat$AdoptionSpeed, order=T, levels = c(0,1,2,3,4))
+dat = subset(dat, dat$Quantity == 1)
+dat = subset(dat, ! dat$AdoptionSpeed == 4)
+dat = subset(dat, ! dat$MaturitySize == 0)
+dat = subset(dat, ! dat$Gender == 3)
 
 dat$Type = as.factor(dat$Type)
 dat$Name = as.factor(dat$Name)
@@ -48,9 +52,6 @@ FurLength: dropping 0 = Not Specified
 Health: dropping 0 = Not Specified
 
 ```{r}
-dat = subset(dat, dat$Quantity == 1)
-dat = subset(dat, ! dat$AdoptionSpeed == 4)
-dat = subset(dat, ! dat$MaturitySize == 0)
 dat = subset(dat, select = - c(Health, State, Sterilized, Quantity, Dewormed, Color1, Color2, Color3, Breed1, Breed2, Fee, RescuerID, Name, Description, PetID, Type))
 summary(dat)
 ```
@@ -105,6 +106,7 @@ library("corrplot")
 dat_numerical <- subset(dat, select = c('ASnum','Age','PhotoAmt','VideoAmt'))
 num_corr <- cor(dat_numerical)
 corrplot(num_corr, method = "number", type="upper")
+
 ```
 
 - Super ugly corrplot, it might be the case that numerical variables aren't that important??
@@ -137,18 +139,27 @@ The fact that our Adjusted R-squared value is a lowly 0.0378 is unsettling.
 ### Using feature selection tools to identify best model
 ```{r results='markup'}
 loadPkg("leaps")
-reg_model <- regsubsets(ASnum~., data = dat, nbest = 2, method = 'exhaustive')
+reg_model <- regsubsets(ASnum~ Age + Gender + MaturitySize + FurLength + Vaccinated + VideoAmt + PhotoAmt, data = dat, nbest = 2, method = 'exhaustive')
 plot(reg_model, scale = "adjr2", main = "Adjusted R^2")
-
+plot(reg_model, scale = "r2", main = "R^2")
+plot(reg_model, scale = "bic", main = "BIC") 
+plot(reg_model, scale = "Cp", main = "Cp")
 ```
 
-Plotting best model as determined by Adjusted $R^2$ plot
-Variables to include Age, Gender, MaturitySize, Furlength, Vaccinated, VideoAmt
+Adjusted $R^2$:
+$R^2$
+BIC:
+Cp: all recommend the same regressors.
+Variables to include Age, Gender2, MaturitySize3, Furlength3, Vaccinated2, Vaccinated3, VideoAmt
+
+Unsurprisingly, $R^2$ model called for the addition of the variables to a list above
 
 ```{r results='markup'}
 adj_model <- lm(ASnum~ Age + Gender + MaturitySize + FurLength + Vaccinated + VideoAmt, data=dat)
 xkabledply(adj_model, title = paste("Model:", format(formula(adj_model)) ) )
 xkablevif(adj_model)
 ```
+
+### Lets add
 
 
