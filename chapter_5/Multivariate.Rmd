@@ -140,26 +140,38 @@ The fact that our Adjusted R-squared value is a lowly 0.0378 is unsettling.
 ```{r results='markup'}
 loadPkg("leaps")
 reg_model <- regsubsets(ASnum~ Age + Gender + MaturitySize + FurLength + Vaccinated + VideoAmt + PhotoAmt, data = dat, nbest = 2, method = 'exhaustive')
-plot(reg_model, scale = "adjr2", main = "Adjusted R^2")
-plot(reg_model, scale = "r2", main = "R^2")
-plot(reg_model, scale = "bic", main = "BIC") 
-plot(reg_model, scale = "Cp", main = "Cp")
+plot(reg_model, scale = "adjr2", main = "Adjusted R^2 Exhaustive")
+#plot(reg_model, scale = "r2", main = "R^2")
+#plot(reg_model, scale = "bic", main = "BIC") 
+#plot(reg_model, scale = "Cp", main = "Cp")
+reg_model_forward <- regsubsets(ASnum~ Age + Gender + MaturitySize + FurLength + Vaccinated + VideoAmt + PhotoAmt, data = dat, nbest = 2, method = 'forward')
+plot(reg_model_forward, scale = "adjr2", main = "Adjusted R^2 Forward")
+reg_model_backward <- regsubsets(ASnum~ Age + Gender + MaturitySize + FurLength + Vaccinated + VideoAmt + PhotoAmt, data = dat, nbest = 2, method = 'backward')
+plot(reg_model_backward, scale = "adjr2", main = "Adjusted R^2 Backward")
+reg_model_sequential <- regsubsets(ASnum~ Age + Gender + MaturitySize + FurLength + Vaccinated + VideoAmt + PhotoAmt, data = dat, nbest = 2, method = 'seqrep')
+plot(reg_model_sequential, scale = "adjr2", main = "Adjusted R^2 Sequential Replacement")
 ```
+No difference in variables between exhaustive, forward, and backward selection:
+Age, Gender 2, MaturitySize2, MaturitySize3, FurLength2, Furlength3, Vaccinated2, and PhotoAmt
 
-Adjusted $R^2$:
-$R^2$
-BIC:
-Cp: all recommend the same regressors.
-Variables to include Age, Gender2, MaturitySize3, Furlength3, Vaccinated2, Vaccinated3, VideoAmt
+Sequential Replacement recommended:
+Gender2, MaturitySize2, FurLength2, FurLength3, Vaccinated2, PhotoAmt
 
-Unsurprisingly, $R^2$ model called for the addition of the variables to a list above
+Dropping Age, MaturitySize3
+
 
 ```{r results='markup'}
-adj_model <- lm(ASnum~ Age + Gender + MaturitySize + FurLength + Vaccinated + VideoAmt, data=dat)
-xkabledply(adj_model, title = paste("Model:", format(formula(adj_model)) ) )
-xkablevif(adj_model)
+dat_drop_mat_4 <- subset(dat, ! dat$MaturitySize == 4)
+dat_drop_mat_4_3 <- subset(dat, ! dat$MaturitySize == 3)
+exh_for_back_model <- lm(ASnum~ Age + Gender + MaturitySize + FurLength + Vaccinated + PhotoAmt, data=dat_drop_mat_4)
+xkabledply(exh_for_back_model, title = paste("Model:", format(formula(exh_for_back_model)) ) )
+xkablevif(exh_for_back_model)
 ```
 
-### Lets add
+```{r}
+sequential_model <- lm(ASnum ~ Gender + MaturitySize + FurLength + Vaccinated + PhotoAmt, data=dat_drop_mat_4_3)
+xkabledply(sequential_model, title = paste("Model:", format(formula(exh_for_back_model)) ) )
+xkablevif(sequential_model)
+```
 
 
