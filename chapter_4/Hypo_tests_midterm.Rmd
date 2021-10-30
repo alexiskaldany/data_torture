@@ -80,11 +80,14 @@ qqnorm(y = dat$ASnum)
 ## SMART: Do dogs get adopted faster than cats?
 ```{r}
 library('ggplot2')
+#pdf('type_boxplot.pdf')
 ggplot(data = dat, aes(y = ASnum, x = Type, fill = Type)) + 
   geom_boxplot() +
   labs(title = "Adoption Speed by Animal Type", x = 'Animal Type', y = 'Adoption Speed') + 
   scale_x_discrete(labels=c("1" = "Dog", "2" = "Cat")) + 
   scale_fill_discrete(labels = c("Dog", "Cat"))
+
+#dev.off()
 ```
 
 ```{r}
@@ -102,6 +105,7 @@ dc_t
 ## SMART: Do physical attributes affect adoption speed?
 ```{r}
 ### GENDER
+#pdf('Gender_boxplot.pdf')
 bp_mf = bptest(data = dat, formula = ASnum ~ Gender)
 bp_mf
 male = subset(dat, dat$Gender == 1)
@@ -115,20 +119,20 @@ ggplot(data = dat, aes(y = ASnum, x = Gender, fill = Gender)) +
   labs(title = "Adoption Speed by Animal Gender", x = 'Animal Gender', y = 'Adoption Speed') + 
   scale_x_discrete(labels=c("1" = "Male", "2" = "Female")) + 
   scale_fill_discrete(labels = c("Male", "Female"))
-
+#dev.off()
 ```
 
 ```{r}
 ### SIZE
 bp_size = bptest(data = dat, formula = ASnum ~ MaturitySize)
 bp_size
-
+#pdf('Size_boxplot.pdf')
 ggplot(data = dat, aes(y = ASnum, x = MaturitySize, fill = MaturitySize)) + 
   geom_boxplot() + 
   labs(title = "Adoption Speed by Maturity Size", x = 'Maturity Size', y = 'Adoption Speed') + 
   scale_x_discrete(labels=c("1" = "Small", "2" = "Medium", "3" = "Large", "4" = "Extra Large")) + 
   scale_fill_discrete(labels = c("Small", "Medium", "Large", "Extra Large"))
-
+#dev.off()
 anova_size = anova(aov(data = dat, ASnum ~ MaturitySize))
 anova_size
 turkey_size = TukeyHSD(aov(data = dat, ASnum ~ MaturitySize))
@@ -140,12 +144,13 @@ turkey_size
 bp_fur = bptest(data = dat, formula = ASnum ~ FurLength)
 bp_fur
 
+#pdf('fur_boxplot.pdf')
 ggplot(data = dat, aes(y = ASnum, x = FurLength, fill = FurLength)) + 
   geom_boxplot() +
   labs(title = "Adoption Speed by Fur Length", x = 'Fur Length', y = 'Adoption Speed') + 
   scale_x_discrete(labels=c("1" = "Short", "2" = "Medium", "3" = "Long")) + 
   scale_fill_discrete(labels = c("Short", "Medium", "Long"))
-
+#dev.off()
 anova_fur = anova(aov(data = dat, ASnum ~ FurLength))
 anova_fur
 turkey_fur = TukeyHSD(aov(data = dat, ASnum ~ FurLength))
@@ -157,13 +162,13 @@ turkey_fur
 ### VACCINATED
 bp_vac = bptest(data = dat, formula = ASnum ~ Vaccinated)
 bp_vac
-
+#pdf('vacc_boxplot.pdf')
 ggplot(data = dat, aes(y = ASnum, x = Vaccinated, fill = Vaccinated)) + 
   geom_boxplot() + 
   labs(title = "Adoption Speed by Vaccination Status", x = 'Vaccination Status', y = 'Adoption Speed') + 
   scale_x_discrete(labels=c("1" = "Vaccinated", "2" = "Unvaccinated", "3" = "Not Specified")) + 
   scale_fill_discrete(labels = c("Vaccinated", "Unvaccinated", "Not Specified"))
-
+#dev.off()
 anova_vac = anova(aov(data = dat, ASnum ~ Vaccinated))
 anova_vac
 turkey_vac = TukeyHSD(aov(data = dat, ASnum ~ Vaccinated))
