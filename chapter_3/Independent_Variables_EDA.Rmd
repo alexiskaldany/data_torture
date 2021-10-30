@@ -92,7 +92,7 @@ qqnorm(tmpAdoptionSpeed, main="Q-Q plot of AdoptionSpeed of pets", ylab = "days"
 qqline(tmpAdoptionSpeed)
 ```
 We transformed AdoptionSpeed to numerical dependent variable ASnum.
-```{r histogram of ASnum}
+```{r ASnum}
 ggplot(data=dat, aes(dat$ASnum)) + 
   geom_histogram(breaks=seq(0, 100, by=5),
                  col="red",
@@ -132,6 +132,52 @@ ggplot(data=catDog, aes(Type)) +
   labs(title="Cats and Dogs", x="Dogs and Cats") + 
   scale_x_discrete(labels= c("Dog","Cat"))
 ```
+```{r donut plot}
+# Create test data.
+data <- data.frame(
+  category=c("Dog", "Cat"),
+  count=c(nrow(catDog[catDog$Type=="1",]),nrow(catDog[catDog$Type=="2",]))
+)
+ 
+# Compute percentages
+data$fraction <- data$count / sum(data$count)
+
+# Compute the cumulative percentages (top of each rectangle)
+data$ymax <- cumsum(data$fraction)
+
+# Compute the bottom of each rectangle
+data$ymin <- c(0, head(data$ymax, n=-1))
+
+# Compute label position
+data$labelPosition <- (data$ymax + data$ymin) / 2
+
+# Compute a good label
+data$label <- paste0(data$category, ":", data$count)
+
+# Make the plot
+ggplot(data, aes(ymax=ymax, ymin=ymin, xmax=4, xmin=3, fill=category)) +
+  geom_rect() +
+  geom_label( x=3.5, aes(y=labelPosition, label=label), size=6) +
+  scale_fill_brewer(palette=4) +
+  coord_polar(theta="y") +
+  xlim(c(2, 4)) +
+  theme_void() +
+  theme(legend.position = "none")
+
+```
+```{r}
+dog = nrow(catDog[catDog$Type=="1",])
+cat = nrow(catDog[catDog$Type=="2",])
+Prop <- c(dog,cat)
+# Prepare a color palette. Here with R color brewer:
+library(RColorBrewer)
+myPalette <- brewer.pal(5, "Set3") 
+
+# You can change the border of each area with the classical parameters:
+pie(Prop , labels = c(paste("Dog",dog, sep = ":"), paste("Cat",cat, sep = ":")), border="white", col=myPalette )
+```
+
+
 
 ```{r barplot of PhotoAmt}
 tmpPhotoAmt = dat
@@ -158,14 +204,17 @@ qqline(tmpPhotoAmt$PhotoAmt)
 tmpVideoAmt = dat
 tmpVideoAmt$VideoAmt = as.numeric(tmpVideoAmt$VideoAmt)
 #tmpVideoAmt = subset(tmpVideoAmt, tmpVideoAmt$VideoAmt > 0)
-summary(tmpVideoAmt)
+```
+```{r}
+#barplot
 ggplot(data=tmpVideoAmt, aes(VideoAmt)) + 
   geom_bar(breaks=seq(0, 30, by=2),
                  col="red",
                  aes(fill=..count..)) +
   labs(title="tmpVideoAmt of pets") + 
   scale_fill_gradient("Count", low="green", high="red")
-
+```
+```{r}
 #Boxplot
 ggplot(data = tmpVideoAmt,aes(y = VideoAmt))+
   geom_boxplot() + 
@@ -181,7 +230,6 @@ qqline(tmpVideoAmt$VideoAmt)
 tmpDatAge = dat
 tmpDatAge$Age = as.numeric(dat$Age)
 
-
 ggplot(data=tmpDatAge, aes(Age)) + 
   geom_histogram(breaks=seq(0, 220, by=10),
                  col="red",
@@ -194,3 +242,129 @@ ggplot(data = tmpDatAge,aes(y = Age))+
   geom_boxplot( colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
   labs(title="Age boxplot using `ggplot`",x="", y = "Age")
 ```
+```{r GENDER}
+tmpGender = subset(dat, dat$Gender == "1" | dat$Gender == "2" | dat$Gender == "3")
+str(tmpGender$Gender)
+```
+```{r}
+#pie plot
+male = nrow(tmpGender[tmpGender$Gender=="1",])
+female = nrow(tmpGender[tmpGender$Gender=="2",])
+Prop <- c(male,female)
+# Prepare a color palette. Here with R color brewer:
+library(RColorBrewer)
+myPalette <- brewer.pal(2, "Set1") 
+
+# You can change the border of each area with the classical parameters:
+pie(Prop , labels = c(paste("Male", male, sep = ":"),paste("Female", female, sep = ":")), border="white", col=myPalette )
+```
+```{r donut plot for Gender}
+# Create test data.
+data <- data.frame(
+  category=c("Male", "Female"),
+  count=c(nrow(tmpGender[tmpGender$Gender=="1",]),nrow(tmpGender[tmpGender$Gender=="2",]))
+)
+ 
+# Compute percentages
+data$fraction <- data$count / sum(data$count)
+
+# Compute the cumulative percentages (top of each rectangle)
+data$ymax <- cumsum(data$fraction)
+
+# Compute the bottom of each rectangle
+data$ymin <- c(0, head(data$ymax, n=-1))
+
+# Compute label position
+data$labelPosition <- (data$ymax + data$ymin) / 2
+
+# Compute a good label
+data$label <- paste0(data$category, ":", data$count)
+
+# Make the plot
+ggplot(data, aes(ymax=ymax, ymin=ymin, xmax=4, xmin=3, fill=category)) +
+  geom_rect() +
+  geom_label( x=3.5, aes(y=labelPosition, label=label), size=6) +
+  scale_fill_brewer(palette=9) +
+  coord_polar(theta="y") +
+  xlim(c(2, 4)) +
+  theme_void() +
+  theme(legend.position = "none")
+```
+```{r MaturitySize}
+tmpMaturitySize = subset(dat, dat$MaturitySize == "1" | dat$MaturitySize == "2" | dat$MaturitySize == "3" | dat$MaturitySize == "4" )
+small = nrow(tmpMaturitySize[tmpMaturitySize$MaturitySize=="1",])
+medium = nrow(tmpMaturitySize[tmpMaturitySize$MaturitySize=="2",])
+large = nrow(tmpMaturitySize[tmpMaturitySize$MaturitySize=="3",])
+extraLarge = nrow(tmpMaturitySize[tmpMaturitySize$MaturitySize=="4",])
+#pie plot
+Prop <- c(small,medium,large,extraLarge)
+# Prepare a color palette. Here with R color brewer:
+library(RColorBrewer)
+myPalette <- brewer.pal(3, "Set2") 
+
+# You can change the border of each area with the classical parameters:
+pie(Prop , labels = c(paste("Small",small, sep = ":"), paste("Medium",medium, sep = ":"), paste("Large",large, sep = ":"), paste("Extra Large",extraLarge, sep = ":")), border="white", col=myPalette )
+
+```
+```{r donut plot for MaturitySize}
+# Create test data.
+data <- data.frame(
+  category=c("Small", "Medium", "Large", "Extra Large"),
+  count=c(nrow(tmpMaturitySize[tmpMaturitySize$MaturitySize=="1",]),nrow(tmpMaturitySize[tmpMaturitySize$MaturitySize=="2",]),
+          nrow(tmpMaturitySize[tmpMaturitySize$MaturitySize=="3",]),nrow(tmpMaturitySize[tmpMaturitySize$MaturitySize=="4",]))
+)
+ 
+# Compute percentages
+data$fraction <- data$count / sum(data$count)
+
+# Compute the cumulative percentages (top of each rectangle)
+data$ymax <- cumsum(data$fraction)
+
+# Compute the bottom of each rectangle
+data$ymin <- c(0, head(data$ymax, n=-1))
+
+# Compute label position
+data$labelPosition <- (data$ymax + data$ymin) / 2
+
+# Compute a good label
+data$label <- paste0(data$category, ":", data$count)
+
+# Make the plot
+ggplot(data, aes(ymax=ymax, ymin=ymin, xmax=4, xmin=3, fill=category)) +
+  geom_rect() +
+  geom_label( x=3.5, aes(y=labelPosition, label=label), size=6) +
+  scale_fill_brewer(palette=9) +
+  coord_polar(theta="y") +
+  xlim(c(2, 4)) +
+  theme_void() +
+  theme(legend.position = "none")
+```
+```{r FurLength }
+tmpFurLength  = subset(dat, dat$FurLength == "1"|dat$FurLength == "2"|dat$FurLength == "3")
+short = nrow(tmpFurLength[tmpFurLength$FurLength=="1",])
+medium = nrow(tmpFurLength[tmpFurLength$FurLength=="2",])
+long = nrow(tmpFurLength[tmpFurLength$FurLength=="3",])
+#pie plot
+Prop <- c(short,medium,long)
+# Prepare a color palette. Here with R color brewer:
+library(RColorBrewer)
+myPalette <- brewer.pal(3, "Set2") 
+
+# You can change the border of each area with the classical parameters:
+pie(Prop , labels = c(paste("Short",short, sep = ":"), paste("Medium",medium, sep = ":"), paste("Long",long, sep = ":")), border="white", col=myPalette )
+```
+```{r Vaccinated }
+tmpVaccinated = subset(dat, dat$Vaccinated == "1" | dat$Vaccinated == "2")
+yesVaccinated = nrow(tmpVaccinated[tmpVaccinated$Vaccinated=="1",])
+noVaccinated = nrow(tmpVaccinated[tmpVaccinated$Vaccinated=="2",])
+#pie plot
+Prop <- c(yesVaccinated,noVaccinated)
+# Prepare a color palette. Here with R color brewer:
+library(RColorBrewer)
+myPalette <- brewer.pal(3, "Set2") 
+
+# You can change the border of each area with the classical parameters:
+pie(Prop , labels = c(paste("Vaccinated",yesVaccinated, sep = ":"), paste("No Vaccinated",noVaccinated, sep = ":")), border="white", col=myPalette )
+
+```
+
