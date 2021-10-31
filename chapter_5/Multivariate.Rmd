@@ -142,9 +142,10 @@ Lets add in the remaining categorical variables
 lm_all <- lm(ASnum ~ ., data=dat)
 lm_all_table <-tbl_regression(lm_all, intercept=TRUE)
 add_vif(lm_all_table, statistic = "GVIF")
-lm_all_table%>%
-  as_gt() %>%
-  gt::gtsave(filename = "lm_all_table.png")
+#lm_all_table%>%
+  #as_gt() %>%
+  #gt::gtsave(filename = "lm_all_table.png")
+xkabledply(lm_all, title = paste("Model:", format(formula(lm_all)) ) )
 ```
 
 Now lets eliminate VideoAmt, Vaccinated3(which means "unsure vaccination status" and might not be worth keeping in its own right) and try again.
