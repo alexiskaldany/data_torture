@@ -33,11 +33,10 @@ MaturitySize - Size at maturity (1 = Small, 2 = Medium, 3 = Large, 4 = Extra Lar
 FurLength - Fur length (1 = Short, 2 = Medium, 3 = Long, 0 = Not Specified)
 Vaccinated - Pet has been vaccinated (1 = Yes, 2 = No, 3 = Not Sure)
 PhotoAmt - Total uploaded photos for this pet
-
-## Loading data
+## Intro
 ```{r}
-# dat = read.csv('/Users/sahara/Documents/GW/DataScience/petfinder-adoption-prediction/train/train.csv')
-data = read.csv('/Users/sahara/Documents/GW/DataScience/data_torture/chapter_5/datafile.csv')
+## Loading data
+data = read.csv('chapter_5/datafile.csv')
 data$AdoptionSpeed <- factor(data$AdoptionSpeed, order=T, levels = c(0,1,2,3,4))
 
 # converting the data types we want
@@ -54,9 +53,7 @@ data = subset(data, ! data$AdoptionSpeed == 4)
 # Only pulling the columns we want to look at
 dat = data[c('Type', 'Age', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt', 'AdoptionSpeed')]
 summary(dat)
-```
 
-```{r}
 # Adding random values
 dat$ASnum = NaN
 dat$ASnum[dat$AdoptionSpeed == 0] = 0
@@ -68,19 +65,16 @@ dat$ASnum[dat$AdoptionSpeed == 3] = runif(sum(dat$AdoptionSpeed == 3), 31, 90)
 summary(dat)
 ```
 
+## Chapter 2
 
-```{r}
-hist(data = dat, x = dat$ASnum)
-```
+## Chapter 3
 
-```{r}
-qqnorm(y = dat$ASnum)
-```
+## Chapter 4
 
-
-## SMART: Do dogs get adopted faster than cats?
+### SMART: Do dogs get adopted faster than cats?
 ```{r}
 library('ggplot2')
+library('lmtest')
 #pdf('type_boxplot.pdf')
 ggplot(data = dat, aes(y = ASnum, x = Type, fill = Type)) + 
   geom_boxplot() +
@@ -91,7 +85,7 @@ ggplot(data = dat, aes(y = ASnum, x = Type, fill = Type)) +
 #dev.off()
 ```
 
-```{r}
+```{r, results='markup'}
 bp_dogscats = bptest(data = dat, formula = ASnum ~ Type)
 bp_dogscats
 dogs = subset(dat, dat$Type == 1)
@@ -103,8 +97,8 @@ dc_t
 
 
 
-## SMART: Do physical attributes affect adoption speed?
-```{r}
+### SMART: Do physical attributes affect adoption speed?
+```{r, results='markup'}
 ### GENDER
 #pdf('Gender_boxplot.pdf')
 bp_mf = bptest(data = dat, formula = ASnum ~ Gender)
@@ -123,7 +117,7 @@ ggplot(data = dat, aes(y = ASnum, x = Gender, fill = Gender)) +
 #dev.off()
 ```
 
-```{r}
+```{r, results='markup'}
 ### SIZE
 bp_size = bptest(data = dat, formula = ASnum ~ MaturitySize)
 bp_size
@@ -140,7 +134,7 @@ turkey_size = TukeyHSD(aov(data = dat, ASnum ~ MaturitySize))
 turkey_size
 ```
 
-```{r}
+```{r, results='markup'}
 ### FURLENGTH
 bp_fur = bptest(data = dat, formula = ASnum ~ FurLength)
 bp_fur
@@ -159,7 +153,7 @@ turkey_fur
 ```
 
 
-```{r}
+```{r, results='markup'}
 ### VACCINATED
 bp_vac = bptest(data = dat, formula = ASnum ~ Vaccinated)
 bp_vac
@@ -175,92 +169,4 @@ anova_vac
 turkey_vac = TukeyHSD(aov(data = dat, ASnum ~ Vaccinated))
 turkey_vac
 ```
-
-
-## SMART: Do profile attributes affect adoption speed?
-
-```{r}
-### PHOTOS
-bp_pho = bptest(data = dat, formula = ASnum ~ PhotoAmt)
-bp_pho
-
-ggplot(data = dat, aes(y = ASnum, fill = PhotoAmt)) + 
-  geom_boxplot()
-
-anova_pho = anova(aov(data = dat, ASnum ~ PhotoAmt))
-anova_pho
-turkey_pho = TukeyHSD(aov(data = dat, ASnum ~ PhotoAmt))
-turkey_pho
-```
-
-## SMART: Do more expensive dogs get adopted slower?
-```{r}
-
-histogram(data = dogs, x = dogs$Fee)
-qqnorm(y = dogs$Fee)
-ggplot(data = dogs, aes(x = Fee, y = ASnum)) + 
-  geom_point() + 
-  geom_smooth(method = lm)
-```
-
-```{r}
-an2 = anova(aov(data = dogs, ASnum ~ Fee))
-an2
-```
-
-
-ok let's remove that outlier now
-
-```{r}
-dogs_noout = outlierKD2(dogs, var = Fee, rm = TRUE)
-
-
-histogram(data = dogs_noout, x = dogs_noout$Fee)
-qqnorm(y = dogs_noout$Fee)
-ggplot(data = dogs_noout, aes(x = Fee, y = ASnum)) + 
-  geom_point() + 
-  geom_smooth(method = lm)
-```
-
-```{r}
-an2_noout = anova(aov(data = dogs_noout, ASnum ~ Fee))
-an2_noout
-```
-
-okay so everything that wasn't 0 was deemed an outlier ...
-
-```{r}
-## ORDINAL
-contable = table(dat$AdoptionSpeed, dat$Age)
-chitest = chisq.test(contable)
-chitest
-contable
-```
-
-## SMART: Do dogs with more pictures get adopted faster?
-
-```{r}
-histogram(data = dogs, x = dogs$PhotoAmt)
-qqnorm(dogs$PhotoAmt)
-```
-
-
-```{r}
-an3 = anova(aov(data = dogs, ASnum ~ PhotoAmt))
-an3
-```
-
-## SMART: Do dogs with more videos get adopted faster?
-
-```{r}
-histogram(data = dogs, x = dogs$VideoAmt)
-qqnorm(dogs$VideoAmt)
-```
-
-
-```{r}
-an3 = anova(aov(data = dogs, ASnum ~ VideoAmt))
-an3
-```
-
 

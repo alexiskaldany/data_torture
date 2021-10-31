@@ -1,0 +1,236 @@
+---
+title: "Independent_Variables_EDA_Final"
+author: "YixiLiang"
+date: "2021/10/31"
+output:
+  html_document:
+    code_folding: hide
+    number_sections: true
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+---
+
+```{r init, include=FALSE}
+# The package "ezids" (EZ Intro to Data Science) includes a lot of the helper functions we developed for the course. 
+# Some of the frequently used functions are loadPkg(), xkabledply(), xkablesummary(), uzscale(), etc.
+library(ezids)
+ 
+# some of common options (and the defaults) are: 
+# include=T, eval=T, echo=T, results='hide'/'asis'/'markup',..., collapse=F, warning=T, message=T, error=T, cache=T, fig.width=6, fig.height=4, fig.dim=c(6,4) #inches, fig.align='left'/'center','right', 
+# knitr::opts_chunk$set(warning = F, results = "markup", message = F)
+knitr::opts_chunk$set(warning = F, results = "hide", message = F)
+options(scientific=T, digits = 3) 
+# options(scipen=9, digits = 3) 
+# ‘scipen’: integer. A penalty to be applied when deciding to print numeric values in fixed or exponential notation.  Positive values bias towards fixed and negative towards scientific notation: fixed notation will be preferred unless it is more than ‘scipen’ digits wider.
+# use scipen=999 to prevent scientific notation at all times
+```
+
+
+## Intro
+```{r}
+## Loading data
+data = read.csv('datafile.csv')
+data$AdoptionSpeed <- factor(data$AdoptionSpeed, order=T, levels = c(0,1,2,3,4))
+# converting the data types we want
+data$Type = as.factor(data$Type)
+data$MaturitySize = as.factor(data$MaturitySize)
+data$FurLength = as.factor(data$FurLength)
+data$Vaccinated = as.factor(data$Vaccinated)
+data$Gender = as.factor(data$Gender)
+# Only looking at profiles with 1 animal
+data = subset(data, data$Quantity == 1)
+data = subset(data, ! data$AdoptionSpeed == 4)
+# Only pulling the columns we want to look at
+dat = data[c('Type', 'Age', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt', 'AdoptionSpeed')]
+#summary(dat)
+# Adding random values
+dat$ASnum = NaN
+dat$ASnum[dat$AdoptionSpeed == 0] = 0
+dat$ASnum[dat$AdoptionSpeed == 1] = runif(sum(dat$AdoptionSpeed == 1), 1, 7)
+dat$ASnum[dat$AdoptionSpeed == 2] = runif(sum(dat$AdoptionSpeed == 2), 8, 30)
+dat$ASnum[dat$AdoptionSpeed == 3] = runif(sum(dat$AdoptionSpeed == 3), 31, 90)
+#dat$ASnum[dat$AdoptionSpeed == 4] = 100
+#summary(dat)
+```
+
+```{r}
+loadPkg("ggplot2")
+```
+## Chapter 3
+
+We transformed AdoptionSpeed to numerical variable: ASnum.
+```{r ASnum}
+ggplot(data=dat, aes(dat$ASnum)) + 
+  geom_histogram(breaks=seq(0, 100, by=5),
+                 col="red",
+                 aes(fill=..count..)) +
+  labs(title="ASnum of pets") + 
+  scale_fill_gradient("Count", low="green", high="red")
+
+#Q-Q plot
+qqnorm(dat$ASnum, main="Q-Q plot of ASnum of pets", ylab = "days",col="blue")
+qqline(dat$ASnum)
+```
+First of all let's us focusing on some variable
+```{r Type}
+dog = nrow(dat[dat$Type=="1",])
+cat = nrow(dat[dat$Type=="2",])
+totalamount = dog+cat
+
+percentDog = format(dog/totalamount * 100, digits = 4)
+percentCat = format(cat/totalamount * 100, digits = 4)
+
+Prop <- c(dog,cat)
+# Prepare a color palette. Here with R color brewer:
+library(RColorBrewer)
+myPalette <- brewer.pal(5, "RdYlGn") 
+
+# You can change the border of each area with the classical parameters:
+pie(Prop , labels = c(paste("Dog: ",percentDog,"%"), paste("Cat: ",percentCat,"%")), border="white", col=myPalette )
+```
+```{r Age}
+tmpDatAge = dat
+tmpDatAge$Age = as.numeric(dat$Age)
+
+ggplot(data=tmpDatAge, aes(Age)) + 
+  geom_histogram(breaks=seq(0, 100, by=5),
+                 col="red",
+                 aes(fill=..count..)) +
+  labs(title="Age of pets") + 
+  scale_fill_gradient("Count", low="green", high="red")
+#Boxplot
+ggplot(data = tmpDatAge,aes(y = Age))+
+  geom_boxplot() + 
+  geom_boxplot( colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+  labs(title="Age boxplot using `ggplot`",x="", y = "Age")
+
+#Q-Q plot
+qqnorm(tmpDatAge$Age, main="Q-Q plot of Age of pets", ylab = "Age",col="blue")
+qqline(tmpDatAge$Age)
+```
+```{r Gender}
+#pie plot
+male = nrow(dat[dat$Gender=="1",])
+female = nrow(dat[dat$Gender=="2",])
+percentMale = format(male/(male+female) * 100, digits = 4)
+percentFemale = format(female/(male+female) * 100, digits = 4)
+Prop <- c(male,female)
+# Prepare a color palette. Here with R color brewer:
+library(RColorBrewer)
+myPalette <- brewer.pal(3, "Pastel1") 
+
+# You can change the border of each area with the classical parameters:
+pie(Prop , labels = c(paste("Male: ", percentMale,"%"),paste("Female: ",percentFemale,"%")), border="white", col=myPalette )
+```
+
+```{r MaturitySize}
+small = nrow(dat[dat$MaturitySize=="1",])
+medium = nrow(dat[dat$MaturitySize=="2",])
+large = nrow(dat[dat$MaturitySize=="3",])
+extraLarge = nrow(dat[dat$MaturitySize=="4",])
+totalamount = small+medium+large+extraLarge
+
+percentSmall = format(small/totalamount * 100, digits = 4)
+percentMedium = format(medium/totalamount * 100, digits = 4)
+percentLarge = format(large/totalamount * 100, digits = 4)
+percentExtraLarge = format(extraLarge/totalamount * 100, digits = 4)
+#pie plot
+Prop <- c(small,medium,large,extraLarge)
+# Prepare a color palette. Here with R color brewer:
+library(RColorBrewer)
+myPalette <- brewer.pal(8, "Spectral") 
+
+# You can change the border of each area with the classical parameters:
+pie(Prop , labels = c(paste("Small: ",percentSmall,"%"), paste("Medium: ",percentMedium,"%"), paste("Large: ",percentLarge,"%"), paste("Extra Large: ",percentExtraLarge,"%")), border="white", col=myPalette )
+
+```
+```{r FurLength }
+
+short = nrow(dat[dat$FurLength=="1",])
+medium = nrow(dat[dat$FurLength=="2",])
+long = nrow(dat[dat$FurLength=="3",])
+totalamount = short+medium+long
+
+percentShort = format(short/totalamount * 100, digits = 4)
+percentMedium = format(medium/totalamount * 100, digits = 4)
+percentLong = format(long/totalamount * 100, digits = 4)
+
+
+#pie plot
+Prop <- c(short,medium,long)
+# Prepare a color palette. Here with R color brewer:
+library(RColorBrewer)
+myPalette <- brewer.pal(3, "Set2") 
+
+# You can change the border of each area with the classical parameters:
+pie(Prop , labels = c(paste("Short: ",percentShort,"%"), paste("Medium: ",percentMedium,"%"), paste("Long: ", percentLong,"%")), border="white", col=myPalette )
+```
+```{r Vaccinated }
+vaccinatedYes = nrow(dat[dat$Vaccinated=="1",])
+vaccinatedNo = nrow(dat[dat$Vaccinated=="2",])
+vaccinatedNotSure = nrow(dat[dat$Vaccinated=="3",])
+totalamount = vaccinatedYes+vaccinatedNo+vaccinatedNotSure
+
+percentVaccinatedYes = format(vaccinatedYes/totalamount * 100, digits = 4)
+percentVaccinatedNo = format(vaccinatedNo/totalamount * 100, digits = 4)
+percentVaccinatedNotSure = format(vaccinatedNotSure/totalamount * 100, digits = 4)
+
+#pie plot
+Prop <- c(vaccinatedYes,vaccinatedNo,vaccinatedNotSure)
+# Prepare a color palette. Here with R color brewer:
+library(RColorBrewer)
+myPalette <- brewer.pal(11,"Paired") 
+
+# You can change the border of each area with the classical parameters:
+pie(Prop , labels = c(paste("Vaccinated: ",percentVaccinatedYes, "%"), paste("Unvaccinated: ",percentVaccinatedNo, "%"), paste("Not Specified: ",percentVaccinatedNotSure, "%")), border="white", col=myPalette )
+
+```
+```{r barplot of PhotoAmt}
+tmpPhotoAmt = dat
+tmpPhotoAmt$PhotoAmt = as.numeric(tmpPhotoAmt$PhotoAmt)
+
+ggplot(data=tmpPhotoAmt, aes(PhotoAmt)) + 
+  geom_histogram(breaks=seq(0, 30, by=2),
+                 col="red",
+                 aes(fill=..count..)) +
+  labs(title="tmpPhotoAmt of pets") + 
+  scale_fill_gradient("Count", low="green", high="red")
+
+#Boxplot
+ggplot(data = tmpPhotoAmt,aes(y = PhotoAmt))+
+  geom_boxplot() + 
+  geom_boxplot( colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+  labs(title="PhotoAmt boxplot using `ggplot`",x="", y = "PhotoAmt")
+
+#Q-Q plot
+qqnorm(tmpPhotoAmt$PhotoAmt, main="Q-Q plot of PhotoAmt of pets", ylab = "PhotoAmt",col="blue")
+qqline(tmpPhotoAmt$PhotoAmt)
+```
+
+
+```{r plot of AdoptionSpeed}
+#Histogram
+ggplot(data=dat, aes(AdoptionSpeed)) + 
+  geom_bar(breaks=seq(0, 4, by=1),
+                 col="red",
+                 aes(fill=..count..)) +
+  labs(title="AdoptionSpeed of pets") + 
+  scale_fill_gradient("Count", low="green", high="red")
+```
+
+```{r ASnum}
+ggplot(data=dat, aes(dat$ASnum)) + 
+  geom_histogram(breaks=seq(0, 100, by=5),
+                 col="red",
+                 aes(fill=..count..)) +
+  labs(title="ASnum of pets") + 
+  scale_fill_gradient("Count", low="green", high="red")
+
+#Q-Q plot
+qqnorm(dat$ASnum, main="Q-Q plot of ASnum of pets", ylab = "days",col="blue")
+qqline(dat$ASnum)
+```
