@@ -81,9 +81,9 @@ Age
 lm_age <- lm(ASnum ~ Age, data=dat )
 table_lm_age <- tbl_regression(lm_age, intercept=TRUE)
 table_lm_age
-table_lm_age %>%
-  as_gt() %>%
-  gt::gtsave(filename = "table_lm_age.png")
+#table_lm_age %>%
+  #as_gt() %>%
+  #gt::gtsave(filename = "table_lm_age.png")
 ```
 Statistically significant p-value, R-squared remains very low, Age alone does not predicate adoption speed.
 
@@ -130,10 +130,10 @@ Lets try a linear model with the three numerical independent variables against A
 ```{r results=T}
 lm_num <- lm(ASnum ~ . , data=dat_numerical)
 table_lm_num <- tbl_regression(lm_num, intercept=TRUE)
-add_vif(table_lm_num, statistic="VIF")
-table_lm_num %>%
-  as_gt() %>%
-  gt::gtsave(filename = "table_lm_num.png")
+#add_vif(table_lm_num, statistic="VIF")
+#table_lm_num %>%
+ # as_gt() %>%
+ # gt::gtsave(filename = "table_lm_num.png")
 ```
 Ok, so PhotoAmt and Age are statistically relevant, but just using numerical values doesn't really generate much predictive power, as evidenced by the rather low adjusted R-squared value.
 

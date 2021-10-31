@@ -35,6 +35,9 @@ Vaccinated - Pet has been vaccinated (1 = Yes, 2 = No, 3 = Not Sure)\
 PhotoAmt - Total uploaded photos for this pet\
 ## Intro
 ```{r}
+library("corrplot")
+library("ezids")
+library("gtsummary")
 ## Loading data
 data = read.csv('chapter_5/datafile.csv')
 data$AdoptionSpeed <- factor(data$AdoptionSpeed, order=T, levels = c(0,1,2,3,4))
@@ -51,7 +54,7 @@ data = subset(data, data$Quantity == 1)
 data = subset(data, ! data$AdoptionSpeed == 4)
 
 # Only pulling the columns we want to look at
-dat = data[c('Type', 'Age', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt', 'AdoptionSpeed')]
+dat = data[c('Type', 'Age', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt','VideoAmt', 'AdoptionSpeed')]
 summary(dat)
 
 # Adding random values
@@ -215,3 +218,35 @@ Finally, we looked at vaccination status. Once again we were able to reject the 
 
 
 The final conclusion from our analysis of categorical physical characteristics is that the difference in variance across the groups does not allow us to draw any meaningful conclusions. However, if we ignore that assumption for this sample of data, we are able to conclude that all the categorical physical characteristics, including the type of the animal, does impact the adoption speed of the animal.
+
+# Chapter 5
+
+### SMART: What numerical variables influence adoption speed?
+
+We will run single variable OLS regressions for the three independent numerical variables.
+First, age.
+
+```{r results='markup'}
+lm_age <- lm(ASnum ~ Age, data=dat )
+table_lm_age <- tbl_regression(lm_age, intercept=TRUE)
+table_lm_age
+```
+Clearly, age is statistically significant, as the p-value is below 0.05.
+
+Lets look at VideoAmt next.
+
+```{r results='markup'}
+lm_video <- lm(ASnum ~ VideoAmt, data=dat)
+table_lm_video <- tbl_regression(lm_video, intercept=TRUE)
+table_lm_video
+```
+
+Finally, lets check PhotoAmt.
+
+```{r results='markup'}
+lm_photo <- lm(ASnum ~ PhotoAmt, data=dat)
+table_lm_photo <-tbl_regression(lm_photo, intercept=TRUE)
+table_lm_photo
+```
+
+As we can see, only Age and PhotoAmt results in a p-value less than 0.05.
