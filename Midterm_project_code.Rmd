@@ -57,9 +57,9 @@ summary(dat)
 # Adding random values
 dat$ASnum = NaN
 dat$ASnum[dat$AdoptionSpeed == 0] = 0
-dat$ASnum[dat$AdoptionSpeed == 1] = runif(sum(dat$AdoptionSpeed == 1), 1, 7)
-dat$ASnum[dat$AdoptionSpeed == 2] = runif(sum(dat$AdoptionSpeed == 2), 8, 30)
-dat$ASnum[dat$AdoptionSpeed == 3] = runif(sum(dat$AdoptionSpeed == 3), 31, 90)
+dat$ASnum[dat$AdoptionSpeed == 1] = floor(runif(sum(dat$AdoptionSpeed == 1), 1, 8))
+dat$ASnum[dat$AdoptionSpeed == 2] = floor(runif(sum(dat$AdoptionSpeed == 2), 8, 31))
+dat$ASnum[dat$AdoptionSpeed == 3] = floor(runif(sum(dat$AdoptionSpeed == 3), 31, 91))
 #dat$ASnum[dat$AdoptionSpeed == 4] = 100
 
 summary(dat)
@@ -72,6 +72,8 @@ summary(dat)
 ## Chapter 4
 
 ### SMART: Do dogs get adopted faster than cats?
+
+In order to answer this question, we split the data into two groups, dogs and cats. Because there were only 2 samples we decided to use a two-sample t-test to evaluate if there was a significant difference between the average adoption speed between dogs and cats. 
 ```{r}
 library('ggplot2')
 library('lmtest')
@@ -95,9 +97,12 @@ dc_t = t.test(dogs$ASnum, cats$ASnum)
 dc_t
 ```
 
-
+The first thing we had to do was a check of the homogeneity of variance. To do this we did a Breusch-Pagan (BP) test. The null hypothesis for this test is that the two groups have the same variance, while the alternative hypothesis is that the groups have difference variances. Because the p_value is less than our alpha of 0.05 we have to reject the null hypothesis that the groups have the same variance. Because of this, the two-sample t-test is not technically a valid statistical test, however we went ahead and performed the test regardless. The p_value of the t-test was also less than our alpha of 0.05, allowing us to reject our null hypothesis that there is no difference between the means of the two groups. Becuase of this we can conclude that there is a difference in adoption speed between cats and dogs. The mean of the dogs adoption speed is --- and the mean of the cats adoption speed is ---, so we can conclude that dogs get adopted slower than cats.
 
 ### SMART: Do physical attributes affect adoption speed?
+
+The next question we wanted to answer was whether physical attributes affect adoption speed. To answer this question we looked at the sex of the animal, the size, the fur length, and the vaccination status.
+
 ```{r, results='markup'}
 ### GENDER
 #pdf('Gender_boxplot.pdf')
@@ -117,6 +122,8 @@ ggplot(data = dat, aes(y = ASnum, x = Gender, fill = Gender)) +
 #dev.off()
 ```
 
+Again, the BP test of variance had a p_value that was significant for our alpha of 0.05, so we were able to accept the alternate hypothesis that the variance was not equal between the groups. We went ahead and did a two-sample t-test regardless and found that this was also significant. So we can reject the null hypothesis that the mean adoption speed between male and female dogs is the same. 
+
 ```{r, results='markup'}
 ### SIZE
 bp_size = bptest(data = dat, formula = ASnum ~ MaturitySize)
@@ -133,6 +140,8 @@ anova_size
 turkey_size = TukeyHSD(aov(data = dat, ASnum ~ MaturitySize))
 turkey_size
 ```
+
+Looking at size we have over 2 samples, so we chose to run an ANOVA to test if the mean adoption speed differed between different sized animals. Once again, we ran a BP test of variance that produced a significant p_value, so an ANOVA is technically not appropriate, however we did run the analysis regardless. We ended up with a significant p_value for the anova so we ran a TukeyHSD post-hoc test and found that ----
 
 ```{r, results='markup'}
 ### FURLENGTH
