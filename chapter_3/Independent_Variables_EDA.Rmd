@@ -73,7 +73,7 @@ dat$ASnum[dat$AdoptionSpeed == 3] = runif(sum(dat$AdoptionSpeed == 3), 31, 90)
 ```
 
 
-
+## Chapter 3
 ```{r histogram of AdoptionSpeed}
 loadPkg("ggplot2")
 #Histogram
@@ -103,7 +103,6 @@ ggplot(data=dat, aes(dat$ASnum)) +
 #Q-Q plot
 qqnorm(dat$ASnum, main="Q-Q plot of ASnum of pets", ylab = "days",col="blue")
 qqline(dat$ASnum)
-
 ```
 
 ```{r histogram of Fee}
@@ -168,13 +167,18 @@ ggplot(data, aes(ymax=ymax, ymin=ymin, xmax=4, xmin=3, fill=category)) +
 ```{r}
 dog = nrow(catDog[catDog$Type=="1",])
 cat = nrow(catDog[catDog$Type=="2",])
+totalamount = dog+cat
+
+percentDog = format(dog/totalamount * 100, digits = 4)
+percentCat = format(cat/totalamount * 100, digits = 4)
+
 Prop <- c(dog,cat)
 # Prepare a color palette. Here with R color brewer:
 library(RColorBrewer)
-myPalette <- brewer.pal(5, "Set3") 
+myPalette <- brewer.pal(11, "RdYlGn") 
 
 # You can change the border of each area with the classical parameters:
-pie(Prop , labels = c(paste("Dog",dog, sep = ":"), paste("Cat",cat, sep = ":")), border="white", col=myPalette )
+pie(Prop , labels = c(paste("Dog: ",percentDog,"%"), paste("Cat: ",percentCat,"%")), border="white", col=myPalette )
 ```
 
 
@@ -208,7 +212,7 @@ tmpVideoAmt$VideoAmt = as.numeric(tmpVideoAmt$VideoAmt)
 ```{r}
 #barplot
 ggplot(data=tmpVideoAmt, aes(VideoAmt)) + 
-  geom_bar(breaks=seq(0, 30, by=2),
+  geom_bar(breaks=seq(0, 5, by=1),
                  col="red",
                  aes(fill=..count..)) +
   labs(title="tmpVideoAmt of pets") + 
@@ -241,22 +245,28 @@ ggplot(data = tmpDatAge,aes(y = Age))+
   geom_boxplot() + 
   geom_boxplot( colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
   labs(title="Age boxplot using `ggplot`",x="", y = "Age")
+
+#Q-Q plot
+qqnorm(tmpDatAge$Age, main="Q-Q plot of Age of pets", ylab = "Age",col="blue")
+qqline(tmpDatAge$Age)
 ```
 ```{r GENDER}
-tmpGender = subset(dat, dat$Gender == "1" | dat$Gender == "2" | dat$Gender == "3")
+tmpGender = subset(dat, dat$Gender == "1" | dat$Gender == "2")
 str(tmpGender$Gender)
 ```
 ```{r}
 #pie plot
 male = nrow(tmpGender[tmpGender$Gender=="1",])
 female = nrow(tmpGender[tmpGender$Gender=="2",])
+percentMale = format(male/(male+female) * 100, digits = 4)
+percentFemale = format(female/(male+female) * 100, digits = 4)
 Prop <- c(male,female)
 # Prepare a color palette. Here with R color brewer:
 library(RColorBrewer)
-myPalette <- brewer.pal(2, "Set1") 
+myPalette <- brewer.pal(3, "Pastel1") 
 
 # You can change the border of each area with the classical parameters:
-pie(Prop , labels = c(paste("Male", male, sep = ":"),paste("Female", female, sep = ":")), border="white", col=myPalette )
+pie(Prop , labels = c(paste("Male: ", percentMale,"%"),paste("Female: ",percentFemale,"%")), border="white", col=myPalette )
 ```
 ```{r donut plot for Gender}
 # Create test data.
@@ -296,14 +306,20 @@ small = nrow(tmpMaturitySize[tmpMaturitySize$MaturitySize=="1",])
 medium = nrow(tmpMaturitySize[tmpMaturitySize$MaturitySize=="2",])
 large = nrow(tmpMaturitySize[tmpMaturitySize$MaturitySize=="3",])
 extraLarge = nrow(tmpMaturitySize[tmpMaturitySize$MaturitySize=="4",])
+totalamount = small+medium+large+extraLarge
+
+percentSmall = format(small/totalamount * 100, digits = 4)
+percentMedium = format(medium/totalamount * 100, digits = 4)
+percentLarge = format(large/totalamount * 100, digits = 4)
+percentExtraLarge = format(extraLarge/totalamount * 100, digits = 4)
 #pie plot
 Prop <- c(small,medium,large,extraLarge)
 # Prepare a color palette. Here with R color brewer:
 library(RColorBrewer)
-myPalette <- brewer.pal(3, "Set2") 
+myPalette <- brewer.pal(8, "Spectral") 
 
 # You can change the border of each area with the classical parameters:
-pie(Prop , labels = c(paste("Small",small, sep = ":"), paste("Medium",medium, sep = ":"), paste("Large",large, sep = ":"), paste("Extra Large",extraLarge, sep = ":")), border="white", col=myPalette )
+pie(Prop , labels = c(paste("Small: ",percentSmall,"%"), paste("Medium: ",percentMedium,"%"), paste("Large: ",percentLarge,"%"), paste("Extra Large: ",percentExtraLarge,"%")), border="white", col=myPalette )
 
 ```
 ```{r donut plot for MaturitySize}
@@ -344,6 +360,13 @@ tmpFurLength  = subset(dat, dat$FurLength == "1"|dat$FurLength == "2"|dat$FurLen
 short = nrow(tmpFurLength[tmpFurLength$FurLength=="1",])
 medium = nrow(tmpFurLength[tmpFurLength$FurLength=="2",])
 long = nrow(tmpFurLength[tmpFurLength$FurLength=="3",])
+totalamount = short+medium+long
+
+percentShort = format(short/totalamount * 100, digits = 4)
+percentMedium = format(medium/totalamount * 100, digits = 4)
+percentLong = format(long/totalamount * 100, digits = 4)
+
+
 #pie plot
 Prop <- c(short,medium,long)
 # Prepare a color palette. Here with R color brewer:
@@ -351,20 +374,27 @@ library(RColorBrewer)
 myPalette <- brewer.pal(3, "Set2") 
 
 # You can change the border of each area with the classical parameters:
-pie(Prop , labels = c(paste("Short",short, sep = ":"), paste("Medium",medium, sep = ":"), paste("Long",long, sep = ":")), border="white", col=myPalette )
+pie(Prop , labels = c(paste("Short: ",percentShort,"%"), paste("Medium: ",percentMedium,"%"), paste("Long: ", percentLong,"%")), border="white", col=myPalette )
 ```
 ```{r Vaccinated }
-tmpVaccinated = subset(dat, dat$Vaccinated == "1" | dat$Vaccinated == "2")
-yesVaccinated = nrow(tmpVaccinated[tmpVaccinated$Vaccinated=="1",])
-noVaccinated = nrow(tmpVaccinated[tmpVaccinated$Vaccinated=="2",])
+tmpVaccinated = subset(dat, dat$Vaccinated == "1" | dat$Vaccinated == "2" | dat$Vaccinated == "3")
+vaccinatedYes = nrow(tmpVaccinated[tmpVaccinated$Vaccinated=="1",])
+vaccinatedNo = nrow(tmpVaccinated[tmpVaccinated$Vaccinated=="2",])
+vaccinatedNotSure = nrow(tmpVaccinated[tmpVaccinated$Vaccinated=="3",])
+totalamount = vaccinatedYes+vaccinatedNo+vaccinatedNotSure
+
+percentVaccinatedYes = format(vaccinatedYes/totalamount * 100, digits = 4)
+percentVaccinatedNo = format(vaccinatedNo/totalamount * 100, digits = 4)
+percentVaccinatedNotSure = format(vaccinatedNotSure/totalamount * 100, digits = 4)
+
 #pie plot
-Prop <- c(yesVaccinated,noVaccinated)
+Prop <- c(vaccinatedYes,vaccinatedNo,vaccinatedNotSure)
 # Prepare a color palette. Here with R color brewer:
 library(RColorBrewer)
-myPalette <- brewer.pal(3, "Set2") 
+myPalette <- brewer.pal(11,"Paired") 
 
 # You can change the border of each area with the classical parameters:
-pie(Prop , labels = c(paste("Vaccinated",yesVaccinated, sep = ":"), paste("No Vaccinated",noVaccinated, sep = ":")), border="white", col=myPalette )
+pie(Prop , labels = c(paste("Vaccinated: ",percentVaccinatedYes, "%"), paste("Unvaccinated: ",percentVaccinatedNo, "%"), paste("Not Specified: ",percentVaccinatedNotSure, "%")), border="white", col=myPalette )
 
 ```
 
