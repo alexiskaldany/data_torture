@@ -1,0 +1,23 @@
+---
+title: "chapter"
+author: "Andrew"
+date: "10/31/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
+dat <- data.frame(read.csv('datafile.csv'))
+names(dat)
+str(dat)
+```
+```{r}
+
+```
+
+
