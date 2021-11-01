@@ -290,24 +290,10 @@ dat_drop_mat_4_3 <- subset(dat_drop_mat_4, ! dat_drop_mat_4$MaturitySize == 3)
 exh_for_back_model <- lm(ASnum~ Age + Gender + MaturitySize + FurLength + Vaccinated + PhotoAmt, data=dat_drop_mat_4)
 table_exh_for_back_model <- tbl_regression(exh_for_back_model, intercept=TRUE)
 add_vif(table_exh_for_back_model, statistic = "GVIF")
-table_exh_for_back_model %>%
-  as_gt() %>%
-  gt::gtsave(filename = "table_exh_for_back_model.png")
-
-
-xkabledply(exh_for_back_model, title = paste("Model:", format(formula(exh_for_back_model)) ) )
-xkablevif(exh_for_back_model)
-summary(exh_for_back_model)
 ```
 
 ```{r results='markup'}
 sequential_model <- lm(ASnum ~ Gender + MaturitySize + FurLength + Vaccinated + PhotoAmt, data=dat_drop_mat_4_3)
 table_sequential_model <- tbl_regression(sequential_model, intercept=TRUE)
 add_vif(table_sequential_model, statistic = "GVIF")
-table_sequential_model %>%
-  as_gt() %>%
-  gt::gtsave(filename = "table_sequential_model.png")
-xkabledply(sequential_model, title = paste("Model:", format(formula(exh_for_back_model)) ) )
-xkablevif(sequential_model)
-summary(sequential_model)
 ```
