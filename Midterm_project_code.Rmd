@@ -71,6 +71,182 @@ summary(dat)
 ## Chapter 2
 
 ## Chapter 3
+### Numerical variable
+In this chapter we will introduce some variables. The first one is AdoptionSpeed.  
+```{r histogram of AdoptionSpeed}
+loadPkg("ggplot2")
+#Histogram
+ggplot(data=dat, aes(AdoptionSpeed)) + 
+  geom_bar(breaks=seq(0, 4, by=1),
+                 col="red",
+                 aes(fill=..count..)) +
+  labs(title="AdoptionSpeed of pets", x = "AdoptionSpeed") + 
+  scale_fill_gradient("Count", low="green", high="red")
+
+```
+AdoptionSpeed is divided into 4 levels.   
+0 means pet was adopted on the same day as it was listed.
+1 Pet was adopted between 1 and 7 days (1st week). 
+2 Pet was adopted between 8 and 30 days (1st month) after being listed.
+3 Pet was adopted between 31 and 90 days (2nd & 3rd month) after being listed.
+4 No adoption after 100 days of being listed.  
+We transformed AdoptionSpeed to numerical variable: ASnum.
+```{r ASnum}
+ggplot(data=dat, aes(dat$ASnum)) + 
+  geom_histogram(breaks=seq(0, 100, by=1),
+                 col="red",
+                 aes(fill=..count..)) +
+  labs(title="Histogram of ASnum", x="Pet adopted days") + 
+  scale_fill_gradient("Count", low="green", high="red")
+
+#Q-Q plot
+qqnorm(dat$ASnum, main="Q-Q plot of ASnum of pets", ylab = "days",col="blue")
+qqline(dat$ASnum)
+```
+This is Age.  
+```{r Age}
+tmpDatAge = dat
+tmpDatAge$Age = as.numeric(dat$Age)
+
+ggplot(data=tmpDatAge, aes(Age)) + 
+  geom_histogram(breaks=seq(0, 100, by=5),
+                 col="red",
+                 aes(fill=..count..)) +
+  labs(title="Histogram of Age of pets", x="Age(in months)") + 
+  scale_fill_gradient("Count", low="green", high="red")
+#Boxplot
+ggplot(data = tmpDatAge,aes(y = Age))+
+  geom_boxplot() + 
+  geom_boxplot( colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+  labs(title="Age boxplot using `ggplot`",x="", y = "Age")
+
+#Q-Q plot
+qqnorm(tmpDatAge$Age, main="Q-Q plot of Age of pets", ylab = "Age(in months)",col="blue")
+qqline(tmpDatAge$Age)
+```
+This is photoAmt: number of photo  
+```{r PhotoAmt}
+tmpPhotoAmt = dat
+tmpPhotoAmt$PhotoAmt = as.numeric(tmpPhotoAmt$PhotoAmt)
+
+ggplot(data=tmpPhotoAmt, aes(PhotoAmt)) + 
+  geom_histogram(breaks=seq(0, 30, by=2),
+                 col="red",
+                 aes(fill=..count..)) +
+  labs(title="Histogram of PhotoAmt of pets") + 
+  scale_fill_gradient("Count", low="green", high="red")
+
+#Boxplot
+ggplot(data = tmpPhotoAmt,aes(y = PhotoAmt))+
+  geom_boxplot() + 
+  geom_boxplot( colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+  labs(title="PhotoAmt boxplot using `ggplot`",x="", y = "Number of Photoes")
+
+#Q-Q plot
+qqnorm(tmpPhotoAmt$PhotoAmt, main="Q-Q plot of PhotoAmt of pets", ylab = "PhotoAmt",col="blue")
+qqline(tmpPhotoAmt$PhotoAmt)
+```
+
+### Categorical variable  
+Let's us focusing on some categorical variables.  
+The first one is Type.  
+```{r Type}
+dog = nrow(dat[dat$Type=="1",])
+cat = nrow(dat[dat$Type=="2",])
+totalamount = dog+cat
+
+percentDog = format(dog/totalamount * 100, digits = 4)
+percentCat = format(cat/totalamount * 100, digits = 4)
+
+Prop <- c(dog,cat)
+# Prepare a color palette. Here with R color brewer:
+library(RColorBrewer)
+myPalette <- brewer.pal(5, "RdYlGn") 
+
+# You can change the border of each area with the classical parameters:
+pie(Prop , labels = c(paste("Dog: ",percentDog,"%"), paste("Cat: ",percentCat,"%")),
+    main = "Pie plot of Type of pets", border="white", col=myPalette )
+```
+The second one is Gender.  
+```{r Gender}
+#pie plot
+male = nrow(dat[dat$Gender=="1",])
+female = nrow(dat[dat$Gender=="2",])
+percentMale = format(male/(male+female) * 100, digits = 4)
+percentFemale = format(female/(male+female) * 100, digits = 4)
+Prop <- c(male,female)
+# Prepare a color palette. Here with R color brewer:
+library(RColorBrewer)
+myPalette <- brewer.pal(3, "Pastel1") 
+
+# You can change the border of each area with the classical parameters:
+pie(Prop , labels = c(paste("Male: ", percentMale,"%"),paste("Female: ",percentFemale,"%")), main = "Pie plot of Gender", border="white", col=myPalette )
+```
+The third one is MaturitySize.  
+```{r MaturitySize}
+small = nrow(dat[dat$MaturitySize=="1",])
+medium = nrow(dat[dat$MaturitySize=="2",])
+large = nrow(dat[dat$MaturitySize=="3",])
+extraLarge = nrow(dat[dat$MaturitySize=="4",])
+totalamount = small+medium+large+extraLarge
+
+percentSmall = format(small/totalamount * 100, digits = 4)
+percentMedium = format(medium/totalamount * 100, digits = 4)
+percentLarge = format(large/totalamount * 100, digits = 4)
+percentExtraLarge = format(extraLarge/totalamount * 100, digits = 4)
+#pie plot
+Prop <- c(small,medium,large,extraLarge)
+# Prepare a color palette. Here with R color brewer:
+library(RColorBrewer)
+myPalette <- brewer.pal(8, "Spectral") 
+
+# You can change the border of each area with the classical parameters:
+pie(Prop , labels = c(paste("Small: ",percentSmall,"%"), paste("Medium: ",percentMedium,"%"), paste("Large: ",percentLarge,"%"), paste("Extra Large: ",percentExtraLarge,"%")), main = "Pie plot of MaturitySize", border="white", col=myPalette )
+
+```
+The fourth one is FurLength.  
+```{r FurLength}
+
+short = nrow(dat[dat$FurLength=="1",])
+medium = nrow(dat[dat$FurLength=="2",])
+long = nrow(dat[dat$FurLength=="3",])
+totalamount = short+medium+long
+
+percentShort = format(short/totalamount * 100, digits = 4)
+percentMedium = format(medium/totalamount * 100, digits = 4)
+percentLong = format(long/totalamount * 100, digits = 4)
+
+
+#pie plot
+Prop <- c(short,medium,long)
+# Prepare a color palette. Here with R color brewer:
+library(RColorBrewer)
+myPalette <- brewer.pal(3, "Set2") 
+
+# You can change the border of each area with the classical parameters:
+pie(Prop , labels = c(paste("Short: ",percentShort,"%"), paste("Medium: ",percentMedium,"%"), paste("Long: ", percentLong,"%")), main = "Pie plot of FurLength", border="white", col=myPalette )
+```
+The fifth one is Vaccinated.  
+```{r Vaccinated}
+vaccinatedYes = nrow(dat[dat$Vaccinated=="1",])
+vaccinatedNo = nrow(dat[dat$Vaccinated=="2",])
+vaccinatedNotSure = nrow(dat[dat$Vaccinated=="3",])
+totalamount = vaccinatedYes+vaccinatedNo+vaccinatedNotSure
+
+percentVaccinatedYes = format(vaccinatedYes/totalamount * 100, digits = 4)
+percentVaccinatedNo = format(vaccinatedNo/totalamount * 100, digits = 4)
+percentVaccinatedNotSure = format(vaccinatedNotSure/totalamount * 100, digits = 4)
+
+#pie plot
+Prop <- c(vaccinatedYes,vaccinatedNo,vaccinatedNotSure)
+# Prepare a color palette. Here with R color brewer:
+library(RColorBrewer)
+myPalette <- brewer.pal(11,"Paired") 
+
+# You can change the border of each area with the classical parameters:
+pie(Prop , labels = c(paste("Vaccinated: ",percentVaccinatedYes, "%"), paste("Unvaccinated: ",percentVaccinatedNo, "%"), paste("Not Specified: ",percentVaccinatedNotSure, "%")), main = "Pie plot of Vaccinated", border="white", col=myPalette )
+```
+
 
 ## Chapter 4
 
