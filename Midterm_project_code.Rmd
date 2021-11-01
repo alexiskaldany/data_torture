@@ -254,6 +254,8 @@ pie(Prop , labels = c(paste("Vaccinated: ",percentVaccinatedYes, "%"), paste("Un
 
 ## Chapter 4
 
+Given all of our independent variables and our (now) numerical dependent variable, we wanted to know what most impacted the speed that an animal got adopted off PetFinder. 
+
 ### SMART: Do dogs get adopted faster than cats?
 
 First, we looked at animal type. In order to answer this question, we split the data into two groups, dogs and cats. Because there were only 2 samples we decided to use a two-sample t-test to evaluate if there was a significant difference between the average adoption speed of dogs and cats. 
