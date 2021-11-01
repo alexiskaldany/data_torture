@@ -69,6 +69,10 @@ summary(dat)
 ```
 
 ## Chapter 2
+```{r}
+str(dat)
+```
+
 
 ## Chapter 3
 ### Numerical variable
