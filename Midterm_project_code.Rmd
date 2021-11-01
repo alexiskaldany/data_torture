@@ -250,3 +250,64 @@ table_lm_photo
 ```
 
 As we can see, only Age and PhotoAmt results in a p-value less than 0.05.
+
+Answer to SMART question 3: Age and PhotoAmt are the only two numerical variables which alone can be considered statistically significant. 
+
+### SMART: What variables, both categorical and numerical, result in the best predictave model?
+
+### Using feature selection tools to identify best model.
+
+Starting with generating an OLS model including all the variables we are considering.
+```{r results='markup'}
+loadPkg("leaps")
+reg_model <- regsubsets(ASnum~ Age + Gender + MaturitySize + FurLength + Vaccinated + VideoAmt + PhotoAmt, data = dat, nbest = 2, method = 'exhaustive')
+```
+
+
+Let us now create plots for all 4 of the methods we want to use. Exhaustive, forward, backward, and sequential methods. 
+```{r results='markup'}
+plot(reg_model, scale = "adjr2", main = "Adjusted R^2 Exhaustive")
+reg_model_forward <- regsubsets(ASnum~ Age + Gender + MaturitySize + FurLength + Vaccinated + VideoAmt + PhotoAmt, data = dat, nbest = 2, method = 'forward')
+plot(reg_model_forward, scale = "adjr2", main = "Adjusted R^2 Forward")
+reg_model_backward <- regsubsets(ASnum~ Age + Gender + MaturitySize + FurLength + Vaccinated + VideoAmt + PhotoAmt, data = dat, nbest = 2, method = 'backward')
+plot(reg_model_backward, scale = "adjr2", main = "Adjusted R^2 Backward")
+reg_model_sequential <- regsubsets(ASnum~ Age + Gender + MaturitySize + FurLength + Vaccinated + VideoAmt + PhotoAmt, data = dat, nbest = 2, method = 'seqrep')
+plot(reg_model_sequential, scale = "adjr2", main = "Adjusted R^2 Sequential Replacement")
+```
+No difference in variables between exhaustive, forward, and backward selection:
+Age, Gender 2, MaturitySize2, MaturitySize3, FurLength2, Furlength3, Vaccinated2, and PhotoAmt
+
+Sequential Replacement recommended:
+Gender2, MaturitySize2, FurLength2, FurLength3, Vaccinated2, PhotoAmt
+
+Dropping Age, MaturitySize3 between two models
+
+
+```{r results='markup'}
+dat_drop_mat_4 <- subset(dat, ! dat$MaturitySize == 4)
+dat_drop_mat_4 <- subset(dat_drop_mat_4, ! dat_drop_mat_4$Vaccinated== 3 )
+dat_drop_mat_4_3 <- subset(dat_drop_mat_4, ! dat_drop_mat_4$MaturitySize == 3)
+exh_for_back_model <- lm(ASnum~ Age + Gender + MaturitySize + FurLength + Vaccinated + PhotoAmt, data=dat_drop_mat_4)
+table_exh_for_back_model <- tbl_regression(exh_for_back_model, intercept=TRUE)
+add_vif(table_exh_for_back_model, statistic = "GVIF")
+table_exh_for_back_model %>%
+  as_gt() %>%
+  gt::gtsave(filename = "table_exh_for_back_model.png")
+
+
+xkabledply(exh_for_back_model, title = paste("Model:", format(formula(exh_for_back_model)) ) )
+xkablevif(exh_for_back_model)
+summary(exh_for_back_model)
+```
+
+```{r results='markup'}
+sequential_model <- lm(ASnum ~ Gender + MaturitySize + FurLength + Vaccinated + PhotoAmt, data=dat_drop_mat_4_3)
+table_sequential_model <- tbl_regression(sequential_model, intercept=TRUE)
+add_vif(table_sequential_model, statistic = "GVIF")
+table_sequential_model %>%
+  as_gt() %>%
+  gt::gtsave(filename = "table_sequential_model.png")
+xkabledply(sequential_model, title = paste("Model:", format(formula(exh_for_back_model)) ) )
+xkablevif(sequential_model)
+summary(sequential_model)
+```
