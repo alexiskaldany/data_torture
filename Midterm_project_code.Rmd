@@ -68,13 +68,13 @@ dat$ASnum[dat$AdoptionSpeed == 3] = floor(runif(sum(dat$AdoptionSpeed == 3), 31,
 summary(dat)
 ```
 
-## Chapter 2
+# Chapter 2
 ```{r}
 str(dat)
 ```
 
 
-## Chapter 3
+# Chapter 3
 ### Numerical variable
 In this chapter we will introduce some variables. The first one is AdoptionSpeed.  
 ```{r histogram of AdoptionSpeed}
@@ -109,7 +109,7 @@ qqline(dat$ASnum)
 ```
 
 
-This is Age. Although this variable is age, it represents months of the pets since they borned. It is obviously that most of the pets are small, which is very common sense that their owners do not have enough energry to take care of so many baby pets after their pets give birth to puppies and kittens.  
+This is Age. Although this variable is age, it represents months of the pets since they born. It is obviously that most of the pets are small, which is very common sense that their owners do not have enough energy to take care of so many baby pets after their pets give birth to puppies and kittens.  
 ```{r Age}
 tmpDatAge = dat
 tmpDatAge$Age = as.numeric(dat$Age)
@@ -253,7 +253,7 @@ myPalette <- brewer.pal(11,"Paired")
 pie(Prop , labels = c(paste("Vaccinated: ",percentVaccinatedYes, "%"), paste("Unvaccinated: ",percentVaccinatedNo, "%"), paste("Not Specified: ",percentVaccinatedNotSure, "%")), main = "Pie plot of Vaccinated", border="white", col=myPalette )
 ```
 
-## Chapter 4
+# Chapter 4
 
 Given all of our independent variables and our (now) numerical dependent variable, we wanted to know what most impacted the speed that an animal got adopted off PetFinder. 
 
@@ -437,8 +437,7 @@ As we can see, only Age and PhotoAmt results in a p-value less than 0.05.
 Answer to SMART question 3: Age and PhotoAmt are the only two numerical variables which alone can be considered statistically significant. 
 
 ### SMART: What variables, both categorical and numerical, result in the best predictave model?
-
-### Using feature selection tools to identify best model.
+Using feature selection tools to identify best model.
 
 Starting with generating an OLS model including all the variables we are considering.
 ```{r results='markup'}
@@ -485,7 +484,17 @@ add_vif(table_sequential_model, statistic = "GVIF")
 
 This model gives an adjusted $R^2$ value of 0.0343
 
-As the exhaustive-forward-backward model has a higher $R^2$ value than the sequential model, the conclusion is that the following model is the best model.
+As the exhaustive-forward-backward model has a higher $R^2$ value than the sequential model, the conclusion is that the following model is the best model, and answer to our last SMART.
 
 ASnum ~ Age + Gender 2 + MaturitySize2 + MaturitySize3 + FurLength2 + Furlength3 + Vaccinated2 + PhotoAmt
 
+
+# Conclusion
+
+### Categorical Variables
+
+Female animals get adopted quicker than male dogs
+
+### Linear Model
+
+The best model: ASnum ~ Age + Gender 2 + MaturitySize2 + MaturitySize3 + FurLength2 + Furlength3 + Vaccinated2 + PhotoAmt
