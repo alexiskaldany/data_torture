@@ -82,7 +82,7 @@ ggplot(data=dat, aes(tmpAdoptionSpeed)) +
   geom_bar(breaks=seq(0, 4, by=1),
                  col="red",
                  aes(fill=..count..)) +
-  labs(title="AdoptionSpeed of pets") + 
+  labs(title="AdoptionSpeed of pets", x ="AdoptionSpeed") + 
   scale_fill_gradient("Count", low="green", high="red")
 
 
