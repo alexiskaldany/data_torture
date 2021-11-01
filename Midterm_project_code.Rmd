@@ -475,8 +475,17 @@ table_exh_for_back_model <- tbl_regression(exh_for_back_model, intercept=TRUE)
 add_vif(table_exh_for_back_model, statistic = "GVIF")
 ```
 
+This model gives an adjusted $R^2$ value of 0.037.
+
 ```{r results='markup'}
 sequential_model <- lm(ASnum ~ Gender + MaturitySize + FurLength + Vaccinated + PhotoAmt, data=dat_drop_mat_4_3)
 table_sequential_model <- tbl_regression(sequential_model, intercept=TRUE)
 add_vif(table_sequential_model, statistic = "GVIF")
 ```
+
+This model gives an adjusted $R^2$ value of 0.0343
+
+As the exhaustive-forward-backward model has a higher $R^2$ value than the sequential model, the conclusion is that the following model is the best model.
+
+ASnum ~ Age + Gender 2 + MaturitySize2 + MaturitySize3 + FurLength2 + Furlength3 + Vaccinated2 + PhotoAmt
+
