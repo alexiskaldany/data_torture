@@ -497,4 +497,6 @@ Female animals get adopted quicker than male dogs
 
 ### Linear Model
 
-The best model: ASnum ~ Age + Gender 2 + MaturitySize2 + MaturitySize3 + FurLength2 + Furlength3 + Vaccinated2 + PhotoAmt
+Only Age and PhotoAmt, out of the numerical independent variables, have an impact on ASnum, VideoAmt is not statistically relevant.
+
+The best model: ASnum ~ Age + Gender 2 + MaturitySize2 + MaturitySize3 + FurLength2 + Furlength3 + Vaccinated2 + PhotoAmt.
