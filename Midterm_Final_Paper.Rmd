@@ -1,8 +1,10 @@
 ---
-title: "PetFinder Adoption Speed Analysis"
+title: "PetFinder Adoption Analysis"
 author: "Group 3: Data Torturers (Alexis Kaldany, Sahara Ensley, Yixi Liang, Kaiyuan Liang)"
 date: "`r Sys.Date()`"
-output:
+output: 
+  rmdformats::material:
+    cards: false
   html_document:
     code_folding: hide
     number_sections: false
@@ -27,7 +29,7 @@ options(scientific=T, digits = 3)
 ```
 
 # Chapter 1: Introduction
-```{r}
+```{r, include=FALSE}
 library("corrplot")
 library("ezids")
 library("gtsummary")
