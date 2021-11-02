@@ -3,8 +3,7 @@ title: "PetFinder Adoption Analysis"
 author: "Group 3: Data Torturers (Alexis Kaldany, Sahara Ensley, Yixi Liang, Kaiyuan Liang)"
 date: "`r Sys.Date()`"
 output: 
-  rmdformats::material:
-    cards: false
+  rmdformats::robobook:
   html_document:
     code_folding: hide
     number_sections: false
@@ -33,6 +32,7 @@ options(scientific=T, digits = 3)
 library("corrplot")
 library("ezids")
 library("gtsummary")
+library('ggridges')
 ## Loading data
 data = read.csv('datafile.csv')
 
@@ -368,13 +368,36 @@ Next we wanted to look at the size of the animals.
 
 ```{r, results='markup'}
 ### SIZE
+library(viridis)
+library(wesanderson)
+library(gridExtra)
+
 
 # box plot of adoption speed and size
-ggplot(data = dat, aes(y = ASnum, x = MaturitySize, fill = MaturitySize)) + 
+g1 = ggplot(data = dat, aes(y = ASnum, x = MaturitySize, color=MaturitySize)) + 
   geom_boxplot() + 
+  scale_color_manual(values = wes_palette("Darjeeling1", n = 4, type = 'continuous')) +
+  geom_jitter(size=0.4, alpha=0.1) +
   labs(title = "Adoption Speed by Maturity Size", x = 'Maturity Size', y = 'Adoption Speed') + 
   scale_x_discrete(labels=c("1" = "Small", "2" = "Medium", "3" = "Large", "4" = "Extra Large")) + 
-  scale_fill_discrete(labels = c("Small", "Medium", "Large", "Extra Large"))
+  theme(
+      legend.position="none",
+      panel.spacing = unit(0.1, "lines"),
+      strip.text.x = element_text(size = 8)
+    )
+
+g2 = ggplot(dat, aes(x = ASnum, y = MaturitySize)) +
+  geom_density_ridges(scale = 1.5, alpha = 0.7, quantile_lines = TRUE, quantile_fun = function(x, ...)mean(x), aes(fill = MaturitySize)) +
+  scale_fill_manual(values = wes_palette("Darjeeling1", n = 4, type = 'continuous')) +
+  labs(title = 'Adoption Speed by Size', y = 'Maturity Size', x = 'Adoption Speed') + 
+  scale_y_discrete(labels=c("1" = "Small", "2" = "Medium", "3" = "Large", "4" = "Extra Large")) + 
+  theme(
+      legend.position="none",
+      panel.spacing = unit(0.1, "lines"),
+      strip.text.x = element_text(size = 8)
+    )
+
+grid.arrange(g1, g2, ncol = 2)   
 ```
 
 First we ran a variance check. 
