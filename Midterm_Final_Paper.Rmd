@@ -21,7 +21,7 @@ output:
 # include=T, eval=T, echo=T, results='hide'/'asis'/'markup',..., collapse=F, warning=T, message=T, error=T, cache=T, fig.width=6, fig.height=4, fig.dim=c(6,4) #inches, fig.align='left'/'center','right', 
 library(ezids)
 # knitr::opts_chunk$set(warning = F, results = "markup", message = F)
-knitr::opts_chunk$set(warning = F, results = "hide", message = F)
+knitr::opts_chunk$set(warning = F, results = "hide", message = F, echo = F)
 options(scientific=T, digits = 3) 
 # options(scipen=9, digits = 3) 
 # ‘scipen’: integer. A penalty to be applied when deciding to print numeric values in fixed or exponential notation.  Positive values bias towards fixed and negative towards scientific notation: fixed notation will be preferred unless it is more than ‘scipen’ digits wider.
@@ -29,7 +29,7 @@ options(scientific=T, digits = 3)
 ```
 
 # Chapter 1: Introduction
-```{r, include=FALSE}
+```{r}
 library("corrplot")
 library("ezids")
 library("gtsummary")
@@ -284,7 +284,7 @@ Given all of our independent variables and our (now) numerical dependent variabl
 ### SMART: Do dogs get adopted faster than cats?
 
 First, we looked at animal type. In order to answer this question, we split the data into two groups, dogs and cats. Because there were only 2 samples we decided to use a two-sample t-test to evaluate if there was a significant difference between the average adoption speed of dogs and cats. 
-```{r}
+```{r, echo = FALSE}
 library('ggplot2')
 library('lmtest')
 
