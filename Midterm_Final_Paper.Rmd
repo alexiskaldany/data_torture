@@ -303,7 +303,12 @@ ggplot(data = dat, aes(y = ASnum, x = Type, color = Type)) +
   geom_jitter(size=0.4, alpha=0.1) +
   labs(title = "Adoption Speed by Animal Type", x = 'Animal Type', y = 'Adoption Speed') + 
   scale_x_discrete(labels=c("1" = "Dog", "2" = "Cat")) + 
-  scale_fill_discrete(labels = c("Dog", "Cat"))
+  scale_fill_discrete(labels = c("Dog", "Cat")) + 
+  theme(
+      legend.position="none",
+      panel.spacing = unit(0.1, "lines"),
+      strip.text.x = element_text(size = 8)
+    )
 
 ```
 
@@ -334,7 +339,7 @@ dc_t = t.test(dogs$ASnum, cats$ASnum)
 dc_t
 ```
 
-The null and alternate hypothesis for this t-test is:\
+The null and alternate hypothesis for this t-test are:\
 **H0**: The mean adoption speed of dogs and cats are equal\
 **H1**: The mean adoption speed of dogs and cats are different
 
@@ -363,7 +368,12 @@ ggplot(data = dat, aes(y = ASnum, x = Gender, color = Gender)) +
   geom_jitter(size=0.4, alpha=0.1) +
   labs(title = "Adoption Speed by Animal Gender", x = 'Animal Gender', y = 'Adoption Speed') + 
   scale_x_discrete(labels=c("1" = "Male", "2" = "Female")) + 
-  scale_fill_discrete(labels = c("Male", "Female"))
+  scale_fill_discrete(labels = c("Male", "Female")) + 
+  theme(
+      legend.position="none",
+      panel.spacing = unit(0.1, "lines"),
+      strip.text.x = element_text(size = 8)
+    )
 ```
 
 From this plot we can see that female animals appear to be adopted slower than male animals. Before we could make any conclusions we ran a variance check by doing a BP test.
@@ -397,7 +407,7 @@ mf_t
 
 ```
 
-The null and alternate hypothesis for this t-test is:\
+The null and alternate hypothesis for this t-test are:\
 **H0**: The mean adoption speed of male and female animals are equal\
 **H1**: The mean adoption speed of male and female animals are different
 
@@ -478,7 +488,7 @@ turkey_size = TukeyHSD(aov(data = dat, ASnum ~ MaturitySize))
 turkey_size
 ```
 
-The null and alternate hypothesis for this ANOVA is:\
+The null and alternate hypothesis for this ANOVA are:\
 **H0**: The mean adoption speed is the same for all sizes\
 **H1**: The mean adoption speed is not the same for all sizes
 
@@ -544,7 +554,7 @@ p = `r format(bp_fur$p.value)`\
 
 Once again our BP test of equal variance failed. However we continued with our analysis.
 
-The null and alternate hypothesis for this ANOVA is:\
+The null and alternate hypothesis for this ANOVA are:\
 **H0**: The mean adoption speed is the same for all fur lengths\
 **H1**: The mean adoption speed is not the same for all fur lengths\
 
@@ -623,7 +633,7 @@ p = `r format(bp_vac$p.value)`\
 
 Once again our BP test of equal variance failed. However we continued with our analysis.
 
-The null and alternate hypothesis for this ANOVA is:\
+The null and alternate hypothesis for this ANOVA are:\
 **H0**: The mean adoption speed is the same for all vaccination statuses\
 **H1**: The mean adoption speed is not the same for all vaccination statuses\
 
