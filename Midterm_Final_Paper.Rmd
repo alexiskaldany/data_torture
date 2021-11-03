@@ -69,7 +69,9 @@ dat$ASnum[dat$AdoptionSpeed == 3] = floor(runif(sum(dat$AdoptionSpeed == 3), 31,
 summary(dat)
 ```
 
-This dataset came from Kaggle (https://www.kaggle.com/c/petfinder-adoption-prediction/data) and contains information about pet profiles that were listed for adoption on PetFinder. 
+It's estimated as of 2016 that 44% of all households in the United States own a dog, and 35% own a cat. In 2019, around 6.3 million animals were in shelters around the country, and 4.1 million were adopted. Unfortunately almost a million animals are euthanized in a shelter every year. While it's encouraging that this statistic is actively dropping, down from 2.6 million in 2011, it's still a sad fact of animal shelters. The creation of websites like PetFinder help shelters and foster owners get the word out about pets that they have up for adoption and are integral to placing deserving companions in loving homes. Because of the importance of websites like PetFinder to pet adoption, we wanted to look closer into the profiles of the animals on the website. We found an open source data set on Kaggle (https://www.kaggle.com/c/petfinder-adoption-prediction/data) that included almost 15,000 observations of 23 columns. One of the data points included was how quickly the animal got adopted. We wanted to look into what aspects of each animals profile impacted the adoption speed, in order to hopefully provide insight into how to get animals adopted quicker.
+
+We did exploratory analysis into many of the variables in the data set, and came to statistically significant conclusions about what aspects of the animals and their profile had an impact on the speed that they were adopted.
 
 # Chapter 2: Data description and cleaning
 
@@ -752,3 +754,6 @@ Type of animal, gender, size, fur length, and vaccination status all impact our 
 Only Age and PhotoAmt, out of the numerical independent variables, have an impact on ASnum, VideoAmt is not statistically relevant.
 
 The best model: ASnum ~ Age + Gender 2 + MaturitySize2 + MaturitySize3 + FurLength2 + Furlength3 + Vaccinated2 + PhotoAmt.
+
+# Bibliography
+Staff, A. S. P. C. A. (2019). Pet statistics. ASPCA. Retrieved November 3, 2021, from https://www.aspca.org/helping-people-pets/shelter-intake-and-surrender/pet-statistics. 
