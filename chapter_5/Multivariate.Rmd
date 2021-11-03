@@ -91,9 +91,9 @@ Video Amount
 ```{r}
 lm_video <- lm(ASnum ~ VideoAmt, data=dat)
 table_lm_video <- tbl_regression(lm_video, intercept=TRUE)
-table_lm_video %>%
-  as_gt() %>%
-  gt::gtsave(filename = "table_lm_vide.png")
+#table_lm_video %>%
+ # as_gt() %>%
+ # gt::gtsave(filename = "table_lm_vide.png")
 ```
 Not statistically significant, p-value > alpha. 
 
@@ -162,6 +162,8 @@ loadPkg("leaps")
 reg_model <- regsubsets(ASnum~ Age + Gender + MaturitySize + FurLength + Vaccinated + VideoAmt + PhotoAmt, data = dat, nbest = 2, method = 'exhaustive')
 ```
 
+
+
 ```{r results='markup'}
 plot(reg_model, scale = "adjr2", main = "Adjusted R^2 Exhaustive")
 reg_model_forward <- regsubsets(ASnum~ Age + Gender + MaturitySize + FurLength + Vaccinated + VideoAmt + PhotoAmt, data = dat, nbest = 2, method = 'forward')
@@ -197,6 +199,8 @@ xkablevif(exh_for_back_model)
 summary(exh_for_back_model)
 ```
 
+
+
 ```{r results='markup'}
 sequential_model <- lm(ASnum ~ Gender + MaturitySize + FurLength + Vaccinated + PhotoAmt, data=dat_drop_mat_4_3)
 table_sequential_model <- tbl_regression(sequential_model, intercept=TRUE)
@@ -210,3 +214,4 @@ summary(sequential_model)
 ```
 
 
+The reccomendations given by the exhaustive, forward, and backward selke
