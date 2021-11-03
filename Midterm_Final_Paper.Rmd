@@ -351,7 +351,7 @@ We can see that the adoption speed for dogs is higher (slower) than the mean ado
 
 ### SMART: Do physical attributes affect adoption speed?
 
-The next question we wanted to answer was what physical attributes affect adoption speed. To answer this question we looked at the gender of the animal, the size, the fur length, and the vaccination status. Beginning with the gender of the animal, we compared male animals to female animals.
+The next question we wanted to answer was what physical attributes affect adoption speed. This question is very broad, so in order to start answering it we broke it into sub-sections. We looked at the gender of the animal, the size, the fur length, and the vaccination status. Beginning with the gender of the animal, we compared male animals to female animals to see if this had an impact on adoption speed.
 
 ```{r, results='markup'}
 ### GENDER
@@ -366,7 +366,7 @@ ggplot(data = dat, aes(y = ASnum, x = Gender, color = Gender)) +
   scale_fill_discrete(labels = c("Male", "Female"))
 ```
 
-From this plot we can see that female animals appear to be adopted slower than male animals. Before we could make any conclusions we ran a variance check.
+From this plot we can see that female animals appear to be adopted slower than male animals. Before we could make any conclusions we ran a variance check by doing a BP test.
 
 ```{r}
 ### GENDER
@@ -378,8 +378,10 @@ bp_mf
 
 **H0**: The two groups have the same variance\
 **H1**: The groups have difference variances\
+
 Our result was:\
-p = `r bp_mf$p.value`\
+p = `r format(bp_mf$p.value)`\
+
 We were able to reject the null hypothesis that the variance was equal between the groups. Again, this meant that a t-test was not appropriate, however we did a two-sample t-test regardless.
 
 ```{r}
