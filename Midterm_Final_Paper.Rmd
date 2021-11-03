@@ -319,7 +319,8 @@ bp_dogscats
 ```
 
 The results of this BP test was:\
-p = `r bp_dogscats$p.value`\
+p = `r format(bp_dogscats$p.value)`\
+
 Because the p_value is less than our alpha of 0.05 we have to reject the null hypothesis that the groups have the same variance. Because of this, the two-sample t-test is not technically a valid statistical test, however we went ahead and performed the test regardless. 
 
 ```{r}
@@ -333,11 +334,12 @@ dc_t = t.test(dogs$ASnum, cats$ASnum)
 dc_t
 ```
 
+The null and alternate hypothesis for this t-test is:\
 **H0**: The mean adoption speed of dogs and cats are equal\
 **H1**: The mean adoption speed of dogs and cats are different
 
 
-The p_value of the t-test was less than our alpha of 0.05 (p = `r dc_t$p.value`), allowing us to reject our null hypothesis that there is no difference between the means of the two groups. Because of this we can conclude that there is a difference in adoption speed between cats and dogs.
+The p_value of the t-test was less than our alpha of 0.05 (p = `r format(dc_t$p.value)`), allowing us to reject our null hypothesis that there is no difference between the means of the two groups. Because of this we can conclude that there is a difference in adoption speed between cats and dogs.
 
 If we look at the mean estimates for the two groups:
 
