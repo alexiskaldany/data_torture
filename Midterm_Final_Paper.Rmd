@@ -397,10 +397,11 @@ mf_t
 
 ```
 
+The null and alternate hypothesis for this t-test is:\
 **H0**: The mean adoption speed of male and female animals are equal\
 **H1**: The mean adoption speed of male and female animals are different
 
-We found that this was also significant (p = `r mf_t$p.value`). So we can reject the null hypothesis that the mean adoption speed between male and female animals is the same. 
+We found that this was also significant (p = `r format(mf_t$p.value)`). So we can reject the null hypothesis that the mean adoption speed between male and female animals is the same. 
 
 Looking at the estimates:
 
@@ -444,9 +445,9 @@ g2 = ggplot(dat, aes(x = ASnum, y = MaturitySize)) +
 grid.arrange(g1, g2, ncol = 2)   
 ```
 
-We plotted both the boxplot and the density plot to emphasize the smililarities in the distribution shapes. The extra large animals appear to have the only different distribution, however its evident from the box-plot that there are very few data points for extra large animals. In order to determine if there are any differences in adoption speed we decided to run an ANOVA.
+We plotted both the box plot and the density plot to emphasize the similarities in the shape of the distribution. The extra large animals appear to have a different distribution than the other three sizes, however it's evident from the box-plot that there are very few data points for extra large animals. In order to determine if there are any significant differences in adoption speed we decided to run an ANOVA.
 
-First we ran a variance check. 
+Before we can run the ANOVA however, we ran a variance check.
 
 ```{r}
 ### SIZE
@@ -458,10 +459,11 @@ bp_size
 
 **H0**: The adoption speed variance is the same across different sizes\
 **H1**: The adoption speed variance is not the same across different sizes\
-Our result was:\
-p = `r bp_size$p.value`\
 
-Once again, we got a significant p_value but decided to run the ANOVA regardless.
+Our result was:\
+p = `r format(bp_size$p.value)`\
+
+Once again, we got a significant p_value, but decided to run the ANOVA regardless.
 
 ```{r}
 ### SIZE
@@ -476,17 +478,17 @@ turkey_size = TukeyHSD(aov(data = dat, ASnum ~ MaturitySize))
 turkey_size
 ```
 
+The null and alternate hypothesis for this ANOVA is:\
 **H0**: The mean adoption speed is the same for all sizes\
 **H1**: The mean adoption speed is not the same for all sizes
 
-We ended up with a significant p_value for the anova (p = `r anova_size$'Pr(>F)'`), so we ran a TukeyHSD post-hoc test.
+We ended up with a significant p_value for the anova (p = `r format(anova_size$'Pr(>F)')`) so we could conclude that the mean adoption speed was not the same for all sizes. In order to determine what sizes varied from each other we ran a TukeyHSD post-hoc test.
 
-```{r}
+```{r, results = 'markup'}
 xkabledply(turkey_size$MaturitySize, title='Post Hoc Analysis of Size')
 ```
 
 We found that the means between the small and medium dogs, and the medium and large dogs, were significantly different. We can therefore conclude that animal size does impact adoption speed.
-
 
 Next we looked at fur length.
 
@@ -521,7 +523,7 @@ g22 = ggplot(dat, aes(x = ASnum, y = FurLength)) +
 grid.arrange(g11, g22, ncol = 2)   
 ```
 
-Again, it's clear that there is an imbalance of sample sizes for the long haired animals. The density plots show the similarities in the adoption speed distributions. It appears that the short haired animals have a more profound elevation around 25 days on PetFinder. To analyze these differences we decided to use an ANOVA.
+Again, it's clear that there is an imbalance of sample sizes for these groups. There is a higher percentage of short haired animals and much fewer long haired animals. The density plots show the similarities in the adoption speed distributions. At first glance. it appears that the short haired animals have a higher frequency around 25 days than the other groups. To determine if these differences are significant we decided to use an ANOVA.
 
 First we ran a variance check.
 
@@ -536,11 +538,13 @@ bp_fur
 
 **H0**: The adoption speed variance is the same across different fur lengths\
 **H1**: The adoption speed variance is not the same across different fur lengths\
+
 Our result was:\
-p = `r bp_fur$p.value`\
+p = `r format(bp_fur$p.value)`\
 
 Once again our BP test of equal variance failed. However we continued with our analysis.
 
+The null and alternate hypothesis for this ANOVA is:\
 **H0**: The mean adoption speed is the same for all fur lengths\
 **H1**: The mean adoption speed is not the same for all fur lengths\
 
@@ -554,10 +558,16 @@ anova_fur = anova(aov(data = dat, ASnum ~ FurLength))
 # post-hoc tests for fur length
 turkey_fur = TukeyHSD(aov(data = dat, ASnum ~ FurLength))
 
+```
+
+Our ANOVA did produce a significant result (p = `r format(anova_fur$'Pr(>F)'[1])`) allowing us to reject the null hypothesis that the adoption speed was the same across fur lengths. Because we got a significant result we again ran a TukeyHSD post-hoc analysis.
+
+```{r, results = 'markup'}
 xkabledply(turkey_fur$FurLength, title = 'Post Hoc Analysis of Fur Length')
 ```
 
-Our ANOVA did produce a significant result (p = `r anova_fur$'Pr(>F)'[1]`) allowing us to reject the null hypothesis that the adoption speed was the same across fur lengths. Because we got a significant result we again ran a TukeyHSD post-hoc analysis and found that the difference between each of the fur length groups was significant. We're able to conclude that fur length does impact adoption speed.
+
+We found that the difference between each of the fur length groups was significant. We're able to conclude that fur length does impact adoption speed.
 
 Finally, we looked at vaccination status.
 
@@ -592,7 +602,7 @@ g222 = ggplot(dat, aes(x = ASnum, y = Vaccinated)) +
 grid.arrange(g111, g222, ncol = 2)   
 ```
 
-Again the density plots are showing a very similar distribution across the different vaccination statuses. IN order to evaluate if there is a difference in the mean values we decided to use an ANOVA.
+Again the density plots are showing a very similar distribution across the different vaccination statuses. In order to evaluate if there is a difference in the mean values we decided to use an ANOVA.
 
 First we ran a variance check.
 
@@ -607,11 +617,13 @@ bp_vac
 
 **H0**: The adoption speed variance is the same across different vaccination statuses\
 **H1**: The adoption speed variance is not the same across different vaccination statuses\
+
 Our result was:\
-p = `r bp_vac$p.value`\
+p = `r format(bp_vac$p.value)`\
 
 Once again our BP test of equal variance failed. However we continued with our analysis.
 
+The null and alternate hypothesis for this ANOVA is:\
 **H0**: The mean adoption speed is the same for all vaccination statuses\
 **H1**: The mean adoption speed is not the same for all vaccination statuses\
 
@@ -627,10 +639,10 @@ turkey_vac = TukeyHSD(aov(data = dat, ASnum ~ Vaccinated))
 xkabledply(turkey_vac$Vaccinated, title = 'Post Hoc Analysis of Vaccination')
 ```
 
-Our ANOVA did produce a significant result (p = `r anova_vac$'Pr(>F)'[1]`). You can see from our post-hoc analysis we  that the difference between the vaccinated and unvaccinated, and the unvaccinated and unspecified group was significantly different. We can conclude that vaccination status did impact the adoption speed of the animal. 
+Our ANOVA did produce a significant result (p = `r format(anova_vac$'Pr(>F)'[1])`). You can see from our post-hoc analysis that the difference between the vaccinated and unvaccinated, and the unvaccinated and unspecified group was significantly different.We can conclude that vaccination status did impact the adoption speed of the animal. 
 
 
-The final conclusion from our analysis of categorical physical characteristics is that the difference in variance across the groups does not allow us to draw any meaningful conclusions. However, if we ignore that assumption for this sample of data, we are able to conclude that all the categorical physical characteristics, including the type of the animal, does impact the adoption speed of the animal.
+The final conclusion from our analysis of categorical physical characteristics is that the difference in variance across the groups does not allow us to draw any meaningful conclusions. However, if we ignore that assumption for this sample of data, we are able to conclude that all the categorical physical characteristics (type, gender, size, fur length, and vaccination status) do impact adoption speed significantly.
 
 # Chapter 5: Linear Modeling
 
