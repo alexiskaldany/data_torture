@@ -106,8 +106,10 @@ PhotoAmt - Total uploaded photos for this pet\
 PhotoAmt - Total uploaded videos for this pet\
 
 # Chapter 3: Independent Variables EDA
-### Numerical variable
-In this chapter we will introduce some variables. The first one is AdoptionSpeed.  
+In this chapter we will introduce some variables. One of the most important variables is ASnum, which is dependent variable.  
+
+### What is ASnum?  
+First of all, we need to see AdoptionSpeed. AdoptionSpeed means speed of adoption.  
 ```{r histogram of AdoptionSpeed}
 loadPkg("ggplot2")
 #Histogram
@@ -124,23 +126,27 @@ AdoptionSpeed is divided into 4 levels.
 1 Pet was adopted between 1 and 7 days (1st week).  
 2 Pet was adopted between 8 and 30 days (1st month) after being listed.  
 3 Pet was adopted between 31 and 90 days (2nd & 3rd month) after being listed.  
-4 No adoption after 100 days of being listed. (we drop this level)    
+4 No adoption after 100 days of being listed. (we drop this level because it is not fit into our research).      
 We transformed AdoptionSpeed to numerical variable: ASnum.  
-```{r ASnum}
+```{r ASnum histogram}
 ggplot(data=dat, aes(dat$ASnum)) + 
   geom_histogram(breaks=seq(0, 100, by=1),
                  col="red",
                  aes(fill=..count..)) +
   labs(title="Histogram of ASnum", x="Pet adopted days") + 
   scale_fill_gradient("Count", low="green", high="red")
+```
 
+We use `runif()` to distribute AdoptionSpeed to numerical variable. `runif()` is a function generate uniform distribution. It is very clearly that in each levels data were uniform distribution. We do this because it can reduce the impact on data analysis in the next step.  
+```{r ASnum Q-Q plot}
 #Q-Q plot
 qqnorm(dat$ASnum, main="Q-Q plot of ASnum of pets", ylab = "days",col="blue")
 qqline(dat$ASnum)
 ```
+From this Q-Q plot and Histogram, we can see ASnum is right skewed distribution.  
 
-
-This is Age. Although this variable is age, it represents the number of months since birth when they were listed on PetFinder. It is obviously that most of the pets are young, which makes sense that their owners do not have enough energy to take care of so many baby pets after their pets give birth to puppies and kittens.  
+### How do the Age distribution looks like?  
+Age represents the number of months since birth when they were listed on PetFinder. It is obviously that most of the pets are young, which makes sense that their owners do not have enough energy to take care of so many baby pets after their pets give birth to puppies and kittens.  
 ```{r Age}
 tmpDatAge = dat
 tmpDatAge$Age = as.numeric(dat$Age)
@@ -161,7 +167,9 @@ ggplot(data = tmpDatAge,aes(y = Age))+
 qqnorm(tmpDatAge$Age, main="Q-Q plot of Age of pets", ylab = "Age(in months)",col="blue")
 qqline(tmpDatAge$Age)
 ```
-This is photoAmt: number of photos included in a profile. Most of the listed pets only have few pictures. 
+
+### How do the PhotoAmt distribution looks like?  
+`PhotoAmt` represents number of photos included in a profile.  
 ```{r PhotoAmt}
 tmpPhotoAmt = dat
 tmpPhotoAmt$PhotoAmt = as.numeric(tmpPhotoAmt$PhotoAmt)
@@ -183,10 +191,11 @@ ggplot(data = tmpPhotoAmt,aes(y = PhotoAmt))+
 qqnorm(tmpPhotoAmt$PhotoAmt, main="Q-Q plot of PhotoAmt of pets", ylab = "PhotoAmt",col="blue")
 qqline(tmpPhotoAmt$PhotoAmt)
 ```
+As we can see, most of the listed pets only have few pictures, and this data is also right skewed distribution.  
 
 ### Categorical variable  
 Let's us focus on some categorical variables.  
-The first one is Type. There are two types: dog and cat.    
+The first is `Type`. There are two types: `Dog` and `Cat`.    
 ```{r Type}
 dog = nrow(dat[dat$Type=="1",])
 cat = nrow(dat[dat$Type=="2",])
@@ -204,7 +213,7 @@ myPalette <- brewer.pal(5, "RdYlGn")
 pie(Prop , labels = c(paste("Dog: ",percentDog,"%"), paste("Cat: ",percentCat,"%")),
     main = "Pie plot of Type of pets", border="white", col=myPalette )
 ```
-The second one is Gender. There are two genders: male and female.  
+The second is `Gender`. There are two genders: `Male` and `Female`.  
 ```{r Gender}
 #pie plot
 male = nrow(dat[dat$Gender=="1",])
@@ -219,7 +228,7 @@ myPalette <- brewer.pal(3, "Pastel1")
 # You can change the border of each area with the classical parameters:
 pie(Prop , labels = c(paste("Male: ", percentMale,"%"),paste("Female: ",percentFemale,"%")), main = "Pie plot of Gender", border="white", col=myPalette )
 ```
-The third one is MaturitySize. There are four levels, which is small, medium, large, and extraLarge.    
+The third is `MaturitySize`. There are four levels, namely `Small`,` Medium`, `Large`, and `ExtraLarge`.    
 ```{r MaturitySize}
 small = nrow(dat[dat$MaturitySize=="1",])
 medium = nrow(dat[dat$MaturitySize=="2",])
@@ -241,7 +250,7 @@ myPalette <- brewer.pal(8, "Spectral")
 pie(Prop , labels = c(paste("Small: ",percentSmall,"%"), paste("Medium: ",percentMedium,"%"), paste("Large: ",percentLarge,"%"), paste("Extra Large: ",percentExtraLarge,"%")), main = "Pie plot of MaturitySize", border="white", col=myPalette )
 
 ```
-The fourth one is FurLength. There are three levels, which is short, medium, and long.  
+The fourth is `FurLength`. There are three levels, namely `Short`, `Medium`, and `Long`.  
 ```{r FurLength}
 
 short = nrow(dat[dat$FurLength=="1",])
@@ -263,7 +272,7 @@ myPalette <- brewer.pal(3, "Set2")
 # You can change the border of each area with the classical parameters:
 pie(Prop , labels = c(paste("Short: ",percentShort,"%"), paste("Medium: ",percentMedium,"%"), paste("Long: ", percentLong,"%")), main = "Pie plot of FurLength", border="white", col=myPalette )
 ```
-The fifth one is Vaccinated. There are three levels, which is Vaccinated, Unvaccinated, and Not Specified.    
+The fifth is `Vaccinated`. There are three levels, namely `Vaccinated`, `Unvaccinated`, and `Not Specified`.    
 ```{r Vaccinated}
 vaccinatedYes = nrow(dat[dat$Vaccinated=="1",])
 vaccinatedNo = nrow(dat[dat$Vaccinated=="2",])
