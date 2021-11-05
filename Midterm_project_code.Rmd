@@ -497,7 +497,7 @@ lm_age <- lm(ASnum ~ Age, data=dat )
 table_lm_age <- tbl_regression(lm_age, intercept=TRUE)
 table_lm_age
 ```
-Clearly, age is statistically significant, as the p-value is below 0.05.
+Clearly, age is statistically significant, as the p-value (p = `r `) is below 0.05.
 
 Lets look at VideoAmt next.
 

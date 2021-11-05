@@ -36,6 +36,8 @@ library('ggridges')
 library('viridis')
 library('wesanderson')
 library('gridExtra')
+library('leaps')
+
 ## Loading data
 data = read.csv('datafile.csv')
 
@@ -693,21 +695,19 @@ Answer to SMART question 3: Age and PhotoAmt are the only two numerical variable
 ### SMART: What variables, both categorical and numerical, result in the best predictave model?
 Using feature selection tools to identify best model.
 
-Starting with generating an OLS model including all the variables we are considering.
-```{r results='markup'}
+Starting with generating an OLS model including all the variables we are considering, then use the 4 methods available to us to find the best model.
+```{r}
 loadPkg("leaps")
 reg_model <- regsubsets(ASnum~ Age + Gender + MaturitySize + FurLength + Vaccinated + VideoAmt + PhotoAmt, data = dat, nbest = 2, method = 'exhaustive')
+reg_model_forward <- regsubsets(ASnum~ Age + Gender + MaturitySize + FurLength + Vaccinated + VideoAmt + PhotoAmt, data = dat, nbest = 2, method = 'forward')
+reg_model_backward <- regsubsets(ASnum~ Age + Gender + MaturitySize + FurLength + Vaccinated + VideoAmt + PhotoAmt, data = dat, nbest = 2, method = 'backward')
+reg_model_sequential <- regsubsets(ASnum~ Age + Gender + MaturitySize + FurLength + Vaccinated + VideoAmt + PhotoAmt, data = dat, nbest = 2, method = 'seqrep')
 ```
 
-
-Let us now create plots for all 4 of the methods we want to use. Exhaustive, forward, backward, and sequential methods. 
 ```{r results='markup'}
 plot(reg_model, scale = "adjr2", main = "Adjusted R^2 Exhaustive")
-reg_model_forward <- regsubsets(ASnum~ Age + Gender + MaturitySize + FurLength + Vaccinated + VideoAmt + PhotoAmt, data = dat, nbest = 2, method = 'forward')
 plot(reg_model_forward, scale = "adjr2", main = "Adjusted R^2 Forward")
-reg_model_backward <- regsubsets(ASnum~ Age + Gender + MaturitySize + FurLength + Vaccinated + VideoAmt + PhotoAmt, data = dat, nbest = 2, method = 'backward')
 plot(reg_model_backward, scale = "adjr2", main = "Adjusted R^2 Backward")
-reg_model_sequential <- regsubsets(ASnum~ Age + Gender + MaturitySize + FurLength + Vaccinated + VideoAmt + PhotoAmt, data = dat, nbest = 2, method = 'seqrep')
 plot(reg_model_sequential, scale = "adjr2", main = "Adjusted R^2 Sequential Replacement")
 ```
 No difference in variables between exhaustive, forward, and backward selection:
