@@ -671,7 +671,9 @@ The final conclusion from our analysis of categorical physical characteristics i
 
 ### SMART: What numerical variables influence adoption speed?
 
-We will run single variable OLS regressions for the three independent numerical variables.
+We will run single variable OLS regressions for the three independent numerical variables. This will enable each variable to be observed by itself, without any interference from other variables.
+
+
 First, age.
 
 ```{r results='markup'}
@@ -679,6 +681,7 @@ lm_age <- lm(ASnum ~ Age, data=dat )
 table_lm_age <- tbl_regression(lm_age, intercept=TRUE)
 table_lm_age
 ```
+
 Clearly, age is statistically significant, as the p-value is below 0.05.
 
 Lets look at VideoAmt next.
@@ -688,6 +691,8 @@ lm_video <- lm(ASnum ~ VideoAmt, data=dat)
 table_lm_video <- tbl_regression(lm_video, intercept=TRUE)
 table_lm_video
 ```
+With a p-value between 0.05 and 0.01, the statistical significance of the number of videos is questionable, and depends on the alpha value chosen for the study. 
+
 
 Finally, lets check PhotoAmt.
 
@@ -697,7 +702,7 @@ table_lm_photo <-tbl_regression(lm_photo, intercept=TRUE)
 table_lm_photo
 ```
 
-As we can see, only Age and PhotoAmt results in a p-value less than 0.05.
+
 
 Answer to SMART question 3: Age and PhotoAmt are the only two numerical variables which alone can be considered statistically significant. 
 
@@ -715,17 +720,34 @@ reg_model_sequential <- regsubsets(ASnum~ Age + Gender + MaturitySize + FurLengt
 
 ```{r results='markup'}
 plot(reg_model, scale = "adjr2", main = "Adjusted R^2 Exhaustive")
+```
+The model recommended using the exhaustive method: ASnum ~ Age + Gender 2 + MaturitySize2 + MaturitySize3 + FurLength2 + Furlength3 + Vaccinated2 + PhotoAmt.
+
+```{r results='markup'}
 plot(reg_model_forward, scale = "adjr2", main = "Adjusted R^2 Forward")
+```
+The model recommended using the Forward selection method: ASnum ~ Age + Gender 2 + MaturitySize2 + MaturitySize3 + FurLength2 + Furlength3 + Vaccinated2 + PhotoAmt.
+
+
+```{r results='markup'}
 plot(reg_model_backward, scale = "adjr2", main = "Adjusted R^2 Backward")
+```
+The model recommended using the Backward selection method: ASnum ~ Age + Gender 2 + MaturitySize2 + MaturitySize3 + FurLength2 + Furlength3 + Vaccinated2 + PhotoAmt
+
+```{r results='markup'}
 plot(reg_model_sequential, scale = "adjr2", main = "Adjusted R^2 Sequential Replacement")
 ```
+
+The model recommended using the Sequential selection method: ASnum~ Gender2, MaturitySize2, FurLength2, FurLength3, Vaccinated2, PhotoAmt
+
+Summary of variables from recommended models:
 No difference in variables between exhaustive, forward, and backward selection:
 Age, Gender 2, MaturitySize2, MaturitySize3, FurLength2, Furlength3, Vaccinated2, and PhotoAmt
 
 Sequential Replacement recommended:
 Gender2, MaturitySize2, FurLength2, FurLength3, Vaccinated2, PhotoAmt
 
-Dropping Age, MaturitySize3 between two models
+The only difference between the two models is that sequential wants to drop Age, MaturitySize3, otherwise the recommendations are identical. 
 
 
 ```{r results='markup'}
@@ -749,7 +771,15 @@ This model gives an adjusted $R^2$ value of 0.0343
 
 As the exhaustive-forward-backward model has a higher $R^2$ value than the sequential model, the conclusion is that the following model is the best model, and answer to our last SMART.
 
+Best Model: 
+
 ASnum ~ Age + Gender 2 + MaturitySize2 + MaturitySize3 + FurLength2 + Furlength3 + Vaccinated2 + PhotoAmt
+
+### Thoughts on Predictive Accuracy
+
+As shown in the previous section, at best we can generate a model that accounts for less than 4% of the variation.
+
+There are two sources of variation which our variables cannot account. The first is the randomization of our dependent variable from the process of transforming our categorical variable into a numerical variable. The second is all of the data in the `description` column, which possess textual information about the pets. We are unable to extract data from this field, but it was included in this dataset, and presumably would contribute to the predictive model. 
 
 
 # Conclusion
