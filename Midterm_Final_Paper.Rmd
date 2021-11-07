@@ -754,6 +754,8 @@ ASnum ~ Age + Gender 2 + MaturitySize2 + MaturitySize3 + FurLength2 + Furlength3
 
 # Conclusion
 
+By looking through this adoption prediction dataset from PetFinder, we were able to make a few interesting conclusions about what impacts the adoption speed of pets in Malaysia. After going through all the variables at our disposal we narrowed down our dataset to only a few key features and through that we tailored our questions to be more specific. We were happy to see that many of our categorical variables had a reasonable distribution of sample sizes, with exceptions to features such as Maturity Size, which had very few animals in the Extra Large category, for example. One drawback of this dataset that we realized early on through our EDA was that most of our features were not normal and therefore failed the normality assumption for hypothesis testing.
+
 ### Categorical Variables
 
 Type of animal, gender, size, fur length, and vaccination status all impact our dependent variable of adoption speed. However, the variance of these values is not equal, so any relationship that is discovered between these variables should be considered lightly.
