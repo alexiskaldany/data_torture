@@ -1,0 +1,804 @@
+---
+title: "PetFinder Adoption Analysis"
+author: "Group 3: Data Torturers (Alexis Kaldany, Sahara Ensley, Yixi Liang, Kaiyuan Liang)"
+date: "`r Sys.Date()`"
+output: 
+  rmdformats::robobook:
+  html_document:
+    code_folding: hide
+    number_sections: false
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+---
+
+```{r setup, include=FALSE}
+# some of common options (and the defaults) are: 
+# include=T, eval=T, echo=T, results='hide'/'asis'/'markup',..., collapse=F, warning=T, message=T, error=T, cache=T, fig.width=6, fig.height=4, fig.dim=c(6,4) #inches, fig.align='left'/'center','right', 
+library(ezids)
+# knitr::opts_chunk$set(warning = F, results = "markup", message = F)
+knitr::opts_chunk$set(warning = F, results = "hide", message = F, echo = F)
+options(scientific=T, digits = 3) 
+# options(scipen=9, digits = 3) 
+# ‘scipen’: integer. A penalty to be applied when deciding to print numeric values in fixed or exponential notation.  Positive values bias towards fixed and negative towards scientific notation: fixed notation will be preferred unless it is more than ‘scipen’ digits wider.
+# use scipen=999 to prevent scientific notation at all times
+```
+
+# Chapter 1: Introduction
+```{r}
+library("corrplot")
+library("ezids")
+library("gtsummary")
+library('ggridges')
+library('viridis')
+library('wesanderson')
+library('gridExtra')
+library('leaps')
+library('vtable')
+## Loading data
+data = read.csv('datafile.csv')
+
+initialrows = nrow(data)
+
+data$AdoptionSpeed <- factor(data$AdoptionSpeed, order=T, levels = c(0,1,2,3,4))
+
+# converting the data types we want - categorical
+data$Type = as.factor(data$Type)
+data$MaturitySize = as.factor(data$MaturitySize)
+data$FurLength = as.factor(data$FurLength)
+data$Vaccinated = as.factor(data$Vaccinated)
+data$Gender = as.factor(data$Gender)
+
+# Only looking at profiles with 1 animal
+data = subset(data, data$Quantity == 1)
+data = subset(data, ! data$AdoptionSpeed == 4)
+
+# Only pulling the columns we want to look at
+dat = data[c('Type', 'Age', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt','VideoAmt', 'AdoptionSpeed')]
+summary(dat)
+
+# Adding random values
+dat$ASnum = NaN
+dat$ASnum[dat$AdoptionSpeed == 0] = 0
+dat$ASnum[dat$AdoptionSpeed == 1] = floor(runif(sum(dat$AdoptionSpeed == 1), 1, 8))
+dat$ASnum[dat$AdoptionSpeed == 2] = floor(runif(sum(dat$AdoptionSpeed == 2), 8, 31))
+dat$ASnum[dat$AdoptionSpeed == 3] = floor(runif(sum(dat$AdoptionSpeed == 3), 31, 91))
+#dat$ASnum[dat$AdoptionSpeed == 4] = 100 -- this line isn't necessary because we exclude animals that have this adoption speed
+
+summary(dat)
+```
+
+It's estimated as of 2016 that 44% of all households in the United States own a dog, and 35% own a cat. In 2019, around 6.3 million animals were in shelters around the country, and 4.1 million were adopted. Unfortunately, almost a million animals are euthanized in a shelter every year. While it's encouraging that this statistic is actively dropping, down from 2.6 million in 2011, it's still a sad fact of animal shelters. The creation of websites like PetFinder help shelters and foster owners get the word out about pets that they have up for adoption and are integral to placing deserving companions in loving homes. PetFinder was founded in the 1990's and as of 2011 had facilitated over 17 million adoptions, with 300,000 animals up for adoption at any given time. They pride themselves on allowing shelters to expand their reach to get animals adopted from all over. Because of the importance of websites like PetFinder to pet adoption, we wanted to look closer into the profiles of the animals on the website and see if we could determine factors that influenced adoption. We found an open source data set on Kaggle (https://www.kaggle.com/c/petfinder-adoption-prediction/data) that included almost 15,000 observations of 23 variables. Each observation is an adoption profile on PetFinder in Malaysia, a country with over 150,000 animals in it's adoption database. One of the data points included was how quickly the animal got adopted. We wanted to look into what aspects of each animal's profile impacted this adoption speed variable, in order to hopefully provide insight into how to get animals adopted quicker.
+
+We did exploratory analysis into many of the variables in the data set, and came to statistically significant conclusions about what aspects of the animals and their profile had an impact on the speed that they were adopted.
+
+# Chapter 2: Data description and cleaning
+
+Initially this dataset contained `r initialrows` observations of `r length(data)` variables with an ordinal dependent variable of `AdoptionSpeed.`
+
+We took a few initial steps to clean this dataset. First, we removed any animal profiles that had more than 1 pet (`quantity = 1`) to reduce the chance of a confounding variable. We then removed any pets that had a categorical adoption speed of 4 because that meant the animal had not been adopted. We decided to keep 8 independent variables for analysis: `Type`, `Age`, `Gender`, `MaturitySize`, `FurLength`, `Vaccinated`, `PhotoAmt`, and `VideoAmt.` The final pre-processing step that we took was to convert the dependent variable `AdoptionSpeed` to a continuous numerical variable `ASnum.` We did this by generating uniform random integers between the intervals that were specified by the dataset for each `AdoptionSpeed` bucket. The resulting dependent variable has values ranging from 0 to 90 days listed on PetFinder.
+
+Our final dataset looks like this at a glance:
+
+```{r, results='markup'}
+sumtable(dat)
+```
+
+It contains `r nrow(dat)` observations of `r length(dat)` variables, including both `AdoptionSpeed` and `ASnum`. 
+
+In order to make sense of the numbers for the variables we use the metadata from the dataset description on Kaggle to decode categorical values.
+
+AdoptionSpeed - Categorical speed of adoption. Lower is faster.\
+Type - Type of animal (1 = Dog, 2 = Cat)\
+Age - Age of pet when listed, in months\
+Gender - Gender of pet (1 = Male, 2 = Female, 3 = Mixed, if profile represents group of pets)\
+MaturitySize - Size at maturity (1 = Small, 2 = Medium, 3 = Large, 4 = Extra Large, 0 = Not Specified)\
+FurLength - Fur length (1 = Short, 2 = Medium, 3 = Long, 0 = Not Specified)\
+Vaccinated - Pet has been vaccinated (1 = Yes, 2 = No, 3 = Not Sure)\
+PhotoAmt - Total uploaded photos for this pet\
+PhotoAmt - Total uploaded videos for this pet\
+
+# Chapter 3: Independent Variables EDA
+In this chapter we will introduce some variables. One of the most important variables is ASnum, which is dependent variable.  
+
+### What is ASnum?  
+First of all, we need to see AdoptionSpeed. AdoptionSpeed means speed of adoption.  
+```{r histogram of AdoptionSpeed}
+loadPkg("ggplot2")
+#Histogram
+ggplot(data=dat, aes(AdoptionSpeed)) + 
+  geom_bar(breaks=seq(0, 4, by=1),
+                 col="red",
+                 aes(fill=..count..)) +
+  labs(title="AdoptionSpeed of pets", x = "AdoptionSpeed") + 
+  scale_fill_gradient("Count", low="green", high="red")
+
+```
+AdoptionSpeed is divided into 4 levels.   
+0 means pet was adopted on the same day as it was listed.  
+1 Pet was adopted between 1 and 7 days (1st week).  
+2 Pet was adopted between 8 and 30 days (1st month) after being listed.  
+3 Pet was adopted between 31 and 90 days (2nd & 3rd month) after being listed.  
+4 No adoption after 100 days of being listed. (we drop this level because it is not fit into our research).      
+We transformed AdoptionSpeed to numerical variable: ASnum.  
+```{r ASnum histogram}
+ggplot(data=dat, aes(dat$ASnum)) + 
+  geom_histogram(breaks=seq(0, 100, by=1),
+                 col="red",
+                 aes(fill=..count..)) +
+  labs(title="Histogram of ASnum", x="Pet adopted days") + 
+  scale_fill_gradient("Count", low="green", high="red")
+```
+
+We use `runif()` to distribute AdoptionSpeed to numerical variable. `runif()` is a function generate uniform distribution. It is very clearly that in each levels data were uniform distribution. We do this because it can reduce the impact on data analysis in the next step.  
+```{r ASnum Q-Q plot}
+#Q-Q plot
+qqnorm(dat$ASnum, main="Q-Q plot of ASnum of pets", ylab = "days",col="blue")
+qqline(dat$ASnum)
+```
+From this Q-Q plot and Histogram, we can see ASnum is right skewed distribution.  
+
+### How do the Age distribution looks like?  
+Age represents the number of months since birth when they were listed on PetFinder. It is obviously that most of the pets are young, which makes sense that their owners do not have enough energy to take care of so many baby pets after their pets give birth to puppies and kittens.  
+```{r Age}
+tmpDatAge = dat
+tmpDatAge$Age = as.numeric(dat$Age)
+
+ggplot(data=tmpDatAge, aes(Age)) + 
+  geom_histogram(breaks=seq(0, 100, by=5),
+                 col="red",
+                 aes(fill=..count..)) +
+  labs(title="Histogram of Age of pets", x="Age(in months)") + 
+  scale_fill_gradient("Count", low="green", high="red")
+#Boxplot
+ggplot(data = tmpDatAge,aes(y = Age))+
+  geom_boxplot() + 
+  geom_boxplot( colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+  labs(title="Age boxplot using `ggplot`",x="", y = "Age")
+
+#Q-Q plot
+qqnorm(tmpDatAge$Age, main="Q-Q plot of Age of pets", ylab = "Age(in months)",col="blue")
+qqline(tmpDatAge$Age)
+```
+
+### How do the PhotoAmt distribution looks like?  
+`PhotoAmt` represents number of photos included in a profile.  
+```{r PhotoAmt}
+tmpPhotoAmt = dat
+tmpPhotoAmt$PhotoAmt = as.numeric(tmpPhotoAmt$PhotoAmt)
+
+ggplot(data=tmpPhotoAmt, aes(PhotoAmt)) + 
+  geom_histogram(breaks=seq(0, 30, by=2),
+                 col="red",
+                 aes(fill=..count..)) +
+  labs(title="Histogram of PhotoAmt of pets") + 
+  scale_fill_gradient("Count", low="green", high="red")
+
+#Boxplot
+ggplot(data = tmpPhotoAmt,aes(y = PhotoAmt))+
+  geom_boxplot() + 
+  geom_boxplot( colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+  labs(title="PhotoAmt boxplot using `ggplot`",x="", y = "Number of Photoes")
+
+#Q-Q plot
+qqnorm(tmpPhotoAmt$PhotoAmt, main="Q-Q plot of PhotoAmt of pets", ylab = "PhotoAmt",col="blue")
+qqline(tmpPhotoAmt$PhotoAmt)
+```
+As we can see, most of the listed pets only have few pictures, and this data is also right skewed distribution.  
+
+### Categorical variable  
+Let's us focus on some categorical variables.  
+The first is `Type`. There are two types: `Dog` and `Cat`.    
+```{r Type}
+dog = nrow(dat[dat$Type=="1",])
+cat = nrow(dat[dat$Type=="2",])
+totalamount = dog+cat
+
+percentDog = format(dog/totalamount * 100, digits = 4)
+percentCat = format(cat/totalamount * 100, digits = 4)
+
+Prop <- c(dog,cat)
+# Prepare a color palette. Here with R color brewer:
+library(RColorBrewer)
+myPalette <- brewer.pal(5, "RdYlGn") 
+
+# You can change the border of each area with the classical parameters:
+pie(Prop , labels = c(paste("Dog: ",percentDog,"%"), paste("Cat: ",percentCat,"%")),
+    main = "Pie plot of Type of pets", border="white", col=myPalette )
+```
+The second is `Gender`. There are two genders: `Male` and `Female`.  
+```{r Gender}
+#pie plot
+male = nrow(dat[dat$Gender=="1",])
+female = nrow(dat[dat$Gender=="2",])
+percentMale = format(male/(male+female) * 100, digits = 4)
+percentFemale = format(female/(male+female) * 100, digits = 4)
+Prop <- c(male,female)
+# Prepare a color palette. Here with R color brewer:
+library(RColorBrewer)
+myPalette <- brewer.pal(3, "Pastel1") 
+
+# You can change the border of each area with the classical parameters:
+pie(Prop , labels = c(paste("Male: ", percentMale,"%"),paste("Female: ",percentFemale,"%")), main = "Pie plot of Gender", border="white", col=myPalette )
+```
+The third is `MaturitySize`. There are four levels, namely `Small`,` Medium`, `Large`, and `ExtraLarge`.    
+```{r MaturitySize}
+small = nrow(dat[dat$MaturitySize=="1",])
+medium = nrow(dat[dat$MaturitySize=="2",])
+large = nrow(dat[dat$MaturitySize=="3",])
+extraLarge = nrow(dat[dat$MaturitySize=="4",])
+totalamount = small+medium+large+extraLarge
+
+percentSmall = format(small/totalamount * 100, digits = 4)
+percentMedium = format(medium/totalamount * 100, digits = 4)
+percentLarge = format(large/totalamount * 100, digits = 4)
+percentExtraLarge = format(extraLarge/totalamount * 100, digits = 4)
+#pie plot
+Prop <- c(small,medium,large,extraLarge)
+# Prepare a color palette. Here with R color brewer:
+library(RColorBrewer)
+myPalette <- brewer.pal(8, "Spectral") 
+
+# You can change the border of each area with the classical parameters:
+pie(Prop , labels = c(paste("Small: ",percentSmall,"%"), paste("Medium: ",percentMedium,"%"), paste("Large: ",percentLarge,"%"), paste("Extra Large: ",percentExtraLarge,"%")), main = "Pie plot of MaturitySize", border="white", col=myPalette )
+
+```
+The fourth is `FurLength`. There are three levels, namely `Short`, `Medium`, and `Long`.  
+```{r FurLength}
+
+short = nrow(dat[dat$FurLength=="1",])
+medium = nrow(dat[dat$FurLength=="2",])
+long = nrow(dat[dat$FurLength=="3",])
+totalamount = short+medium+long
+
+percentShort = format(short/totalamount * 100, digits = 4)
+percentMedium = format(medium/totalamount * 100, digits = 4)
+percentLong = format(long/totalamount * 100, digits = 4)
+
+
+#pie plot
+Prop <- c(short,medium,long)
+# Prepare a color palette. Here with R color brewer:
+library(RColorBrewer)
+myPalette <- brewer.pal(3, "Set2") 
+
+# You can change the border of each area with the classical parameters:
+pie(Prop , labels = c(paste("Short: ",percentShort,"%"), paste("Medium: ",percentMedium,"%"), paste("Long: ", percentLong,"%")), main = "Pie plot of FurLength", border="white", col=myPalette )
+```
+The fifth is `Vaccinated`. There are three levels, namely `Vaccinated`, `Unvaccinated`, and `Not Specified`.    
+```{r Vaccinated}
+vaccinatedYes = nrow(dat[dat$Vaccinated=="1",])
+vaccinatedNo = nrow(dat[dat$Vaccinated=="2",])
+vaccinatedNotSure = nrow(dat[dat$Vaccinated=="3",])
+totalamount = vaccinatedYes+vaccinatedNo+vaccinatedNotSure
+
+percentVaccinatedYes = format(vaccinatedYes/totalamount * 100, digits = 4)
+percentVaccinatedNo = format(vaccinatedNo/totalamount * 100, digits = 4)
+percentVaccinatedNotSure = format(vaccinatedNotSure/totalamount * 100, digits = 4)
+
+#pie plot
+Prop <- c(vaccinatedYes,vaccinatedNo,vaccinatedNotSure)
+# Prepare a color palette. Here with R color brewer:
+library(RColorBrewer)
+myPalette <- brewer.pal(11,"Paired") 
+
+# You can change the border of each area with the classical parameters:
+pie(Prop , labels = c(paste("Vaccinated: ",percentVaccinatedYes, "%"), paste("Unvaccinated: ",percentVaccinatedNo, "%"), paste("Not Specified: ",percentVaccinatedNotSure, "%")), main = "Pie plot of Vaccinated", border="white", col=myPalette )
+```
+
+# Chapter 4: Independent Variables EDA (Variance, T-Test, ANOVA)
+
+Given all the variables we've just seen, we started asking questions about what impacted the adoption speed of individual animals on PetFinder. We started to answer this question by looking at the categorical variables we chose to isolate in our dataset. These variables are:\
+`Type`: Dogs and Cats\
+`Gender`: Male and Female\
+`Size`: Small, Medium, Large, and Extra Large\
+`Fur Length`: Short, Medium, and long\
+`Vaccinated`: Vaccinated, Unvaccinated, and Unspecified\
+
+### SMART: Do dogs get adopted faster than cats?
+
+First, we looked at animal `Type`. In order to answer this question, we split the data into two groups, dogs and cats. 
+```{r, echo = FALSE}
+library('ggplot2')
+library('lmtest')
+
+# boxplot of the animal type adoption speed
+ggplot(data = dat, aes(y = ASnum, x = Type, color = Type)) + 
+  geom_boxplot() +
+  scale_color_manual(values = wes_palette("Darjeeling1", n = 2, type = 'continuous')) +
+  geom_jitter(size=0.4, alpha=0.1) +
+  labs(title = "Adoption Speed by Animal Type", x = 'Animal Type', y = 'Adoption Speed') + 
+  scale_x_discrete(labels=c("1" = "Dog", "2" = "Cat")) + 
+  scale_fill_discrete(labels = c("Dog", "Cat")) + 
+  theme(
+      legend.position="none",
+      panel.spacing = unit(0.1, "lines"),
+      strip.text.x = element_text(size = 8)
+    )
+
+```
+
+Looking at this graph it appeared that dogs were getting adopted slower than cats. Because there were only 2 samples we decided to use a two-sample t-test to evaluate if there was a significant difference between the average adoption speed of dogs and cats. However, the first thing we had to do was a check of the homogeneity of variance. To do this we did a Breusch-Pagan (BP) test. 
+
+**H0**: The two groups have the same variance\
+**H1**: The groups have difference variances\
+
+```{r}
+# running a variance check between dogs and cats
+bp_dogscats = bptest(data = dat, formula = ASnum ~ Type)
+bp_dogscats
+```
+
+The results of this BP test was:\
+p = `r format(bp_dogscats$p.value)`\
+
+Because the p_value is less than our alpha of 0.05 we have to reject the null hypothesis that the groups have the same variance. Because of this, the two-sample t-test is not technically a valid statistical test, however we went ahead and performed the test regardless. 
+
+```{r}
+# subsetting the data
+dogs = subset(dat, dat$Type == 1) # only the dogs
+cats = subset(dat, dat$Type == 2) # only the cats
+
+
+# 2 sample t-test
+dc_t = t.test(dogs$ASnum, cats$ASnum)
+dc_t
+```
+
+The null and alternate hypothesis for this t-test are:\
+**H0**: The mean adoption speed of dogs and cats are equal\
+**H1**: The mean adoption speed of dogs and cats are different
+
+
+The p_value of the t-test was less than our alpha of 0.05 (p = `r format(dc_t$p.value)`), allowing us to reject our null hypothesis that there is no difference between the means of the two groups. Because of this we can conclude that there is a difference in adoption speed between cats and dogs.
+
+If we look at the mean estimates for the two groups:
+
+Type  | Dogs  | Cats |  
+:--|:----|:----|  
+Avg Days  | `r format(dc_t$estimate[1])`  | `r format(dc_t$estimate[2])` |  
+
+We can see that the adoption speed for dogs is higher (slower) than the mean adoption speed for cats, therefore we can conclude that dogs get adopted slower than cats, and that animal type does have an effect on adoption speed.
+
+### SMART: Do physical attributes affect adoption speed?
+
+The next question we wanted to answer was what physical attributes affect adoption speed. This question is very broad, so in order to start answering it we broke it into sub-sections. We looked at the gender of the animal, the size, the fur length, and the vaccination status. Beginning with the gender of the animal, we compared male animals to female animals to see if this had an impact on adoption speed.
+
+```{r, results='markup'}
+### GENDER
+
+# box plot of the adoption speed by gender
+ggplot(data = dat, aes(y = ASnum, x = Gender, color = Gender)) + 
+  geom_boxplot() + 
+  scale_color_manual(values = wes_palette("Darjeeling1", n = 2, type = 'continuous')) +
+  geom_jitter(size=0.4, alpha=0.1) +
+  labs(title = "Adoption Speed by Animal Gender", x = 'Animal Gender', y = 'Adoption Speed') + 
+  scale_x_discrete(labels=c("1" = "Male", "2" = "Female")) + 
+  scale_fill_discrete(labels = c("Male", "Female")) + 
+  theme(
+      legend.position="none",
+      panel.spacing = unit(0.1, "lines"),
+      strip.text.x = element_text(size = 8)
+    )
+```
+
+From this plot we can see that female animals appear to be adopted slower than male animals. Before we could make any conclusions we ran a variance check by doing a BP test.
+
+```{r}
+### GENDER
+
+# variance check for the gender
+bp_mf = bptest(data = dat, formula = ASnum ~ Gender)
+bp_mf
+```
+
+**H0**: The two groups have the same variance\
+**H1**: The groups have difference variances\
+
+Our result was:\
+p = `r format(bp_mf$p.value)`\
+
+We were able to reject the null hypothesis that the variance was equal between the groups. Again, this meant that a t-test was not appropriate, however we did a two-sample t-test regardless.
+
+```{r}
+### GENDER
+
+# subsetting the data for the t-test
+male = subset(dat, dat$Gender == 1) # only the male dogs
+female = subset(dat, dat$Gender == 2) # only the female dogs
+
+# 2 sample t-test
+mf_t = t.test(male$ASnum, female$ASnum)
+mf_t
+
+```
+
+The null and alternate hypothesis for this t-test are:\
+**H0**: The mean adoption speed of male and female animals are equal\
+**H1**: The mean adoption speed of male and female animals are different
+
+We found that this was also significant (p = `r format(mf_t$p.value)`). So we can reject the null hypothesis that the mean adoption speed between male and female animals is the same. 
+
+Looking at the estimates:
+
+Gender  | Male  | Female |  
+:--|:----|:----|  
+Avg Days  | `r format(mf_t$estimate[1])`  | `r format(mf_t$estimate[2])` |  
+
+Because the mean adoption speed of male animals was less than the mean adoption speed than female animals, we can conclude that female animals get adopted quicker than male dogs.
+
+Next we wanted to look at the size of the animals.
+
+```{r, results='markup'}
+### SIZE
+
+
+
+# box plot of adoption speed and size
+g1 = ggplot(data = dat, aes(y = ASnum, x = MaturitySize, color=MaturitySize)) + 
+  geom_boxplot() + 
+  scale_color_manual(values = wes_palette("Darjeeling1", n = 4, type = 'continuous')) +
+  geom_jitter(size=0.4, alpha=0.1) +
+  labs(title = "Adoption Speed by Maturity Size", x = 'Maturity Size', y = 'Adoption Speed') + 
+  scale_x_discrete(labels=c("1" = "Small", "2" = "Medium", "3" = "Large", "4" = "Extra Large")) + 
+  theme(
+      legend.position="none",
+      panel.spacing = unit(0.1, "lines"),
+      strip.text.x = element_text(size = 8)
+    )
+
+g2 = ggplot(dat, aes(x = ASnum, y = MaturitySize)) +
+  geom_density_ridges(scale = 1.5, alpha = 0.7, quantile_lines = TRUE, quantile_fun = function(x, ...)mean(x), aes(fill = MaturitySize)) +
+  scale_fill_manual(values = wes_palette("Darjeeling1", n = 4, type = 'continuous')) +
+  labs(title = 'Adoption Speed by Size', y = 'Maturity Size', x = 'Adoption Speed') + 
+  scale_y_discrete(labels=c("1" = "Small", "2" = "Medium", "3" = "Large", "4" = "Extra Large")) + 
+  theme(
+      legend.position="none",
+      panel.spacing = unit(0.1, "lines"),
+      strip.text.x = element_text(size = 8)
+    )
+
+grid.arrange(g1, g2, ncol = 2)   
+```
+
+We plotted both the box plot and the density plot to emphasize the similarities in the shape of the distribution. The extra large animals appear to have a different distribution than the other three sizes, however it's evident from the box-plot that there are very few data points for extra large animals. In order to determine if there are any significant differences in adoption speed we decided to run an ANOVA.
+
+Before we can run the ANOVA however, we ran a variance check.
+
+```{r}
+### SIZE
+
+# variance check for the size
+bp_size = bptest(data = dat, formula = ASnum ~ MaturitySize)
+bp_size
+```
+
+**H0**: The adoption speed variance is the same across different sizes\
+**H1**: The adoption speed variance is not the same across different sizes\
+
+Our result was:\
+p = `r format(bp_size$p.value)`\
+
+Once again, we got a significant p_value, but decided to run the ANOVA regardless.
+
+```{r}
+### SIZE
+
+# running an anova on the size
+anova_size = anova(aov(data = dat, ASnum ~ MaturitySize))
+anova_size
+
+
+# running the post-hoc analysis
+turkey_size = TukeyHSD(aov(data = dat, ASnum ~ MaturitySize))
+turkey_size
+```
+
+The null and alternate hypothesis for this ANOVA are:\
+**H0**: The mean adoption speed is the same for all sizes\
+**H1**: The mean adoption speed is not the same for all sizes
+
+We ended up with a significant p_value for the anova (p = `r format(anova_size$'Pr(>F)')`) so we could conclude that the mean adoption speed was not the same for all sizes. In order to determine what sizes varied from each other we ran a TukeyHSD post-hoc test.
+
+```{r, results = 'markup'}
+xkabledply(turkey_size$MaturitySize, title='Post Hoc Analysis of Size')
+```
+
+We found that the means between the small and medium dogs, and the medium and large dogs, were significantly different. We can therefore conclude that animal size does impact adoption speed.
+
+Next we looked at fur length.
+
+```{r, results='markup'}
+### FURLENGTH
+
+# fur length box plot
+g11 = ggplot(data = dat, aes(y = ASnum, x = FurLength, color = FurLength)) + 
+  geom_boxplot() +
+  scale_color_manual(values = wes_palette("Darjeeling1", n = 3, type = 'continuous')) +
+  geom_jitter(size=0.4, alpha=0.1) +
+  labs(title = "Adoption Speed by Fur Length", x = 'Fur Length', y = 'Adoption Speed') + 
+  scale_x_discrete(labels=c("1" = "Short", "2" = "Medium", "3" = "Long")) + 
+  scale_fill_discrete(labels = c("Short", "Medium", "Long"))+
+  theme(
+      legend.position="none",
+      panel.spacing = unit(0.1, "lines"),
+      strip.text.x = element_text(size = 8)
+    )
+
+g22 = ggplot(dat, aes(x = ASnum, y = FurLength)) +
+  geom_density_ridges(scale = 1.5, alpha = 0.7, quantile_lines = TRUE, quantile_fun = function(x, ...)mean(x), aes(fill = FurLength)) +
+  scale_fill_manual(values = wes_palette("Darjeeling1", n = 3, type = 'continuous')) +
+  labs(title = 'Adoption Speed by Size', y = 'Maturity Size', x = 'Adoption Speed') + 
+  scale_y_discrete(labels=c("1" = "Short", "2" = "Medium", "3" = "Long")) + 
+  theme(
+      legend.position="none",
+      panel.spacing = unit(0.1, "lines"),
+      strip.text.x = element_text(size = 8)
+    )
+
+grid.arrange(g11, g22, ncol = 2)   
+```
+
+Again, it's clear that there is an imbalance of sample sizes for these groups. There is a higher percentage of short haired animals and much fewer long haired animals. The density plots show the similarities in the adoption speed distributions. At first glance. it appears that the short haired animals have a higher frequency around 25 days than the other groups. To determine if these differences are significant we decided to use an ANOVA.
+
+First we ran a variance check.
+
+```{r}
+### FURLENGTH
+
+# variance check for fur length
+bp_fur = bptest(data = dat, formula = ASnum ~ FurLength)
+bp_fur
+
+```
+
+**H0**: The adoption speed variance is the same across different fur lengths\
+**H1**: The adoption speed variance is not the same across different fur lengths\
+
+Our result was:\
+p = `r format(bp_fur$p.value)`\
+
+Once again our BP test of equal variance failed. However we continued with our analysis.
+
+The null and alternate hypothesis for this ANOVA are:\
+**H0**: The mean adoption speed is the same for all fur lengths\
+**H1**: The mean adoption speed is not the same for all fur lengths\
+
+```{r, results = 'markup'}
+### FURLENGTH
+
+# anova for fur length
+anova_fur = anova(aov(data = dat, ASnum ~ FurLength))
+
+
+# post-hoc tests for fur length
+turkey_fur = TukeyHSD(aov(data = dat, ASnum ~ FurLength))
+
+```
+
+Our ANOVA did produce a significant result (p = `r format(anova_fur$'Pr(>F)'[1])`) allowing us to reject the null hypothesis that the adoption speed was the same across fur lengths. Because we got a significant result we again ran a TukeyHSD post-hoc analysis.
+
+```{r, results = 'markup'}
+xkabledply(turkey_fur$FurLength, title = 'Post Hoc Analysis of Fur Length')
+```
+
+
+We found that the difference between each of the fur length groups was significant. We're able to conclude that fur length does impact adoption speed.
+
+Finally, we looked at vaccination status.
+
+```{r, results='markup'}
+### VACCINATED
+
+# vaccination box plot
+g111 = ggplot(data = dat, aes(y = ASnum, x = Vaccinated, color = Vaccinated)) + 
+  geom_boxplot() + 
+  scale_color_manual(values = wes_palette("Darjeeling1", n = 3, type = 'continuous')) +
+  geom_jitter(size=0.4, alpha=0.1) +
+  labs(title = "Adoption Speed by Vaccination Status", x = 'Vaccination Status', y = 'Adoption Speed') + 
+  scale_x_discrete(labels=c("1" = "Vaccinated", "2" = "Unvaccinated", "3" = "Not Specified")) + 
+  scale_fill_discrete(labels = c("Vaccinated", "Unvaccinated", "Not Specified")) +
+  theme(
+      legend.position="none",
+      panel.spacing = unit(0.1, "lines"),
+      strip.text.x = element_text(size = 8)
+    )
+
+g222 = ggplot(dat, aes(x = ASnum, y = Vaccinated)) +
+  geom_density_ridges(scale = 1.5, alpha = 0.7, quantile_lines = TRUE, quantile_fun = function(x, ...)mean(x), aes(fill = Vaccinated)) +
+  scale_fill_manual(values = wes_palette("Darjeeling1", n = 3, type = 'continuous')) +
+  labs(title = 'Adoption Speed by Size', y = 'Maturity Size', x = 'Adoption Speed') + 
+  scale_y_discrete(labels = c("Vaccinated", "Unvaccinated", "Not Specified")) + 
+  theme(
+      legend.position="none",
+      panel.spacing = unit(0.1, "lines"),
+      strip.text.x = element_text(size = 8)
+    )
+
+grid.arrange(g111, g222, ncol = 2)   
+```
+
+Again the density plots are showing a very similar distribution across the different vaccination statuses. In order to evaluate if there is a difference in the mean values we decided to use an ANOVA.
+
+First we ran a variance check.
+
+```{r}
+### VACCINATED
+
+# variance check for vaccination status
+bp_vac = bptest(data = dat, formula = ASnum ~ Vaccinated)
+bp_vac
+
+```
+
+**H0**: The adoption speed variance is the same across different vaccination statuses\
+**H1**: The adoption speed variance is not the same across different vaccination statuses\
+
+Our result was:\
+p = `r format(bp_vac$p.value)`\
+
+Once again our BP test of equal variance failed. However we continued with our analysis.
+
+The null and alternate hypothesis for this ANOVA are:\
+**H0**: The mean adoption speed is the same for all vaccination statuses\
+**H1**: The mean adoption speed is not the same for all vaccination statuses\
+
+
+```{r, results='markup'}
+### VACCINATED
+# vaccination anova
+anova_vac = anova(aov(data = dat, ASnum ~ Vaccinated))
+
+
+# post-hoc analysis for vaccination
+turkey_vac = TukeyHSD(aov(data = dat, ASnum ~ Vaccinated))
+xkabledply(turkey_vac$Vaccinated, title = 'Post Hoc Analysis of Vaccination')
+```
+
+Our ANOVA did produce a significant result (p = `r format(anova_vac$'Pr(>F)'[1])`). You can see from our post-hoc analysis that the difference between the vaccinated and unvaccinated, and the unvaccinated and unspecified group was significantly different.We can conclude that vaccination status did impact the adoption speed of the animal. 
+
+
+The final conclusion from our analysis of categorical physical characteristics is that the difference in variance across the groups does not allow us to draw any meaningful conclusions. However, if we ignore that assumption for this sample of data, we are able to conclude that all the categorical physical characteristics (type, gender, size, fur length, and vaccination status) do impact adoption speed significantly.
+
+# Chapter 5: Linear Modeling
+
+### SMART: What numerical variables influence adoption speed?
+
+We will run single variable OLS regressions for the three independent numerical variables. This will enable each variable to be observed by itself, without any interference from other variables.
+
+
+First, age.
+
+```{r results='markup'}
+lm_age <- lm(ASnum ~ Age, data=dat )
+table_lm_age <- tbl_regression(lm_age, intercept=TRUE)
+table_lm_age
+```
+
+Clearly, age is statistically significant, as the p-value is below 0.05.
+
+Lets look at VideoAmt next.
+
+```{r results='markup'}
+lm_video <- lm(ASnum ~ VideoAmt, data=dat)
+table_lm_video <- tbl_regression(lm_video, intercept=TRUE)
+table_lm_video
+```
+With a p-value between 0.05 and 0.01, the statistical significance of the number of videos is questionable, and depends on the alpha value chosen for the study. 
+
+
+Finally, lets check PhotoAmt.
+
+```{r results='markup'}
+lm_photo <- lm(ASnum ~ PhotoAmt, data=dat)
+table_lm_photo <-tbl_regression(lm_photo, intercept=TRUE)
+table_lm_photo
+```
+
+
+
+Answer to SMART question 3: Age and PhotoAmt are the only two numerical variables which alone can be considered statistically significant. 
+
+### SMART: What variables, both categorical and numerical, result in the best predictave model?
+Using feature selection tools to identify best model.
+
+Starting with generating an OLS model including all the variables we are considering, then use the 4 methods available to us to find the best model.
+```{r}
+loadPkg("leaps")
+reg_model <- regsubsets(ASnum~ Age + Gender + MaturitySize + FurLength + Vaccinated + VideoAmt + PhotoAmt, data = dat, nbest = 2, method = 'exhaustive')
+reg_model_forward <- regsubsets(ASnum~ Age + Gender + MaturitySize + FurLength + Vaccinated + VideoAmt + PhotoAmt, data = dat, nbest = 2, method = 'forward')
+reg_model_backward <- regsubsets(ASnum~ Age + Gender + MaturitySize + FurLength + Vaccinated + VideoAmt + PhotoAmt, data = dat, nbest = 2, method = 'backward')
+reg_model_sequential <- regsubsets(ASnum~ Age + Gender + MaturitySize + FurLength + Vaccinated + VideoAmt + PhotoAmt, data = dat, nbest = 2, method = 'seqrep')
+```
+
+```{r results='markup'}
+plot(reg_model, scale = "adjr2", main = "Adjusted R^2 Exhaustive")
+```
+The model recommended using the exhaustive method: ASnum ~ Age + Gender 2 + MaturitySize2 + MaturitySize3 + FurLength2 + Furlength3 + Vaccinated2 + PhotoAmt.
+
+```{r results='markup'}
+plot(reg_model_forward, scale = "adjr2", main = "Adjusted R^2 Forward")
+```
+The model recommended using the Forward selection method: ASnum ~ Age + Gender 2 + MaturitySize2 + MaturitySize3 + FurLength2 + Furlength3 + Vaccinated2 + PhotoAmt.
+
+
+```{r results='markup'}
+plot(reg_model_backward, scale = "adjr2", main = "Adjusted R^2 Backward")
+```
+The model recommended using the Backward selection method: ASnum ~ Age + Gender 2 + MaturitySize2 + MaturitySize3 + FurLength2 + Furlength3 + Vaccinated2 + PhotoAmt
+
+```{r results='markup'}
+plot(reg_model_sequential, scale = "adjr2", main = "Adjusted R^2 Sequential Replacement")
+```
+
+The model recommended using the Sequential selection method: ASnum~ Gender2, MaturitySize2, FurLength2, FurLength3, Vaccinated2, PhotoAmt
+
+Summary of variables from recommended models:
+No difference in variables between exhaustive, forward, and backward selection:
+Age, Gender 2, MaturitySize2, MaturitySize3, FurLength2, Furlength3, Vaccinated2, and PhotoAmt
+
+Sequential Replacement recommended:
+Gender2, MaturitySize2, FurLength2, FurLength3, Vaccinated2, PhotoAmt
+
+The only difference between the two models is that sequential wants to drop Age, MaturitySize3, otherwise the recommendations are identical. 
+
+
+```{r results='markup'}
+dat_drop_mat_4 <- subset(dat, ! dat$MaturitySize == 4)
+dat_drop_mat_4 <- subset(dat_drop_mat_4, ! dat_drop_mat_4$Vaccinated== 3 )
+dat_drop_mat_4_3 <- subset(dat_drop_mat_4, ! dat_drop_mat_4$MaturitySize == 3)
+exh_for_back_model <- lm(ASnum~ Age + Gender + MaturitySize + FurLength + Vaccinated + PhotoAmt, data=dat_drop_mat_4)
+table_exh_for_back_model <- tbl_regression(exh_for_back_model, intercept=TRUE)
+add_vif(table_exh_for_back_model, statistic = "GVIF")
+```
+
+This model gives an adjusted $R^2$ value of 0.037.
+
+```{r results='markup'}
+sequential_model <- lm(ASnum ~ Gender + MaturitySize + FurLength + Vaccinated + PhotoAmt, data=dat_drop_mat_4_3)
+table_sequential_model <- tbl_regression(sequential_model, intercept=TRUE)
+add_vif(table_sequential_model, statistic = "GVIF")
+```
+
+This model gives an adjusted $R^2$ value of 0.0343
+
+As the exhaustive-forward-backward model has a higher $R^2$ value than the sequential model, the conclusion is that the following model is the best model, and answer to our last SMART.
+
+Best Model: 
+
+ASnum ~ Age + Gender 2 + MaturitySize2 + MaturitySize3 + FurLength2 + Furlength3 + Vaccinated2 + PhotoAmt
+
+### Thoughts on Predictive Accuracy
+
+As shown in the previous section, at best we can generate a model that accounts for less than 4% of the variation.
+
+There are two sources of variation which our variables cannot account. The first is the randomization of our dependent variable from the process of transforming our categorical variable into a numerical variable. The second is all of the data in the `description` column, which possess textual information about the pets. We are unable to extract data from this field, but it was included in this dataset, and presumably would contribute to the predictive model. 
+
+
+# Conclusion
+
+By looking through this adoption prediction dataset from PetFinder, we were able to make a few interesting conclusions about what impacts the adoption speed of pets in Malaysia. After going through all the variables at our disposal we narrowed down our dataset to only a few key features and through that we tailored our questions to be more specific. We were happy to see that many of our categorical variables had a reasonable distribution of sample sizes, with exceptions to features such as Maturity Size, which had very few animals in the Extra Large category, for example. One drawback of this dataset that we realized early on through our EDA was that most of our features were not normal and therefore failed the normality assumption for hypothesis testing. We also had to convert our ordinal dependent variable Adoption Speed to a continuous numeric variable, this conversion included random number generation, a process that has the ability to change some results from trial to trial, although we did not see this happening in our dataset. 
+
+Once we got to hypothesis testing we were able to answer some of our initial questions. By separating our features and focusing first on our categorical variables, we saw that every feature we isolated did have a significant effect on adoption speed. We saw that dogs got adopted slower than cats, male animals got adopted quicker than female animals, maturity size, fur length, and vaccination status all influenced adoption speed. By using a linear model we found that Age and Photo Amount predicted adoption speed significantly, and that a model consisting of age, gender, all but the last level of maturity size, fur length, vaccination status, and photo amount, was the most effective at predicting adoption speed.
+
+Future studies could use this framework and collect a larger sample size from more regions to determine if our results can be generalized to larger populations. It would also be beneficial if future data sets could have the adoption speed feature as the exact number of days the animal was on PetFinder, reducing any potential confounding variable of the random number generation. Text analysis of the pet description would also be interesting for additional studies as it adds in many other features that have the ability to impact adoption speed. 
+
+Pet adoption is a very big decision, and choosing the right pet is an even bigger one. By analyzing pet profiles we are confident that we were able to discern valuable features that impacted the adoption speed of pets on PetFinder in Malaysia. These results could be invaluable to placing deserving animals in loving homes all around the world, and we hope that future studies can take our results to the next level to further the effectiveness of adoption.
+
+### Categorical Variables
+
+Type of animal, gender, size, fur length, and vaccination status all impact our dependent variable of adoption speed. However, the variance of these values is not equal, so any relationship that is discovered between these variables should be considered lightly.
+
+### Linear Model
+
+Only Age and PhotoAmt, out of the numerical independent variables, have an impact on ASnum, VideoAmt is not statistically relevant.
+
+The best model: ASnum ~ Age + Gender 2 + MaturitySize2 + MaturitySize3 + FurLength2 + Furlength3 + Vaccinated2 + PhotoAmt.
+
+# Bibliography
+Staff, A. S. P. C. A. (2019). Pet statistics. ASPCA. Retrieved November 3, 2021, from https://www.aspca.org/helping-people-pets/shelter-intake-and-surrender/pet-statistics. 
+
+Babej, M. E. (2011, May 23). Petfinder.com arranges 17 million adoptions by open branding, technology. Forbes. Retrieved November 7, 2021, from https://www.forbes.com/sites/marcbabej/2011/05/10/petfinder-com-arranges-17-million-adoptions-by-open-branding-technology/?sh=184e0d8fac4b. 
