@@ -87,11 +87,7 @@ Our final dataset looks like this at a glance:
 sumtable(dat)
 ```
 
-It contains `r nrow(dat)` observations of `r length(dat)` variables, including both `AdoptionSpeed` and `ASnum`. Here is a look at the first 3 rows of the cleaned dataset. 
-
-```{r, results='markup'}
-head(dat, 3)
-```
+It contains `r nrow(dat)` observations of `r length(dat)` variables, including both `AdoptionSpeed` and `ASnum`. 
 
 In order to make sense of the numbers for the variables we use the metadata from the dataset description on Kaggle to decode categorical values.
 
