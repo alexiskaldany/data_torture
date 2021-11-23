@@ -93,12 +93,16 @@ summary(dat)
 - Creating section specific variables
 
 ```{r}
-dat$puppy[dat$age <= 6] = 1
-dat$puppy[dat$age > 6] = 0
+dat$puppy = NaN
+dat$puppy[dat$Age <= 3] = 1
+dat$puppy[dat$Age > 3] = 0
 dat$puppy = as.factor(dat$puppy)
+puppies = subset(dat, dat$puppy == 1)
+older = subset(dat, dat$puppy ==0)
+puppy_proportion = nrow(puppies) * 100/nrow(dat)
 ```
 
-
+- To answer the SMART question, let us consider the general problem. There is a categorical dependent variable, and a mixture of numerical and categorical independent variables. A Logistic Regression makes a great deal of sense in this situation. As `r puppy_proportion` percent of the pets are puppies, there is a very good balance for our dependent variable. 
 
 
 # Conclusion
