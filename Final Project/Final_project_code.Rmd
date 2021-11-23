@@ -27,7 +27,7 @@ options(scientific=T, digits = 3)
 # use scipen=999 to prevent scientific notation at all times
 ```
 
-# Chapter 1: Introduction
+- Loading data and libraries
 ```{r}
 library("corrplot")
 library("ezids")
@@ -70,3 +70,35 @@ summary(dat)
 
 summary(dat)
 ```
+
+#Kaiyuan's section
+
+
+
+
+# Yixi's section
+
+
+
+
+# Sahara's section
+
+
+
+
+# Alexis's section
+
+- SMART Question:  Can puppies/kittens be identified based on their adoption profile?
+
+- Creating section specific variables
+
+```{r}
+dat$puppy[dat$age <= 6] = 1
+dat$puppy[dat$age > 6] = 0
+dat$puppy = as.factor(dat$puppy)
+```
+
+
+
+
+# Conclusion
