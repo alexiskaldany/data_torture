@@ -1,0 +1,72 @@
+---
+title: "PetFinder Adoption Final Paper"
+author: "Group 3: Data Torturers (Alexis Kaldany, Sahara Ensley, Yixi Liang, Kaiyuan Liang)"
+date: "`r Sys.Date()`"
+output: 
+  rmdformats::robobook:
+  html_document:
+    code_folding: hide
+    number_sections: false
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+---
+
+```{r setup, include=FALSE}
+# some of common options (and the defaults) are: 
+# include=T, eval=T, echo=T, results='hide'/'asis'/'markup',..., collapse=F, warning=T, message=T, error=T, cache=T, fig.width=6, fig.height=4, fig.dim=c(6,4) #inches, fig.align='left'/'center','right', 
+library(ezids)
+# knitr::opts_chunk$set(warning = F, results = "markup", message = F)
+knitr::opts_chunk$set(warning = F, results = "hide", message = F, echo = F)
+options(scientific=T, digits = 3) 
+# options(scipen=9, digits = 3) 
+# ‘scipen’: integer. A penalty to be applied when deciding to print numeric values in fixed or exponential notation.  Positive values bias towards fixed and negative towards scientific notation: fixed notation will be preferred unless it is more than ‘scipen’ digits wider.
+# use scipen=999 to prevent scientific notation at all times
+```
+
+# Chapter 1: Introduction
+```{r}
+library("corrplot")
+library("ezids")
+library("gtsummary")
+library('ggridges')
+library('viridis')
+library('wesanderson')
+library('gridExtra')
+library('leaps')
+library('vtable')
+## Loading data
+data = read.csv('datafile.csv')
+
+initialrows = nrow(data)
+
+data$AdoptionSpeed <- factor(data$AdoptionSpeed, order=T, levels = c(0,1,2,3,4))
+
+# converting the data types we want - categorical
+data$Type = as.factor(data$Type)
+data$MaturitySize = as.factor(data$MaturitySize)
+data$FurLength = as.factor(data$FurLength)
+data$Vaccinated = as.factor(data$Vaccinated)
+data$Gender = as.factor(data$Gender)
+
+# Only looking at profiles with 1 animal
+data = subset(data, data$Quantity == 1)
+data = subset(data, ! data$AdoptionSpeed == 4)
+
+# Only pulling the columns we want to look at
+dat = data[c('Type', 'Age', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt','VideoAmt', 'AdoptionSpeed')]
+summary(dat)
+
+# Adding random values
+#dat$ASnum = NaN
+#dat$ASnum[dat$AdoptionSpeed == 0] = 0
+#dat$ASnum[dat$AdoptionSpeed == 1] = floor(runif(sum(dat$AdoptionSpeed == 1), 1, 8))
+#dat$ASnum[dat$AdoptionSpeed == 2] = floor(runif(sum(dat$AdoptionSpeed == 2), 8, 31))
+#dat$ASnum[dat$AdoptionSpeed == 3] = floor(runif(sum(dat$AdoptionSpeed == 3), 31, 91))
+#dat$ASnum[dat$AdoptionSpeed == 4] = 100 -- this line isn't necessary because we exclude animals that have this adoption speed
+
+summary(dat)
+```
