@@ -83,7 +83,55 @@ summary(dat)
 
 # Sahara's section
 
+Trying feature selection
 
+```{r}
+datclean = dat[, c('Age', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt', 'VideoAmt', 'AdoptionSpeed')]
+datclean$y = dat[, c('Type')]
+```
+
+```{r}
+loadPkg("bestglm")
+res.bestglm <- bestglm(Xy = datclean, family = binomial,
+            IC = "AIC",                 # Information criteria for
+            method = "exhaustive")
+summary(res.bestglm)
+res.bestglm$BestModels
+summary(res.bestglm$BestModels)
+unloadPkg("bestglm") 
+unloadPkg("leaps") # leaps is required by bestglm, thus cannot be unloaded before bestglm
+```
+
+so everything except video amount
+
+```{r}
+typeLogit <- glm(Type ~ Age + Gender + MaturitySize + FurLength + Vaccinated + AdoptionSpeed + PhotoAmt, data = dat, family = "binomial")
+xkabledply(typeLogit, title = paste("Logistic Regression :", format(formula(typeLogit)) ))
+```
+
+```{r}
+loadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluation
+typeHoslem = hoslem.test(dat$Type, fitted(typeLogit)) # Hosmer and Lemeshow test, a chi-squared test
+typeHoslem
+unloadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluation
+```
+
+
+```{r}
+loadPkg("pROC") # receiver operating characteristic curve, gives the diagnostic ability of a binary classifier system as its discrimination threshold is varied. The curve is on sensitivity/recall/true-positive-rate vs false_alarm/false-positive-rate/fall-out.
+prob=predict(typeLogit, type = "response" )
+dat$prob=prob
+h <- roc(Type~prob, data=dat)
+plot(h)
+auc(h)
+```
+
+```{r}
+loadPkg("pscl") # use pR2( ) function to calculate McFadden statistics for model eval
+typePR = pR2(typeLogit)
+typePR
+unloadPkg("pscl") 
+```
 
 
 # Alexis's section
