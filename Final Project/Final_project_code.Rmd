@@ -141,16 +141,28 @@ unloadPkg("pscl")
 - Creating section specific variables
 
 ```{r}
-dat$puppy = NaN
-dat$puppy[dat$Age <= 3] = 1
-dat$puppy[dat$Age > 3] = 0
-dat$puppy = as.factor(dat$puppy)
-puppies = subset(dat, dat$puppy == 1)
-older = subset(dat, dat$puppy ==0)
+datage <- dat[ ,c('Type','Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt', 'VideoAmt', 'AdoptionSpeed') ]
+datage$puppy = NaN
+datage$puppy[dat$Age <= 3] = 1
+datage$puppy[dat$Age > 3] = 0
+datage$puppy = as.factor(datage$puppy)
+puppies = subset(datage, datage$puppy == 1)
+older = subset(datage, datage$puppy ==0)
 puppy_proportion = nrow(puppies) * 100/nrow(dat)
 ```
 
-- To answer the SMART question, let us consider the general problem. There is a categorical dependent variable, and a mixture of numerical and categorical independent variables. A Logistic Regression makes a great deal of sense in this situation. As `r puppy_proportion` percent of the pets are puppies, there is a very good balance for our dependent variable. 
+- To answer the SMART question, let us consider the general problem. There is a categorical dependent variable, and a mixture of numerical and categorical independent variables. A Logistic Regression makes a great deal of sense in this situation. Potentially KNN or classification-tree model.
 
+As `r puppy_proportion` percent of the pets are puppies, there is a very good balance for our dependent variable. 
+
+## Logistic Model
+
+- Starting off with a full model, excluding Age as it would perfectly predict `r datage$puppy`
+
+```{r}
+
+```
+
+## Classification Tree
 
 # Conclusion
