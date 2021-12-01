@@ -188,7 +188,7 @@ for (kval in 3:20) {
 ResultDf[which.max(ResultDf$Total.Accuracy),]
 ```
 
-According to the KNN model with all features included, the best K value is 20 and it produces an accuracy of `r ResultDf[which.max(ResultDf$Total.Accuracy),]$Total.Accuracy`.
+According to the KNN model with all features included, the best K value is 8 and it produces an accuracy of `r ResultDf[which.max(ResultDf$Total.Accuracy),]$Total.Accuracy`.
 
 Let's try and remove some features. We removed features by logic. For example gender is something that is consistent between types and video amount was removed in the logistic model so we removed it for this test to see if it improved anything. Again we ran through 18 possible K values from 3-20.
 
@@ -228,12 +228,19 @@ ResultDf2[which.max(ResultDf2$Total.Accuracy),]
 
 ```
 
-Not quite as good as the first model so we'll stick with that one, all features and a K of 20.
+Not quite as good as the first model so we'll stick with that one, all features and a K of 8
 
 ```{r}
+tpred <- knn(train = train, test = test, cl=typeknn.trainLabel, k=8)
+cross <- CrossTable(typeknn.testLabel, tpred, prop.chisq = FALSE)
+cm = confusionMatrix(tpred, reference = as.factor(typeknn.testLabel)) # from caret library
+cmaccu = cm$overall['Accuracy']
 
+cross
+cm
 ```
 
+However, when we look closer at the predictions we can see that it just over predicted dogs. The balanced accuracy value dropped by a couple percentage points. At the end of all of this we're basically just above chance in the predictions for both models which leads us to the conclusion that the type of animal can't be predicted based on the adoption profile.
 
 # Alexis's section
 
