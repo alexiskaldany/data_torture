@@ -222,40 +222,6 @@ ResultDf2[which.max(ResultDf2$Total.Accuracy),]
 ```
 
 Not quite as good as the first model so we'll stick with that one.
-```{r}
-loadPkg("FNN")
-loadPkg("caret") # confusionMatrix
-
-# Loop thru different k values
-
-# create an empty dataframe to store the results from confusion matrices
-ResultDf = data.frame( k=numeric(0), Total.Accuracy= numeric(0), row.names = NULL )
-
-for (kval in 3:20) {
-  tpred <- knn(train = train2, test = test2, cl=typeknn2.trainLabel, k=kval)
-  cross <- CrossTable(typeknn2.testLabel, tpred, prop.chisq = FALSE)
-  print( paste("k = ", kval) )
-  cross
-  # 
-  cm = confusionMatrix(tpred, reference = as.factor(typeknn2.testLabel)) # from caret library
-  # print.confusionMatrix(cm)
-  # 
-  cmaccu = cm$overall['Accuracy']
-  print( paste("Total Accuracy = ", cmaccu ) )
-  # print("Other metrics : ")
-  # print(cm$byClass)
-  # 
-  cmt = data.frame(k=kval, Total.Accuracy = cmaccu, row.names = NULL ) # initialize a row of the metrics 
-  # cmt = cbind( cmt, data.frame( t(cm$byClass) ) ) # the dataframe of the transpose, with k valued added in front
-  ResultDf = rbind(ResultDf, cmt)
-  print( xkabledply(   as.matrix(cm), title = paste("ConfusionMatrix for k = ",kval ) ) )
-  print( xkabledply(data.frame(cm$byClass), title=paste("k = ",kval)) )
-}
-```
-```{r, results="asis"}
-xkabledply(ResultDf, "Total Accuracy Summary")
-```
-
 
 # Alexis's section
 
