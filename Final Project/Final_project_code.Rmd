@@ -38,6 +38,7 @@ library('wesanderson')
 library('gridExtra')
 library('leaps')
 library('vtable')
+
 ## Loading data
 data = read.csv('datafile.csv')
 
@@ -84,46 +85,50 @@ summary(dat)
 # Sahara's section
 # SMART QUESTION: Can the type of animal be classified from the adoption profile?
 
-Starting with Logistic Regression. Trying out feature selection first.
+Given that the type of animal is a categorical variable this is a classification problem. The first model we can try is a Logistic Regression model. First we need a new clean dataset with the features we want and a renamed target variable for the feature selection.
 
-```{r}
+```{r, results = 'markup'}
 # creating a cleaned dataset without the animal type
 datclean = dat[, c('Age', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt', 'VideoAmt', 'AdoptionSpeed')]
 
 # labeling the target variable appropriately
 datclean$y = dat[, c('Type')]
+str(datclean)
 ```
 
-```{r}
+Now we can run the feature selection.
+```{r, results='markup'}
 loadPkg("bestglm")
 
 # feature selection
 res.bestglm <- bestglm(Xy = datclean, family = binomial,
             IC = "AIC",
             method = "exhaustive")
-summary(res.bestglm) # printing the summary
+#summary(res.bestglm) # printing the summary
 res.bestglm$BestModels
-summary(res.bestglm$BestModels)
-
+#summary(res.bestglm$BestModels)
 unloadPkg("bestglm") 
 ```
 
-The best model based off this feature selection is every feature except video amount.
+The best model based off this feature selection is every feature except video amount. Now we can make that model.
 
-```{r}
+```{r, results='markup'}
 typeLogit <- glm(y ~ Age + Gender + MaturitySize + FurLength + Vaccinated + AdoptionSpeed + PhotoAmt, data = datclean, family = "binomial")
-xkabledply(typeLogit, title = paste("Logistic Regression :", format(formula(typeLogit)) ))
+xkabledply(typeLogit, title = paste("Logistic Regression : Type ~ age+gender+size+fur+vaccinated+AdoptSpd+photos"))
 ```
 
-```{r}
+There are a number of significant values for these coefficients. But let's look at other metrics to get a sense of the effectiveness of this model.
+
+```{r, results='markup'}
 loadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluation
 typeHoslem = hoslem.test(datclean$y, fitted(typeLogit)) # Hosmer and Lemeshow test, a chi-squared test
 typeHoslem
 unloadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluation
 ```
 
+The GOF value is very low which suggests that the model isn't a great fit. But we can look closer at this with an ROC plot.
 
-```{r}
+```{r, results='markup'}
 loadPkg("pROC") # receiver operating characteristic curve, gives the diagnostic ability of a binary classifier system as its discrimination threshold is varied. The curve is on sensitivity/recall/true-positive-rate vs false_alarm/false-positive-rate/fall-out.
 prob=predict(typeLogit, type = "response" )
 datclean$prob=prob
@@ -132,18 +137,18 @@ plot(h)
 auc(h)
 ```
 
-Not a great model. Only at 0.7.
+The ROC plot confirms that this is not a great model. The AUC value is `format(auc(h))`, not at our bar of 0.8. Let's check one more measure.
 
-```{r}
+```{r, results = 'markup'}
 loadPkg("pscl") # use pR2( ) function to calculate McFadden statistics for model eval
 typePR = pR2(typeLogit)
 typePR
 unloadPkg("pscl") 
 ```
 
-According to the McFadden score only `r format(round(typePR['McFadden'] * 100), 0)`% of the variance in Type is explained by this model, so incredibly low.
+According to the McFadden score only `r format(round(typePR['McFadden'] * 100), 0)`% of the variance in Type is explained by this model, this is incredibly low. Clearly the logistic regression model is not great at classifying type, or type is not decodeable from the profile.
 
-Lets try a KNN model next. First the variables need to be returned to integers to pass into the model and the numerical features need to be scaled. First I'm using all the features and running a search for the optimal K.
+Lets try a KNN model next. First the variables need to be returned to integers to pass into the model and the numerical features need to be scaled. First we're using all the features and running a search for the optimal K. The search for K went over values 3 - 20.
 
 ```{r}
 loadPkg("gmodels")
@@ -183,7 +188,9 @@ for (kval in 3:20) {
 ResultDf[which.max(ResultDf$Total.Accuracy),]
 ```
 
-Okay could be worse. Let's try and remove some features.
+According to the KNN model with all features included, the best K value is 20 and it produces an accuracy of `r ResultDf[which.max(ResultDf$Total.Accuracy),]$Total.Accuracy`.
+
+Let's try and remove some features. We removed features by logic. For example gender is something that is consistent between types and video amount was removed in the logistic model so we removed it for this test to see if it improved anything. Again we ran through 18 possible K values from 3-20.
 
 ```{r}
 
@@ -221,7 +228,12 @@ ResultDf2[which.max(ResultDf2$Total.Accuracy),]
 
 ```
 
-Not quite as good as the first model so we'll stick with that one.
+Not quite as good as the first model so we'll stick with that one, all features and a K of 20.
+
+```{r}
+
+```
+
 
 # Alexis's section
 
