@@ -82,36 +82,42 @@ summary(dat)
 
 
 # Sahara's section
+# SMART QUESTION: Can the type of animal be classified from the adoption profile?
 
-Trying feature selection
+Starting with Logistic Regression. Trying out feature selection first.
 
 ```{r}
+# creating a cleaned dataset without the animal type
 datclean = dat[, c('Age', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt', 'VideoAmt', 'AdoptionSpeed')]
+
+# labeling the target variable appropriately
 datclean$y = dat[, c('Type')]
 ```
 
 ```{r}
 loadPkg("bestglm")
+
+# feature selection
 res.bestglm <- bestglm(Xy = datclean, family = binomial,
-            IC = "AIC",                 # Information criteria for
+            IC = "AIC",
             method = "exhaustive")
-summary(res.bestglm)
+summary(res.bestglm) # printing the summary
 res.bestglm$BestModels
 summary(res.bestglm$BestModels)
+
 unloadPkg("bestglm") 
-unloadPkg("leaps") # leaps is required by bestglm, thus cannot be unloaded before bestglm
 ```
 
-so everything except video amount
+The best model based off this feature selection is every feature except video amount.
 
 ```{r}
-typeLogit <- glm(Type ~ Age + Gender + MaturitySize + FurLength + Vaccinated + AdoptionSpeed + PhotoAmt, data = dat, family = "binomial")
+typeLogit <- glm(y ~ Age + Gender + MaturitySize + FurLength + Vaccinated + AdoptionSpeed + PhotoAmt, data = datclean, family = "binomial")
 xkabledply(typeLogit, title = paste("Logistic Regression :", format(formula(typeLogit)) ))
 ```
 
 ```{r}
 loadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluation
-typeHoslem = hoslem.test(dat$Type, fitted(typeLogit)) # Hosmer and Lemeshow test, a chi-squared test
+typeHoslem = hoslem.test(datclean$y, fitted(typeLogit)) # Hosmer and Lemeshow test, a chi-squared test
 typeHoslem
 unloadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluation
 ```
@@ -120,11 +126,13 @@ unloadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluat
 ```{r}
 loadPkg("pROC") # receiver operating characteristic curve, gives the diagnostic ability of a binary classifier system as its discrimination threshold is varied. The curve is on sensitivity/recall/true-positive-rate vs false_alarm/false-positive-rate/fall-out.
 prob=predict(typeLogit, type = "response" )
-dat$prob=prob
-h <- roc(Type~prob, data=dat)
+datclean$prob=prob
+h <- roc(y~prob, data=datclean)
 plot(h)
 auc(h)
 ```
+
+Not a great model. Only at 0.7.
 
 ```{r}
 loadPkg("pscl") # use pR2( ) function to calculate McFadden statistics for model eval
@@ -133,6 +141,68 @@ typePR
 unloadPkg("pscl") 
 ```
 
+According to the McFadden score only `r format(round(typePR['McFadden'] * 100), 0)`% of the variance in Type is explained by this model, so incredibly low.
+
+Lets try a KNN model next. First the variables need to be returned to integers to pass into the model and the numerical features need to be scaled.
+
+```{r}
+loadPkg("gmodels")
+
+# reloading the original dataframe to cancel all the factor variables
+knndat = read.csv('datafile.csv')
+knndat = subset(knndat, knndat$Quantity == 1)
+knndat = subset(knndat, ! knndat$AdoptionSpeed == 4)
+
+knndat = knndat[c('Type', 'Age', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt','VideoAmt', 'AdoptionSpeed')]
+
+scaledknn = as.data.frame(scale(knndat[c(2, 7, 8)], center = TRUE, scale = TRUE)) # only scaling the numerical values
+scaledknn[c('Type', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'AdoptionSpeed')] = knndat[c(1, 3, 4, 5, 6, 9)]
+
+#sampling for train and test
+set.seed(1000)
+knn_sample <- sample(2, nrow(scaledknn), replace=TRUE, prob=c(0.7, 0.3))
+
+train <- scaledknn[knn_sample==1, 1:3, 5:9]
+test <- scaledknn[knn_sample==2, 1:3, 5:9]
+
+typeknn.trainLabel = scaledknn[knn_sample==1, 4]
+typeknn.testLabel = scaledknn[knn_sample==2, 4]
+
+
+type_pred <- knn(train = train, test = test, cl=typeknn.trainLabel, k=7)
+
+typepredcross <- CrossTable(typeknn.testLabel, type_pred, prop.chisq = FALSE)
+```
+
+Okay still not very good. Let's try and remove some features.
+
+```{r}
+
+knndat2 = read.csv('datafile.csv')
+knndat2 = subset(knndat2, knndat2$Quantity == 1)
+knndat2 = subset(knndat2, ! knndat2$AdoptionSpeed == 4)
+knndat2 = knndat2[c('Type', 'Age', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt', 'AdoptionSpeed')]
+
+scaledknn2 = as.data.frame(scale(knndat2[c(2, 6)], center = TRUE, scale = TRUE)) # only scaling the numerical values
+scaledknn2[c('Type', 'MaturitySize', 'FurLength', 'Vaccinated', 'AdoptionSpeed')] = knndat2[c(1, 3, 4, 5, 7)]
+
+#sampling for train and test
+set.seed(1000)
+knn_sample2 <- sample(2, nrow(scaledknn2), replace=TRUE, prob=c(0.7, 0.3))
+
+train2 <- scaledknn2[knn_sample2==1, 1:2, 4:7]
+test2 <- scaledknn2[knn_sample2==2, 1:2, 4:7]
+
+typeknn2.trainLabel = scaledknn2[knn_sample2==1, 3]
+typeknn2.testLabel = scaledknn2[knn_sample2==2, 3]
+
+
+type_pred2 <- knn(train = train2, test = test2, cl=typeknn2.trainLabel, k=7)
+
+typepredcross2 <- CrossTable(typeknn2.testLabel, type_pred2, prop.chisq = FALSE)
+```
+
+Much better! Let's try to change K
 
 # Alexis's section
 
