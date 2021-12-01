@@ -160,7 +160,14 @@ As `r puppy_proportion` percent of the pets are puppies, there is a very good ba
 - Starting off with a full model, excluding Age as it would perfectly predict `r datage$puppy`
 
 ```{r}
-
+loadPkg("bestglm")
+loadPkg("leaps")
+datage$y <- datage$puppy
+datage <- na.omit(datage)
+logit_pups <- bestglm(Xy = datage, family = binomial, IC = "AIC", method = "exhaustive")
+summary(logit_pups)
+logit_pups$BestModels
+summary(logit_pups$BestModels)
 ```
 
 ## Classification Tree
