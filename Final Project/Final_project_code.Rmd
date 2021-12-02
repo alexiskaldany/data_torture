@@ -38,6 +38,7 @@ library('wesanderson')
 library('gridExtra')
 library('leaps')
 library('vtable')
+library('pscl')  
 
 ## Loading data
 data = read.csv('datafile.csv')
@@ -243,11 +244,7 @@ cm
 However, when we look closer at the predictions we can see that it just over predicted dogs. The balanced accuracy value dropped by a couple percentage points. At the end of all of this we're basically just above chance in the predictions for both models which leads us to the conclusion that the type of animal can't be predicted based on the adoption profile.
 
 # Alexis's section
-
-- SMART Question:  Can puppies/kittens be identified based on their adoption profile?
-
-- Creating section specific variables
-
+# SMART Question:  Can puppies/kittens be identified based on their adoption profile?
 ```{r}
 datage <- dat[ ,c('Type','Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt', 'VideoAmt', 'AdoptionSpeed') ]
 datage$puppy = NaN
@@ -267,17 +264,76 @@ As `r puppy_proportion` percent of the pets are puppies, there is a very good ba
 
 - Starting off with a full model, excluding Age as it would perfectly predict `r datage$puppy`
 
-```{r}
+```{r results='markup'}
 loadPkg("bestglm")
 loadPkg("leaps")
+
 datage$y <- datage$puppy
+datage <- datage[, c('Type', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt', 'VideoAmt', 'AdoptionSpeed', 'y')]
 datage <- na.omit(datage)
+# using bestglm as it has feature selection built in
+
 logit_pups <- bestglm(Xy = datage, family = binomial, IC = "AIC", method = "exhaustive")
 summary(logit_pups)
+unloadPkg("bestglm") 
+```
+
+
+Summary of Logistic Model Feature Selection
+```{r results='markup'}
 logit_pups$BestModels
 summary(logit_pups$BestModels)
 ```
 
+Feature Selection indicates everything except PhotoAmt should be used to generate best logistic model.
+
+Creating Best Logistic Model
+```{r results='markup'}
+pup_logit <- glm(y ~ Type + Gender + MaturitySize + FurLength + Vaccinated + VideoAmt + AdoptionSpeed, data = datage, family = "binomial")
+xkabledply(pup_logit, title = paste("Logistic Regression : Puppy ~ type +gender+size+fur+vaccinated+AdoptSpd+videos"))
+```
+
+Checking Model Effectiveness
+```{r}
+loadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluation
+ageHoslem = hoslem.test(datage$y, fitted(pup_logit)) # Hosmer and Lemeshow test, a chi-squared test
+ageHoslem
+unloadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluation
+```
+
+[add analysis]
+
+```{r results='markup'}
+loadPkg("pROC")
+prob=predict(pup_logit, type = "response" )
+datage$prob=prob
+h <- roc(y~prob, data=datage)
+plot(h)
+auc(h)
+```
+
+[add analysis]
+
 ## Classification Tree
+
+```{r}
+loadPkg("rpart")
+datage <- datage[, c('Type', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt', 'VideoAmt', 'AdoptionSpeed', 'y')]
+puppy_tree <- rpart(y ~ .,data = datage, method="class", control = list(maxdepth = 4))
+```
+
+```{r results='markup'}
+printcp(puppy_tree) # display the results 
+plotcp(puppy_tree) # visualize cross-validation results 
+summary(puppy_tree) # detailed summary of splits
+```
+
+Plot Tree
+
+```{r}
+plot(puppy_tree, uniform=TRUE, main="Classification Tree for Puppy")
+text(puppy_tree, use.n=TRUE, all=TRUE, cex=.8)
+```
+
 
 # Conclusion
