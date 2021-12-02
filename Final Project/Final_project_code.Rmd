@@ -293,6 +293,24 @@ pup_logit <- glm(y ~ Type + Gender + MaturitySize + FurLength + Vaccinated + Vid
 xkabledply(pup_logit, title = paste("Logistic Regression : Puppy ~ type +gender+size+fur+vaccinated+AdoptSpd+videos"))
 ```
 
+Confusion Matrix for Logistic Model:
+
+```{r}
+loadPkg("regclass")
+xkabledply( confusion_matrix(pup_logit), title = "Confusion matrix from Logit Model" )
+```
+
+```{r results='markup'}
+#loadPkg("caret") 
+#cm_puppy_logi = confusionMatrix(pup_logit, type = "class", reference = datage$y )
+#print('Overall: ')
+#cm_puppy_logi$overall
+#print('Class: ')
+#cm_puppy_logi$byClass
+#unloadPkg("caret")
+```
+
+
 Checking Model Effectiveness
 ```{r}
 loadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluation
@@ -319,20 +337,42 @@ auc(h)
 ```{r}
 loadPkg("rpart")
 datage <- datage[, c('Type', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt', 'VideoAmt', 'AdoptionSpeed', 'y')]
-puppy_tree <- rpart(y ~ .,data = datage, method="class", control = list(maxdepth = 4))
+puppy_tree <- rpart(y ~ Type + Gender + MaturitySize + FurLength + Vaccinated + PhotoAmt + VideoAmt + AdoptionSpeed ,data = datage, method="class", control = list(maxdepth = 20))
+puppy_tree_vac_adopt <- rpart(y ~ Vaccinated+ AdoptionSpeed ,data = datage, method="class", control = list(maxdepth = 20))
 ```
 
 ```{r results='markup'}
-printcp(puppy_tree) # display the results 
-plotcp(puppy_tree) # visualize cross-validation results 
-summary(puppy_tree) # detailed summary of splits
+#printcp(puppy_tree) # display the results 
+printcp(puppy_tree_vac_adopt)
 ```
+
+```{r results='markup'}
+plotcp(puppy_tree) # visualize cross-validation results 
+```
+
+```{r results='markup'}
+summary(puppy_tree) # detailed summary of splits
+#summary(puppy_tree_vac_adopt)
+```
+
+Confusion Matrix for Classification Tree
+
+```{r}
+loadPkg("caret") 
+cm_puppy_tree = confusionMatrix( predict(puppy_tree, type = "class"), reference = datage$y )
+print('Overall: ')
+cm_puppy_tree$overall
+print('Class: ')
+cm_puppy_tree$byClass
+unloadPkg("caret")
+```
+
 
 Plot Tree
 
 ```{r}
 plot(puppy_tree, uniform=TRUE, main="Classification Tree for Puppy")
-text(puppy_tree, use.n=TRUE, all=TRUE, cex=.8)
+text(puppy_tree, use.n=TRUE, all=TRUE, cex=.8) # Kind of a useless graph!!!
 ```
 
 
