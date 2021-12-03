@@ -342,7 +342,7 @@ unloadPkg("bestglm")
 unloadPkg("leaps") # leaps is required by bestglm, thus cannot be unloaded before bestglm
 
 ```
-```
+
 ```{r}
 loadPkg("bestglm")
 res.bestglm <- bestglm(Xy = dataTGMFV, family = binomial,
