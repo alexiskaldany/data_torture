@@ -235,7 +235,47 @@ myPalette <- brewer.pal(11,"Paired")
 pie(Prop , labels = c(paste("Vaccinated: ",percentVaccinatedYes, "%"), paste("Unvaccinated: ",percentVaccinatedNo, "%"), paste("Not Specified: ",percentVaccinatedNotSure, "%")), main = "Pie plot of Vaccinated", border="white", col=myPalette )
 ```
 
-After this we did some EDA to see what features affected adoption speed.
+After this we did some EDA to see what features affected adoption speed. We initially had a numerical dependent variable so we converted it to a continuous numerical feature. We then ran ANOVAs on a number of the features against the now numerical adoption speed. We discovered that if we disregarded the asumption of equal variance, every feature significantly impacted adoption speed. 
+
+```{r}
+numericaldat = dat
+
+numericaldat$ASnum = NaN
+numericaldat$ASnum[numericaldat$AdoptionSpeed == 0] = 0
+numericaldat$ASnum[numericaldat$AdoptionSpeed == 1] = floor(runif(sum(numericaldat$AdoptionSpeed == 1), 1, 8))
+numericaldat$ASnum[numericaldat$AdoptionSpeed == 2] = floor(runif(sum(numericaldat$AdoptionSpeed == 2), 8, 31))
+numericaldat$ASnum[numericaldat$AdoptionSpeed == 3] = floor(runif(sum(numericaldat$AdoptionSpeed == 3), 31, 91))
+
+
+dogs = subset(numericaldat, numericaldat$Type == 1) # only the dogs
+cats = subset(numericaldat, numericaldat$Type == 2) # only the cats
+
+
+# 2 sample t-test
+dc_t = t.test(dogs$ASnum, cats$ASnum)
+dc_t
+
+male = subset(numericaldat, numericaldat$Gender == 1) # only the male dogs
+female = subset(numericaldat, numericaldat$Gender == 2) # only the female dogs
+
+# 2 sample t-test
+mf_t = t.test(male$ASnum, female$ASnum)
+mf_t
+
+# anova on size
+anova_size = anova(aov(data = numericaldat, ASnum ~ MaturitySize))
+anova_size
+
+# anova for fur length
+anova_fur = anova(aov(data = numericaldat, ASnum ~ FurLength))
+anova_fur
+
+# vaccination anova
+anova_vac = anova(aov(data = numericaldat, ASnum ~ Vaccinated))
+anova_vac
+```
+
+
 
 #Kaiyuan's section
 #SMART QUESTION:What is the probability that a large, female, vaccinated dog would get adopted quickly (adoption speed of 1 or 2). 
