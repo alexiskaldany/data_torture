@@ -428,6 +428,7 @@ The best model based off this feature selection is every feature except video am
 ```{r, results='markup'}
 typeLogit <- glm(y ~ Age + Gender + MaturitySize + FurLength + Vaccinated + AdoptionSpeed + PhotoAmt, data = datclean, family = "binomial")
 xkabledply(typeLogit, title = paste("Logistic Regression : Type ~ age+gender+size+fur+vaccinated+AdoptSpd+photos"))
+summary(typeLogit)
 ```
 
 There are a number of significant values for these coefficients. But let's look at other metrics to get a sense of the effectiveness of this model.
@@ -542,6 +543,7 @@ ResultDf2[which.max(ResultDf2$Total.Accuracy),]
 ```
 
 Not quite as good as the first model so we'll stick with that one, all features and a K of 8
+
 
 ```{r}
 tpred <- knn(train = train, test = test, cl=typeknn.trainLabel, k=8)
