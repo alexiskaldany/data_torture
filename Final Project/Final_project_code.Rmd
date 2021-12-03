@@ -235,9 +235,22 @@ myPalette <- brewer.pal(11,"Paired")
 pie(Prop , labels = c(paste("Vaccinated: ",percentVaccinatedYes, "%"), paste("Unvaccinated: ",percentVaccinatedNo, "%"), paste("Not Specified: ",percentVaccinatedNotSure, "%")), main = "Pie plot of Vaccinated", border="white", col=myPalette )
 ```
 
-After this we did some EDA to see what features affected adoption speed.
+After this we did4 some EDA to see what features affected adoption speed.
 
 #Kaiyuan's section
+#SMART QUESTION:What is the probability that a large, female, vaccinated dog would get adopted quickly (adoption speed of 1 or 2). 
+```{r}
+logit <- glm(data$AdoptionSpeed ~ data$Type + data$MaturitySize+ data$Vaccinated + data$Gender, data = data, family = "binomial")
+```
+```{r}
+xkabledply(logit, title = paste("Logistic Regression :", format(formula(logit)) ))
+```
+```{r}
+pdt<-data.frame(Type=1,MaturitySize=3,Gender=2,Vaccinated=1)
+predict_female <- predict(logit,pdt,typle="response")
+predict_female
+```
+
 
 
 
