@@ -73,15 +73,287 @@ summary(dat)
 summary(dat)
 ```
 
+# Background EDA
+
+We're using the same dataset as from the midterm assignment. The data comes from Kaggle (https://www.kaggle.com/c/petfinder-adoption-prediction/data) and includs almost 15,000 observations of 23 variables. Each observation is an adoption profile on PetFinder in Malaysia. We chose to keep `r length(dat)` features, as well as discarding any profile that contained more than one animal, and any animal that did not get adopted in the first 100 days. At the end of these cleaning measures we end up with `r nrow(dat)` observations of the `r length(dat)` features. Initially we transformed the categorical dependent variable (adoption speed) into a continuous numerical variable. For the sake of this project we are keeping it as a categorical variable for some of our analyses.
+
+As a refresher on the basic features of the dataset we can look at the distribution of the various variables.
+
+First here is our dependent variable Adoption Speed, plotted by number of occurences since it is categorical.
+```{r histogram of AdoptionSpeed}
+loadPkg("ggplot2")
+#Histogram
+ggplot(data=dat, aes(AdoptionSpeed)) + 
+  geom_bar(breaks=seq(0, 4, by=1),
+                 col="red",
+                 aes(fill=..count..)) +
+  labs(title="AdoptionSpeed of pets", x = "AdoptionSpeed") + 
+  scale_fill_gradient("Count", low="green", high="red")
+
+```
+
+We can also look at the other numerical features.
+```{r Age}
+tmpDatAge = dat
+tmpDatAge$Age = as.numeric(dat$Age)
+
+ggplot(data=tmpDatAge, aes(Age)) + 
+  geom_histogram(breaks=seq(0, 100, by=5),
+                 col="red",
+                 aes(fill=..count..)) +
+  labs(title="Histogram of Age of pets", x="Age(in months)") + 
+  scale_fill_gradient("Count", low="green", high="red")
+#Boxplot
+ggplot(data = tmpDatAge,aes(y = Age))+
+  geom_boxplot() + 
+  geom_boxplot( colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+  labs(title="Age boxplot using `ggplot`",x="", y = "Age")
+
+#Q-Q plot
+qqnorm(tmpDatAge$Age, main="Q-Q plot of Age of pets", ylab = "Age(in months)",col="blue")
+qqline(tmpDatAge$Age)
+```
+
+```{r PhotoAmt}
+tmpPhotoAmt = dat
+tmpPhotoAmt$PhotoAmt = as.numeric(tmpPhotoAmt$PhotoAmt)
+
+ggplot(data=tmpPhotoAmt, aes(PhotoAmt)) + 
+  geom_histogram(breaks=seq(0, 30, by=2),
+                 col="red",
+                 aes(fill=..count..)) +
+  labs(title="Histogram of PhotoAmt of pets") + 
+  scale_fill_gradient("Count", low="green", high="red")
+
+#Boxplot
+ggplot(data = tmpPhotoAmt,aes(y = PhotoAmt))+
+  geom_boxplot() + 
+  geom_boxplot( colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+  labs(title="PhotoAmt boxplot using `ggplot`",x="", y = "Number of Photoes")
+
+#Q-Q plot
+qqnorm(tmpPhotoAmt$PhotoAmt, main="Q-Q plot of PhotoAmt of pets", ylab = "PhotoAmt",col="blue")
+qqline(tmpPhotoAmt$PhotoAmt)
+```
+
+Next we can see the distributions of the categorical variables.
+
+```{r Type}
+dog = nrow(dat[dat$Type=="1",])
+cat = nrow(dat[dat$Type=="2",])
+totalamount = dog+cat
+
+percentDog = format(dog/totalamount * 100, digits = 4)
+percentCat = format(cat/totalamount * 100, digits = 4)
+
+Prop <- c(dog,cat)
+# Prepare a color palette. Here with R color brewer:
+library(RColorBrewer)
+myPalette <- brewer.pal(5, "RdYlGn") 
+
+# You can change the border of each area with the classical parameters:
+pie(Prop , labels = c(paste("Dog: ",percentDog,"%"), paste("Cat: ",percentCat,"%")),
+    main = "Pie plot of Type of pets", border="white", col=myPalette )
+```
+The second is `Gender`. There are two genders: `Male` and `Female`.  
+```{r Gender}
+#pie plot
+male = nrow(dat[dat$Gender=="1",])
+female = nrow(dat[dat$Gender=="2",])
+percentMale = format(male/(male+female) * 100, digits = 4)
+percentFemale = format(female/(male+female) * 100, digits = 4)
+Prop <- c(male,female)
+# Prepare a color palette. Here with R color brewer:
+library(RColorBrewer)
+myPalette <- brewer.pal(3, "Pastel1") 
+
+# You can change the border of each area with the classical parameters:
+pie(Prop , labels = c(paste("Male: ", percentMale,"%"),paste("Female: ",percentFemale,"%")), main = "Pie plot of Gender", border="white", col=myPalette )
+```
+The third is `MaturitySize`. There are four levels, namely `Small`,` Medium`, `Large`, and `ExtraLarge`.    
+```{r MaturitySize}
+small = nrow(dat[dat$MaturitySize=="1",])
+medium = nrow(dat[dat$MaturitySize=="2",])
+large = nrow(dat[dat$MaturitySize=="3",])
+extraLarge = nrow(dat[dat$MaturitySize=="4",])
+totalamount = small+medium+large+extraLarge
+
+percentSmall = format(small/totalamount * 100, digits = 4)
+percentMedium = format(medium/totalamount * 100, digits = 4)
+percentLarge = format(large/totalamount * 100, digits = 4)
+percentExtraLarge = format(extraLarge/totalamount * 100, digits = 4)
+#pie plot
+Prop <- c(small,medium,large,extraLarge)
+# Prepare a color palette. Here with R color brewer:
+library(RColorBrewer)
+myPalette <- brewer.pal(8, "Spectral") 
+
+# You can change the border of each area with the classical parameters:
+pie(Prop , labels = c(paste("Small: ",percentSmall,"%"), paste("Medium: ",percentMedium,"%"), paste("Large: ",percentLarge,"%"), paste("Extra Large: ",percentExtraLarge,"%")), main = "Pie plot of MaturitySize", border="white", col=myPalette )
+
+```
+The fourth is `FurLength`. There are three levels, namely `Short`, `Medium`, and `Long`.  
+```{r FurLength}
+
+short = nrow(dat[dat$FurLength=="1",])
+medium = nrow(dat[dat$FurLength=="2",])
+long = nrow(dat[dat$FurLength=="3",])
+totalamount = short+medium+long
+
+percentShort = format(short/totalamount * 100, digits = 4)
+percentMedium = format(medium/totalamount * 100, digits = 4)
+percentLong = format(long/totalamount * 100, digits = 4)
+
+
+#pie plot
+Prop <- c(short,medium,long)
+# Prepare a color palette. Here with R color brewer:
+library(RColorBrewer)
+myPalette <- brewer.pal(3, "Set2") 
+
+# You can change the border of each area with the classical parameters:
+pie(Prop , labels = c(paste("Short: ",percentShort,"%"), paste("Medium: ",percentMedium,"%"), paste("Long: ", percentLong,"%")), main = "Pie plot of FurLength", border="white", col=myPalette )
+```
+The fifth is `Vaccinated`. There are three levels, namely `Vaccinated`, `Unvaccinated`, and `Not Specified`.    
+```{r Vaccinated}
+vaccinatedYes = nrow(dat[dat$Vaccinated=="1",])
+vaccinatedNo = nrow(dat[dat$Vaccinated=="2",])
+vaccinatedNotSure = nrow(dat[dat$Vaccinated=="3",])
+totalamount = vaccinatedYes+vaccinatedNo+vaccinatedNotSure
+
+percentVaccinatedYes = format(vaccinatedYes/totalamount * 100, digits = 4)
+percentVaccinatedNo = format(vaccinatedNo/totalamount * 100, digits = 4)
+percentVaccinatedNotSure = format(vaccinatedNotSure/totalamount * 100, digits = 4)
+
+#pie plot
+Prop <- c(vaccinatedYes,vaccinatedNo,vaccinatedNotSure)
+# Prepare a color palette. Here with R color brewer:
+library(RColorBrewer)
+myPalette <- brewer.pal(11,"Paired") 
+
+# You can change the border of each area with the classical parameters:
+pie(Prop , labels = c(paste("Vaccinated: ",percentVaccinatedYes, "%"), paste("Unvaccinated: ",percentVaccinatedNo, "%"), paste("Not Specified: ",percentVaccinatedNotSure, "%")), main = "Pie plot of Vaccinated", border="white", col=myPalette )
+```
+
+After this we did some EDA to see what features affected adoption speed.
+
 #Kaiyuan's section
-
-
+#SMART QUESTION:What is the probability that a large, female, vaccinated dog would get adopted quickly (adoption speed of 1 or 2). 
+```{r}
+logit <- glm(data$AdoptionSpeed ~ data$Type + data$MaturitySize+ data$Vaccinated + data$Gender, data = data, family = "binomial")
+```
+```{r}
+xkabledply(logit, title = paste("Logistic Regression :", format(formula(logit)) ))
+```
+```{r}
+pdt<-data.frame(Type=1,MaturitySize=3,Gender=2,Vaccinated=1)
+predict_female <- predict(logit,pdt,typle="response")
+predict_female
+```
 
 
 # Yixi's section
+# SMART QUESTION: Does animal Type, Gender, MaturitySize, FurLength, and Vaccination status influence the adoption speed significantly, and what is the best model (Logistic Regression, Knn) when considering these variables?
+```{r}
+dataTGMFV = dat[, c('Age','Type','Gender','MaturitySize','FurLength','Vaccinated','AdoptionSpeed')]
+dataTGMFV$AdoptionSpeed[dat$AdoptionSpeed == 0|dat$AdoptionSpeed == 1|dat$AdoptionSpeed == 2] = 0
+dataTGMFV$AdoptionSpeed[dat$AdoptionSpeed == 3|dat$AdoptionSpeed == 4 ] = 1
+dataTGMFV$AdoptionSpeed = factor(dataTGMFV$AdoptionSpeed, levels = c(0,1))
+str(dataTGMFV)
+```
+
+### Exhaustive search  
+
+```{r}
+loadPkg("leaps")
+#This is essentially best fit 
+reg.best10 <- regsubsets(AdoptionSpeed~. , data = dataTGMFV, nvmax = 10, nbest = 1, method = "exhaustive")  # leaps::regsubsets() - Model selection by exhaustive (default) search, forward or backward stepwise, or sequential replacement
+#The plot will show the Adjust R^2 when using the variables across the bottom
+plot(reg.best10, scale = "adjr2", main = "Adjusted R^2")
+plot(reg.best10, scale = "r2", main = "R^2")
+# In the "leaps" package, we can use scale=c("bic","Cp","adjr2","r2")
+plot(reg.best10, scale = "bic", main = "BIC")
+plot(reg.best10, scale = "Cp", main = "Cp")
+summary(reg.best10)
+```
 
 
+```{r}
 
+
+# petFeaturetable1 = glm(AdoptionSpeed ~ Age+Type+Gender+MaturitySize+FurLength+Vaccinated, data = dataTGMFV, family = "binomial")
+petFeaturetableAll = glm(AdoptionSpeed ~Type+Gender+Vaccinated, data = dataTGMFV, family = "binomial")
+petFeaturetableR2 = glm(AdoptionSpeed ~ Age+Type+Gender+MaturitySize+FurLength+Vaccinated, data = dataTGMFV, family = "binomial")
+petFeaturetable = glm(AdoptionSpeed ~Vaccinated, data = dataTGMFV, family = "binomial")
+summary(petFeaturetableAll)
+
+
+```
+```{r, results='markup'}
+loadPkg("regclass")
+loadPkg("ModelMetrics")
+# xkabledply( confusion_matrix(petFeaturetableAll), title = "Confusion matrix from Logit Model" )
+
+pred_ = as.factor(ifelse(predict(petFeaturetableAll, dataTGMFV, type="response")>0.4,"1","0"))
+unloadPkg("regclass")
+confusionMatrix( pred_, as.factor(dataTGMFV$AdoptionSpeed))
+
+```
+
+
+```{r}
+loadPkg("pROC") # receiver operating characteristic curve, gives the diagnostic ability of a binary classifier system as its discrimination threshold is varied. The curve is on sensitivity/recall/true-positive-rate vs false_alarm/false-positive-rate/fall-out.
+prob=predict(petFeaturetableAll, type = "response" )
+dataTGMFV$prob=prob
+h <- roc(AdoptionSpeed~prob, data=dataTGMFV)
+plot(h)
+auc(h)
+
+# summary(multinom(AdoptionSpeed ~ Age+Type+Gender+MaturitySize+FurLength+Vaccinated, data=VA))
+
+# dataAov = glm(AdoptionSpeed ~ Type+Gender+MaturitySize+FurLength+Vaccinated , data = dataTGMFV)
+# summary(dataAov)
+```
+```{r}
+featureClean = dat[ , c('Age','Type','Gender','MaturitySize','FurLength','Vaccinated')]
+featureClean$y = dataTGMFV$AdoptionSpeed # copy Holiday column and call it 'y'
+#convert some columns into factos as appropriate
+
+featureClean$y <- ifelse(featureClean$y == 1,TRUE,FALSE)
+featureClean$y = factor(featureClean$y)
+str(featureClean)
+```
+```{r}
+loadPkg("leaps")
+reg.leaps <- regsubsets(y~., data = featureClean, nbest = 1, method = "exhaustive")  # leaps, 
+plot(reg.leaps, scale = "adjr2", main = "Adjusted R^2")
+plot(reg.leaps, scale = "bic", main = "BIC")
+plot(reg.leaps, scale = "Cp", main = "Cp")
+```
+```{r}
+loadPkg("bestglm")
+res.bestglm <- bestglm(Xy = featureClean, family = binomial,
+            IC = "AIC",                 # Information criteria for
+            method = "exhaustive")
+summary(res.bestglm)
+res.bestglm$BestModels
+summary(res.bestglm$BestModels)
+unloadPkg("bestglm") 
+unloadPkg("leaps") # leaps is required by bestglm, thus cannot be unloaded before bestglm
+
+```
+
+```{r}
+loadPkg("bestglm")
+res.bestglm <- bestglm(Xy = dataTGMFV, family = binomial,
+            IC = "AIC",                 # Information criteria for
+            method = "exhaustive")
+summary(res.bestglm)
+res.bestglm$BestModels
+summary(res.bestglm$BestModels)
+unloadPkg("bestglm") 
+unloadPkg("leaps") # leaps is required by bestglm, thus cannot be unloaded before bestglm
+```
 
 # Sahara's section
 # SMART QUESTION: Can the type of animal be classified from the adoption profile?
