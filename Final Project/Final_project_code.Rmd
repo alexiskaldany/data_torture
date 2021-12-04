@@ -235,47 +235,7 @@ myPalette <- brewer.pal(11,"Paired")
 pie(Prop , labels = c(paste("Vaccinated: ",percentVaccinatedYes, "%"), paste("Unvaccinated: ",percentVaccinatedNo, "%"), paste("Not Specified: ",percentVaccinatedNotSure, "%")), main = "Pie plot of Vaccinated", border="white", col=myPalette )
 ```
 
-After this we did some EDA to see what features affected adoption speed. We initially had a numerical dependent variable so we converted it to a continuous numerical feature. We then ran ANOVAs on a number of the features against the now numerical adoption speed. We discovered that if we disregarded the asumption of equal variance, every feature significantly impacted adoption speed. 
-
-```{r}
-numericaldat = dat
-
-numericaldat$ASnum = NaN
-numericaldat$ASnum[numericaldat$AdoptionSpeed == 0] = 0
-numericaldat$ASnum[numericaldat$AdoptionSpeed == 1] = floor(runif(sum(numericaldat$AdoptionSpeed == 1), 1, 8))
-numericaldat$ASnum[numericaldat$AdoptionSpeed == 2] = floor(runif(sum(numericaldat$AdoptionSpeed == 2), 8, 31))
-numericaldat$ASnum[numericaldat$AdoptionSpeed == 3] = floor(runif(sum(numericaldat$AdoptionSpeed == 3), 31, 91))
-
-
-dogs = subset(numericaldat, numericaldat$Type == 1) # only the dogs
-cats = subset(numericaldat, numericaldat$Type == 2) # only the cats
-
-
-# 2 sample t-test
-dc_t = t.test(dogs$ASnum, cats$ASnum)
-dc_t
-
-male = subset(numericaldat, numericaldat$Gender == 1) # only the male dogs
-female = subset(numericaldat, numericaldat$Gender == 2) # only the female dogs
-
-# 2 sample t-test
-mf_t = t.test(male$ASnum, female$ASnum)
-mf_t
-
-# anova on size
-anova_size = anova(aov(data = numericaldat, ASnum ~ MaturitySize))
-anova_size
-
-# anova for fur length
-anova_fur = anova(aov(data = numericaldat, ASnum ~ FurLength))
-anova_fur
-
-# vaccination anova
-anova_vac = anova(aov(data = numericaldat, ASnum ~ Vaccinated))
-anova_vac
-```
-
-
+After this we did some EDA to see what features affected adoption speed.
 
 #Kaiyuan's section
 #SMART QUESTION:What is the probability that a large, female, vaccinated dog would get adopted quickly (adoption speed of 1 or 2). 
@@ -295,10 +255,11 @@ predict_female
 # Yixi's section
 # SMART QUESTION: Does animal Type, Gender, MaturitySize, FurLength, and Vaccination status influence the adoption speed significantly, and what is the best model (Logistic Regression, Knn) when considering these variables?
 ```{r}
-dataTGMFV = dat[, c('Age','Type','Gender','MaturitySize','FurLength','Vaccinated','AdoptionSpeed')]
-dataTGMFV$AdoptionSpeed[dat$AdoptionSpeed == 0|dat$AdoptionSpeed == 1|dat$AdoptionSpeed == 2] = 0
-dataTGMFV$AdoptionSpeed[dat$AdoptionSpeed == 3|dat$AdoptionSpeed == 4 ] = 1
-dataTGMFV$AdoptionSpeed = factor(dataTGMFV$AdoptionSpeed, levels = c(0,1))
+dataTGMFV = dat[, c('Type','Gender','MaturitySize','FurLength','Vaccinated','AdoptionSpeed')]
+dataTGMFV$AdoptionSpeed[dat$AdoptionSpeed == 0|dat$AdoptionSpeed == 1] = 0
+dataTGMFV$AdoptionSpeed[dat$AdoptionSpeed == 2|dat$AdoptionSpeed == 3|dat$AdoptionSpeed == 4 ] = 1
+# dataTGMFV$AdoptionSpeed = droplevels(dataTGMFV$AdoptionSpeed)
+dataTGMFV$AdoptionSpeed = factor(dataTGMFV$AdoptionSpeed)
 str(dataTGMFV)
 ```
 
@@ -319,43 +280,47 @@ summary(reg.best10)
 
 
 ```{r}
-
-
 # petFeaturetable1 = glm(AdoptionSpeed ~ Age+Type+Gender+MaturitySize+FurLength+Vaccinated, data = dataTGMFV, family = "binomial")
-petFeaturetableAll = glm(AdoptionSpeed ~Type+Gender+Vaccinated, data = dataTGMFV, family = "binomial")
-petFeaturetableR2 = glm(AdoptionSpeed ~ Age+Type+Gender+MaturitySize+FurLength+Vaccinated, data = dataTGMFV, family = "binomial")
-petFeaturetable = glm(AdoptionSpeed ~Vaccinated, data = dataTGMFV, family = "binomial")
+petFeaturetableAll = glm(AdoptionSpeed ~Type+Gender+MaturitySize+FurLength+Vaccinated, data = dataTGMFV, family = "binomial")
+# petFeaturetableR2 = glm(AdoptionSpeed ~ Type+Gender+MaturitySize+FurLength+Vaccinated, data = dataTGMFV, family = "binomial")
+# petFeaturetable = glm(AdoptionSpeed ~Vaccinated, data = dataTGMFV, family = "binomial")
 summary(petFeaturetableAll)
-
-
 ```
 ```{r, results='markup'}
-loadPkg("regclass")
-loadPkg("ModelMetrics")
-# xkabledply( confusion_matrix(petFeaturetableAll), title = "Confusion matrix from Logit Model" )
-
-pred_ = as.factor(ifelse(predict(petFeaturetableAll, dataTGMFV, type="response")>0.4,"1","0"))
-unloadPkg("regclass")
-confusionMatrix( pred_, as.factor(dataTGMFV$AdoptionSpeed))
-
+# loadPkg("regclass")
+# loadPkg("ModelMetrics")
+# # xkabledply( confusion_matrix(petFeaturetableAll), title = "Confusion matrix from Logit Model" )
+# pred_ = as.factor(ifelse(predict(petFeaturetableAll, dataTGMFV, type="response")>0.4,"1","0"))
+# unloadPkg("regclass")
+# confusionMatrix( pred_, as.factor(dataTGMFV$AdoptionSpeed))
 ```
-
-
+```{r}
+loadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluation
+petLogitHoslem = hoslem.test(dataTGMFV$AdoptionSpeed, fitted(petFeaturetableAll)) # Hosmer and Lemeshow test, a chi-squared test
+unloadPkg("ResourceSelection")
+petLogitHoslem
+```
 ```{r}
 loadPkg("pROC") # receiver operating characteristic curve, gives the diagnostic ability of a binary classifier system as its discrimination threshold is varied. The curve is on sensitivity/recall/true-positive-rate vs false_alarm/false-positive-rate/fall-out.
 prob=predict(petFeaturetableAll, type = "response" )
 dataTGMFV$prob=prob
 h <- roc(AdoptionSpeed~prob, data=dataTGMFV)
+auc(h) # area-under-curve prefer 0.8 or higher.
 plot(h)
-auc(h)
-
-# summary(multinom(AdoptionSpeed ~ Age+Type+Gender+MaturitySize+FurLength+Vaccinated, data=VA))
-
-# dataAov = glm(AdoptionSpeed ~ Type+Gender+MaturitySize+FurLength+Vaccinated , data = dataTGMFV)
-# summary(dataAov)
+# unloadPkg("pROC")
 ```
+#### McFadden
+
 ```{r}
-featureClean = dat[ , c('Age','Type','Gender','MaturitySize','FurLength','Vaccinated')]
+loadPkg("pscl") # use pR2( ) function to calculate McFadden statistics for model eval
+petLogitpr2 = pR2(petFeaturetableAll)
+petLogitpr2
+unloadPkg("pscl") 
+```
+With the McFadden value of `r petLogitpr2['McFadden']`, which is analogous to the coefficient of determination $R^2$, only about 2% of the variations in y is explained by the explanatory variables in the model. 
+
+```{r}
+featureClean = dat[ , c('Type','Gender','MaturitySize','FurLength','Vaccinated')]
 featureClean$y = dataTGMFV$AdoptionSpeed # copy Holiday column and call it 'y'
 #convert some columns into factos as appropriate
 
@@ -363,6 +328,7 @@ featureClean$y <- ifelse(featureClean$y == 1,TRUE,FALSE)
 featureClean$y = factor(featureClean$y)
 str(featureClean)
 ```
+
 ```{r}
 loadPkg("leaps")
 reg.leaps <- regsubsets(y~., data = featureClean, nbest = 1, method = "exhaustive")  # leaps, 
@@ -382,17 +348,70 @@ unloadPkg("bestglm")
 unloadPkg("leaps") # leaps is required by bestglm, thus cannot be unloaded before bestglm
 
 ```
+#### KNN
+```{r}
+#first we want to scale the data so KNN will operate correctly
+knnDataTGMFV = dataTGMFV[1:6]
+knnDataTGMFV$Type = as.numeric(knnDataTGMFV$Type)
+knnDataTGMFV$Gender = as.numeric(knnDataTGMFV$Gender)
+knnDataTGMFV$MaturitySize = as.numeric(knnDataTGMFV$MaturitySize)
+knnDataTGMFV$FurLength = as.numeric(knnDataTGMFV$FurLength)
+knnDataTGMFV$Vaccinated = as.numeric(knnDataTGMFV$Vaccinated)
+str(knnDataTGMFV)
+
+scaledPet <- as.data.frame(scale(knnDataTGMFV[1:5], center = TRUE, scale = TRUE))
+#We also need to create test and train data sets, we will do this slightly differently by using the sample function. The 2 says create 2 data sets essentially, replacement means we can reset the random sampling across each vector and the probability gives sample the weight of the splits, 2/3 for train, 1/3 for test. 
+set.seed(1000)
+pet_sample <- sample(2, nrow(scaledPet), replace=TRUE, prob=c(0.67, 0.33))
+#We then just need to use the new variable to create the test/train outputs, selecting the first five rows as they are the numeric data in the pet data set and we want to predict AdoptionSpeed 
+pet_training <- scaledPet[pet_sample==1, 1:5]
+pet_test <- scaledPet[pet_sample==2, 1:5]
+```
+```{r}
+#Now we need to create our 'Y' variables or labels need to input into the KNN function
+pet.trainLabels <- knnDataTGMFV[pet_sample==1, 6]
+pet.testLabels <- knnDataTGMFV[pet_sample==2, 6]
+```
 
 ```{r}
-loadPkg("bestglm")
-res.bestglm <- bestglm(Xy = dataTGMFV, family = binomial,
-            IC = "AIC",                 # Information criteria for
-            method = "exhaustive")
-summary(res.bestglm)
-res.bestglm$BestModels
-summary(res.bestglm$BestModels)
-unloadPkg("bestglm") 
-unloadPkg("leaps") # leaps is required by bestglm, thus cannot be unloaded before bestglm
+#So now we will deploy our model 
+pet_pred <- knn(train = pet_training, test = pet_test, cl=pet.trainLabels, k=7)
+```
+```{r}
+loadPkg("gmodels")
+petPREDCross <- CrossTable(pet.testLabels, pet_pred, prop.chisq = FALSE)
+#Looks like we got all but three correct, not bad
+```
+```{r}
+loadPkg("gmodels")
+loadPkg("FNN")
+loadPkg("caret") # confusionMatrix
+
+# Loop thru different k values
+
+# create an empty dataframe to store the results from confusion matrices
+ResultDf = data.frame( k=numeric(0), Total.Accuracy= numeric(0), row.names = NULL )
+
+for (kval in 3:11) {
+  pet_pred <- knn(train = pet_training, test = pet_test, cl=pet.trainLabels, k=kval)
+  petPREDCross <- CrossTable(pet.testLabels, pet_pred, prop.chisq = FALSE)
+  print( paste("k = ", kval) )
+  petPREDCross
+  # 
+  cm = confusionMatrix(pet_pred, reference = pet.testLabels ) # from caret library
+  # print.confusionMatrix(cm)
+  # 
+  cmaccu = cm$overall['Accuracy']
+  print( paste("Total Accuracy = ", cmaccu ) )
+  # print("Other metrics : ")
+  # print(cm$byClass)
+  # 
+  cmt = data.frame(k=kval, Total.Accuracy = cmaccu, row.names = NULL ) # initialize a row of the metrics 
+  # cmt = cbind( cmt, data.frame( t(cm$byClass) ) ) # the dataframe of the transpose, with k valued added in front
+  ResultDf = rbind(ResultDf, cmt)
+  print( xkabledply(   as.matrix(cm), title = paste("ConfusionMatrix for k = ",kval ) ) )
+  print( xkabledply(data.frame(cm$byClass), title=paste("k = ",kval)) )
+}
 ```
 
 # Sahara's section
@@ -428,7 +447,6 @@ The best model based off this feature selection is every feature except video am
 ```{r, results='markup'}
 typeLogit <- glm(y ~ Age + Gender + MaturitySize + FurLength + Vaccinated + AdoptionSpeed + PhotoAmt, data = datclean, family = "binomial")
 xkabledply(typeLogit, title = paste("Logistic Regression : Type ~ age+gender+size+fur+vaccinated+AdoptSpd+photos"))
-summary(typeLogit)
 ```
 
 There are a number of significant values for these coefficients. But let's look at other metrics to get a sense of the effectiveness of this model.
@@ -543,7 +561,6 @@ ResultDf2[which.max(ResultDf2$Total.Accuracy),]
 ```
 
 Not quite as good as the first model so we'll stick with that one, all features and a K of 8
-
 
 ```{r}
 tpred <- knn(train = train, test = test, cl=typeknn.trainLabel, k=8)
