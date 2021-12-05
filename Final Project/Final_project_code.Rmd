@@ -320,7 +320,9 @@ loadPkg("ModelMetrics")
 xkabledply( confusion_matrix(petFeaturetableAll), title = "Confusion matrix from Logit Model" )
 pred_ = predict(petFeaturetableAll, dataTGMFV[1:8], type="response")
 unloadPkg("regclass")
-confusionMatrix( pred_, as.factor(dataTGMFV$AdoptionSpeed))
+confusionMatrixLogistic = confusionMatrix( pred_, as.factor(dataTGMFV$AdoptionSpeed))
+confusionMatrixLogistic
+
 ```
 ```{r}
 loadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluation
