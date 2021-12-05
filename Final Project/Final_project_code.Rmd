@@ -266,17 +266,73 @@ anova_vac
 ```
 
 #Kaiyuan's section
-#SMART QUESTION:What is the probability that a large, female, vaccinated dog would get adopted quickly (adoption speed of 1 or 2). 
+#SMART QUESTION:What is the probability that a large, female, vaccinated dog would get adopted quickly (adoption speed of 0 and 1). 
 ```{r}
-logit <- glm(data$AdoptionSpeed ~ data$Type + data$MaturitySize+ data$Vaccinated + data$Gender, data = data, family = "binomial")
+##data preparation
+new_dat = dat[c('Type',  'Gender', 'MaturitySize', 'Vaccinated', 'AdoptionSpeed')]
+xkabledply(summary(new_dat))
+```
+```{r}
+ggplot(data=new_dat, aes(AdoptionSpeed)) + 
+  geom_bar(breaks=seq(0, 4, by=1),
+                 col="red",
+                 aes(fill=..count..)) +
+  labs(title="AdoptionSpeed of pets", x = "AdoptionSpeed") + 
+  scale_fill_gradient("Count", low="lightblue", high="#FF9999")
+```
+
+```{r}
+levels(new_dat$AdoptionSpeed)[levels(new_dat$AdoptionSpeed)==0] <-1
+summary(new_dat)
+```
+
+
+```{r}
+levels(new_dat$AdoptionSpeed)[levels(new_dat$AdoptionSpeed)==4] <-3
+summary(new_dat)
+```
+
+
+```{r}
+levels(new_dat$AdoptionSpeed)[levels(new_dat$AdoptionSpeed)==3] <-2
+xkabledply(summary(new_dat))
+```
+```{r}
+ggplot(data=new_dat, aes(AdoptionSpeed)) + 
+  geom_bar(breaks=seq(0, 4, by=1),
+                 col="red",
+                 aes(fill=..count..)) +
+  labs(title="AdoptionSpeed of pets", x = "AdoptionSpeed") + 
+  scale_fill_gradient("Count", low="lightblue", high="#FF9999")
+```
+
+```{r}
+logit11 <- glm(new_dat$AdoptionSpeed ~ new_dat$Type + new_dat$MaturitySize+ new_dat$Vaccinated + new_dat$Gender, data = new_dat, family = binomial(link = "logit"))
+summary(logit11)
 ```
 ```{r}
 xkabledply(logit, title = paste("Logistic Regression :", format(formula(logit)) ))
 ```
 ```{r}
-pdt<-data.frame(Type=1,MaturitySize=3,Gender=2,Vaccinated=1)
-predict_female <- predict(logit,pdt,typle="response")
-predict_female
+exp1<-exp(coef(logit))
+xkabledply( as.table(exp1), title = "Exponential of coefficients in Logit Reg" )
+```
+
+```{r}
+pdt<-data.frame(Type=factor(2),Gender=factor(1),MaturitySize=factor(3),Vaccinated=factor(1))
+predict_female <- predict(logit11,pdt,typle="response")
+
+```
+```{r}
+
+```
+```{r}
+loadPkg("pROC")
+prob=predict(logit11, type = "response" )
+new_dat$AdoptionSpeed$prob=prob
+h <- roc(new_dat$AdoptionSpeed~prob, data=new_dat)
+auc(h) # area-under-curve prefer 0.8 or higher.
+plot(h)
 ```
 
 
