@@ -41,7 +41,7 @@ library('vtable')
 library('pscl')  
 
 ## Loading data
-data = read.csv('datafile.csv',encoding = "UTF-8")
+data = read.csv('datafile.csv',encoding = "UTF-8")s
 
 initialrows = nrow(data)
 
@@ -540,6 +540,16 @@ typeLogit <- glm(y ~ Age + Gender + MaturitySize + FurLength + Vaccinated + Adop
 xkabledply(typeLogit, title = paste("Logistic Regression : Type ~ age+gender+size+fur+vaccinated+AdoptSpd+photos"))
 ```
 
+```{r}
+loadPkg("regclass")
+loadPkg("ModelMetrics")
+xkabledply( confusion_matrix(typeLogit), title = "Type Confusion matrix from Logit Model" )
+typep = predict(typeLogit, datclean, type="response")
+#confusionMatrix(typep, datclean$y)
+unloadPkg("regclass")
+```
+
+
 There are a number of significant values for these coefficients. But let's look at other metrics to get a sense of the effectiveness of this model.
 
 ```{r, results='markup'}
@@ -575,6 +585,8 @@ Lets try a KNN model next. First the variables need to be returned to integers t
 
 ```{r}
 loadPkg("gmodels")
+loadPkg("FNN")
+loadPkg("caret")
 
 # reloading the original dataframe to cancel all the factor variables
 knndat = read.csv('datafile.csv')
@@ -601,7 +613,7 @@ ResultDf = data.frame( k=numeric(0), Total.Accuracy= numeric(0), row.names = NUL
 for (kval in 3:20) {
   tpred <- knn(train = train, test = test, cl=typeknn.trainLabel, k=kval)
   cross <- CrossTable(typeknn.testLabel, tpred, prop.chisq = FALSE)
-  cm = confusionMatrix(tpred, reference = as.factor(typeknn.testLabel)) # from caret library
+  cm = caret::confusionMatrix(tpred, as.factor(typeknn.testLabel)) # from caret library
   
   cmaccu = cm$overall['Accuracy']
   cmt = data.frame(k=kval, Total.Accuracy = cmaccu, row.names = NULL ) # initialize a row of the metrics 
@@ -620,7 +632,7 @@ Let's try and remove some features. We removed features by logic. For example ge
 knndat2 = read.csv('datafile.csv')
 knndat2 = subset(knndat2, knndat2$Quantity == 1)
 knndat2 = subset(knndat2, ! knndat2$AdoptionSpeed == 4)
-knndat2 = knndat2[c('Type', 'Age', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt', 'AdoptionSpeed')]
+knndat2 = knndat2[c('Type', 'Age', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt', 'AdoptionSpeed')]
 
 scaledknn2 = as.data.frame(scale(knndat2[c(2, 6)], center = TRUE, scale = TRUE)) # only scaling the numerical values
 scaledknn2[c('Type', 'MaturitySize', 'FurLength', 'Vaccinated', 'AdoptionSpeed')] = knndat2[c(1, 3, 4, 5, 7)]
@@ -641,7 +653,7 @@ for (kval in 3:20) {
   tpred <- knn(train = train2, test = test2, cl=typeknn2.trainLabel, k=kval)
   cross <- CrossTable(typeknn2.testLabel, tpred, prop.chisq = FALSE)
   print( paste("k = ", kval) )
-  cm = confusionMatrix(tpred, reference = as.factor(typeknn2.testLabel)) # from caret library
+  cm = caret::confusionMatrix(tpred, reference = as.factor(typeknn2.testLabel)) # from caret library
   cmaccu = cm$overall['Accuracy']
   cmt = data.frame(k=kval, Total.Accuracy = cmaccu, row.names = NULL ) # initialize a row of the metrics 
   ResultDf2 = rbind(ResultDf2, cmt)
@@ -651,12 +663,13 @@ ResultDf2[which.max(ResultDf2$Total.Accuracy),]
 
 ```
 
-Not quite as good as the first model so we'll stick with that one, all features and a K of 8
+Slightly better than the first model, so lets stick with this one.
+
 
 ```{r}
-tpred <- knn(train = train, test = test, cl=typeknn.trainLabel, k=8)
-cross <- CrossTable(typeknn.testLabel, tpred, prop.chisq = FALSE)
-cm = confusionMatrix(tpred, reference = as.factor(typeknn.testLabel)) # from caret library
+tpred <- knn(train = train2, test = test2, cl=typeknn2.trainLabel, k=10)
+cross <- CrossTable(typeknn2.testLabel, tpred, prop.chisq = FALSE)
+cm = confusionMatrix(tpred, reference = as.factor(typeknn2.testLabel)) # from caret library
 cmaccu = cm$overall['Accuracy']
 
 cross
