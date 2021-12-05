@@ -309,18 +309,18 @@ summary(reg.best10)
 
 ```{r}
 # petFeaturetable1 = glm(AdoptionSpeed ~ Age+Type+Gender+MaturitySize+FurLength+Vaccinated+PhotoAmt+VideoAmt, data = dataTGMFV, family = "binomial")
-petFeaturetableAll = glm(AdoptionSpeed ~Age+Type+Gender+MaturitySize+FurLength+Vaccinated+VideoAmt, data = dataTGMFV, family = "binomial")
+petFeaturetableAll = glm(AdoptionSpeed ~Age+Type+Gender+MaturitySize+FurLength+Vaccinated+PhotoAmt, data = dataTGMFV, family = "binomial")
 # petFeaturetableR2 = glm(AdoptionSpeed ~ Type+Gender+MaturitySize+FurLength+Vaccinated, data = dataTGMFV, family = "binomial")
 # petFeaturetable = glm(AdoptionSpeed ~Vaccinated, data = dataTGMFV, family = "binomial")
 summary(petFeaturetableAll)
 ```
 ```{r, results='markup'}
-# loadPkg("regclass")
-# loadPkg("ModelMetrics")
-# # xkabledply( confusion_matrix(petFeaturetableAll), title = "Confusion matrix from Logit Model" )
-# pred_ = as.factor(ifelse(predict(petFeaturetableAll, dataTGMFV, type="response")>0.4,"1","0"))
-# unloadPkg("regclass")
-# confusionMatrix( pred_, as.factor(dataTGMFV$AdoptionSpeed))
+loadPkg("regclass")
+loadPkg("ModelMetrics")
+xkabledply( confusion_matrix(petFeaturetableAll), title = "Confusion matrix from Logit Model" )
+pred_ = predict(petFeaturetableAll, dataTGMFV[1:8], type="response")
+unloadPkg("regclass")
+confusionMatrix( pred_, as.factor(dataTGMFV$AdoptionSpeed))
 ```
 ```{r}
 loadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluation
