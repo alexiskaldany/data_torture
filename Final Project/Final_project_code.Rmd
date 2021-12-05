@@ -703,7 +703,7 @@ As `r puppy_proportion` percent of the pets are puppies, there is a very good ba
 
 ## Logistic Model
 
-- Starting off with a full model, excluding Age as it would perfectly predict `r datage$puppy`
+- Starting off with a full model, excluding Age as it would perfectly predict datage$puppy
 
 ```{r results='markup'}
 loadPkg("bestglm")
@@ -732,11 +732,12 @@ Creating Best Logistic Model
 ```{r results='markup'}
 pup_logit <- glm(y ~ Type + Gender + MaturitySize + FurLength + Vaccinated + VideoAmt + AdoptionSpeed, data = datage, family = "binomial")
 xkabledply(pup_logit, title = paste("Logistic Regression : Puppy ~ type +gender+size+fur+vaccinated+AdoptSpd+videos"))
+summary(pup_logit)
 ```
 
 Confusion Matrix for Logistic Model:
 
-```{r}
+```{r results='markup'}
 loadPkg("regclass")
 xkabledply( confusion_matrix(pup_logit), title = "Confusion matrix from Logit Model" )
 ```
@@ -760,7 +761,7 @@ ageHoslem
 unloadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluation
 ```
 
-[add analysis]
+As the p-value is very low, indicating the recommended logistic model is not a good fit.
 
 ```{r results='markup'}
 loadPkg("pROC")
@@ -771,7 +772,18 @@ plot(h)
 auc(h)
 ```
 
-[add analysis]
+The shape is decent, but the score of `format(auc(h))` is below the recommended 0.8 thresh-hold, but indicates a better fit than the Hosmer-Lemeshow test would indicate. 
+
+```{r, results = 'markup'}
+loadPkg("pscl") # use pR2( ) function to calculate McFadden statistics for model eval
+typePR = pR2(pup_logit)
+typePR
+unloadPkg("pscl") 
+```
+
+The McFadden score of `r format(round(typePR['McFadden'] * 100), 0)`% is pretty low.
+
+Lets see if a classification tree can give a better score. 
 
 ## Classification Tree
 
@@ -787,6 +799,7 @@ puppy_tree_vac_adopt <- rpart(y ~ Vaccinated+ AdoptionSpeed ,data = datage, meth
 printcp(puppy_tree_vac_adopt)
 ```
 
+Split
 ```{r results='markup'}
 plotcp(puppy_tree) # visualize cross-validation results 
 ```
@@ -798,7 +811,7 @@ summary(puppy_tree) # detailed summary of splits
 
 Confusion Matrix for Classification Tree
 
-```{r}
+```{r results='markup'}
 loadPkg("caret") 
 cm_puppy_tree = confusionMatrix( predict(puppy_tree, type = "class"), reference = datage$y )
 print('Overall: ')
@@ -806,14 +819,20 @@ cm_puppy_tree$overall
 print('Class: ')
 cm_puppy_tree$byClass
 unloadPkg("caret")
+
+xkabledply(cm_puppy_tree$table, "confusion matrix")
 ```
 
 
 Plot Tree
 
 ```{r}
-plot(puppy_tree, uniform=TRUE, main="Classification Tree for Puppy")
-text(puppy_tree, use.n=TRUE, all=TRUE, cex=.8) # Kind of a useless graph!!!
+loadPkg("rpart.plot")
+loadPkg("rattle")
+#plot(puppy_tree, uniform=TRUE, main="Classification Tree for Puppy")
+#text(puppy_tree, use.n=TRUE, all=TRUE, cex=.8) # Kind of a useless graph!!!
+
+fancyRpartPlot(puppy_tree)
 ```
 
 
