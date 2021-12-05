@@ -607,7 +607,7 @@ xkabledply(pup_logit, title = paste("Logistic Regression : Puppy ~ type +gender+
 
 Confusion Matrix for Logistic Model:
 
-```{r}
+```{r results='markup'}
 loadPkg("regclass")
 xkabledply( confusion_matrix(pup_logit), title = "Confusion matrix from Logit Model" )
 ```
@@ -631,7 +631,7 @@ ageHoslem
 unloadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluation
 ```
 
-[add analysis]
+As the p-value is very low, indicating the recommended logistic model is not a good fit.
 
 ```{r results='markup'}
 loadPkg("pROC")
@@ -642,7 +642,18 @@ plot(h)
 auc(h)
 ```
 
-[add analysis]
+The shape is decent, but the score of `format(auc(h))` is below the recommended 0.8 thresh-hold, but indicates a better fit than the Hosmer-Lemeshow test would indicate. 
+
+```{r, results = 'markup'}
+loadPkg("pscl") # use pR2( ) function to calculate McFadden statistics for model eval
+typePR = pR2(pup_logit)
+typePR
+unloadPkg("pscl") 
+```
+
+The McFadden score of `r format(round(typePR['McFadden'] * 100), 0)`% is pretty low.
+
+Lets see if a classification tree can give a better score. 
 
 ## Classification Tree
 
