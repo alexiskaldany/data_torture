@@ -424,7 +424,7 @@ loadPkg("caret") # confusionMatrix
 # create an empty dataframe to store the results from confusion matrices
 ResultDf = data.frame( k=numeric(0), Total.Accuracy= numeric(0), row.names = NULL )
 
-for (kval in 3:11) {
+for (kval in 3:21) {
   pet_pred <- knn(train = pet_training, test = pet_test, cl=pet.trainLabels, k=kval)
   petPREDCross <- CrossTable(pet.testLabels, pet_pred, prop.chisq = FALSE)
   print( paste("k = ", kval) )
@@ -446,7 +446,7 @@ for (kval in 3:11) {
 }
 ```
 ```{r}
-
+xkabledply(ResultDf[ResultDf$k%%2 == 1,])
 ```
 
 # Sahara's section
