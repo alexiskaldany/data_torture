@@ -883,6 +883,12 @@ loadPkg("rattle")
 fancyRpartPlot(puppy_tree)
 ```
 
+### Explanation for resulting tree
+
+- The left branch is non-puppy/kitten animals. The right branch is puppy/kitten. 
+- This model recommends going along the 
+
+
 
 # Conclusion
 
