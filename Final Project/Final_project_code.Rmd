@@ -797,7 +797,7 @@ plot(h)
 #auc(h)
 ```
 
--The shape is decent, but the score of `format(auc(h))` is below the recommended 0.8 thresh-hold, but indicates a better fit than the Hosmer-Lemeshow test would indicate. 
+-The shape is decent, but the score of .761 is below the recommended 0.8 thresh-hold, but indicates a better fit than the Hosmer-Lemeshow test would indicate. 
 
 ```{r, results = 'markup'}
 loadPkg("pscl") # use pR2( ) function to calculate McFadden statistics for model eval
@@ -858,3 +858,10 @@ fancyRpartPlot(puppy_tree)
 
 
 # Conclusion
+
+- Best Model Accuracy for the 4 SMART Questions:
+
+Targeted Prediction Accuracy: .675
+Adoption Speed Prediction: Logistic Model, Accuracy .65, McFadden = .027
+Pet Type Prediction Accuracy: Logistic Model, .677, McFadden = .097
+Age Type Prediction Accuracy: Logistic Model, .695, McFadden = .163
