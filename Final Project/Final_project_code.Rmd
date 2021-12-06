@@ -886,9 +886,9 @@ fancyRpartPlot(puppy_tree)
 
 # Conclusion
 
-- Best Model Accuracy for the 4 SMART Questions:
+##Best Model Accuracy for the 4 SMART Questions:
 
-Targeted Prediction Accuracy: .675
-Adoption Speed Prediction: Logistic Model, Accuracy .65, McFadden = .027
-Pet Type Prediction Accuracy: Logistic Model, .677, McFadden = .097
-Age Type Prediction Accuracy: Logistic Model, .695, McFadden = .163
+- Targeted Prediction Accuracy: .675
+- Adoption Speed Prediction: Logistic Model, Accuracy .65, McFadden = .027
+- Pet Type Prediction Accuracy: Logistic Model, .677, McFadden = .097
+- Age Type Prediction Accuracy: Logistic Model, .695, McFadden = .163
