@@ -19,8 +19,8 @@ output:
 # some of common options (and the defaults) are: 
 # include=T, eval=T, echo=T, results='hide'/'asis'/'markup',..., collapse=F, warning=T, message=T, error=T, cache=T, fig.width=6, fig.height=4, fig.dim=c(6,4) #inches, fig.align='left'/'center','right', 
 library(ezids)
-# knitr::opts_chunk$set(warning = F, results = "markup", message = F)
-knitr::opts_chunk$set(warning = F, results = "hide", message = F, echo = F)
+#knitr::opts_chunk$set(warning = F, results = "markup", message = F, echo = F)
+knitr::opts_chunk$set(warning = F, results = "hide", message = F)
 options(scientific=T, digits = 3) 
 # options(scipen=9, digits = 3) 
 # ‘scipen’: integer. A penalty to be applied when deciding to print numeric values in fixed or exponential notation.  Positive values bias towards fixed and negative towards scientific notation: fixed notation will be preferred unless it is more than ‘scipen’ digits wider.
@@ -29,17 +29,16 @@ options(scientific=T, digits = 3)
 
 - Loading data and libraries
 ```{r}
-library("corrplot")
-library("ezids")
-library("gtsummary")
-library('ggridges')
-library('viridis')
-library('wesanderson')
-library('gridExtra')
-library('leaps')
-library('vtable')
-library('pscl')  
-library('FNN')
+#library("corrplot")
+#library("ezids")
+#library("gtsummary")
+#library('ggridges')
+#library('viridis')
+#library('wesanderson')
+#library('gridExtra')
+#library('leaps')
+#library('vtable')
+#library('pscl')  
 
 ## Loading data
 data = read.csv('datafile.csv',encoding = "UTF-8")
@@ -266,8 +265,7 @@ anova_vac = anova(aov(data = numericaldat, ASnum ~ Vaccinated))
 anova_vac
 ```
 
-#Kaiyuan's section
-#SMART QUESTION:What is the probability that a large, female, vaccinated dog would get adopted quickly (adoption speed of 0 and 1). 
+#SMART QUESTION: What is the probability that a large, female, vaccinated dog would get adopted quickly (adoption speed of 0 and 1). 
 ```{r}
 ##data preparation
 new_dat = dat[c('Type',  'Gender', 'MaturitySize', 'Vaccinated', 'AdoptionSpeed')]
@@ -345,7 +343,7 @@ loadPkg("pROC")
 prob=predict(logit, type = "response" )
 new_dat$prob=prob
 h <- roc(AdoptionSpeed~prob, data=new_dat)
-auc(h) 
+#auc(h) 
 plot(h, main = "ROC curve of model")
 ```
 
@@ -367,8 +365,6 @@ d3
 ```
 
 
-
-# Yixi's section
 # SMART QUESTION: Does animal Type, Gender, MaturitySize, FurLength, and Vaccination status influence the adoption speed significantly, and what is the best model (Logistic Regression, Knn) when considering these variables?
 ```{r}
 dataTGMFV = dat[, c('Age','Type','Gender','MaturitySize','FurLength','Vaccinated','PhotoAmt','VideoAmt','AdoptionSpeed')]
@@ -382,7 +378,6 @@ str(dataTGMFV)
 ### Exhaustive search  
 
 ```{r}
-loadPkg("leaps")
 #This is essentially best fit 
 reg.best10 <- regsubsets(AdoptionSpeed~. , data = dataTGMFV, nvmax = 10, nbest = 1, method = "exhaustive")  # leaps::regsubsets() - Model selection by exhaustive (default) search, forward or backward stepwise, or sequential replacement
 #The plot will show the Adjust R^2 when using the variables across the bottom
@@ -408,8 +403,9 @@ loadPkg("ModelMetrics")
 xkabledply( confusion_matrix(petFeaturetableAll), title = "Confusion matrix from Logit Model" )
 pred_ = predict(petFeaturetableAll, dataTGMFV[1:8], type="response")
 unloadPkg("regclass")
-confusionMatrixLogistic = confusionMatrix( pred_, as.factor(dataTGMFV$AdoptionSpeed))
-confusionMatrixLogistic
+
+confusionMatrix( pred_, as.factor(dataTGMFV$AdoptionSpeed))
+
 unloadPkg("ModelMetrics")
 ```
 ```{r}
@@ -421,12 +417,14 @@ petLogitHoslem
 ```{r}
 unloadPkg("pROC")
 loadPkg("pROC") # receiver operating characteristic curve, gives the diagnostic ability of a binary classifier system as its discrimination threshold is varied. The curve is on sensitivity/recall/true-positive-rate vs false_alarm/false-positive-rate/fall-out.
+
 probOfTGMFV=predict(petFeaturetableAll, type = "response" )
 dataTGMFV$prob=probOfTGMFV
 aucRocOfTGMFV <- roc(AdoptionSpeed~prob, data=dataTGMFV)
 auc(aucRocOfTGMFV) # area-under-curve prefer 0.8 or higher.
 plot(aucRocOfTGMFV)
 unloadPkg("pROC")
+ main
 ```
 #### McFadden
 
@@ -455,6 +453,7 @@ plot(reg.leaps, scale = "adjr2", main = "Adjusted R^2")
 plot(reg.leaps, scale = "bic", main = "BIC")
 plot(reg.leaps, scale = "Cp", main = "Cp")
 ```
+
 ```{r}
 loadPkg("bestglm")
 res.bestglm <- bestglm(Xy = featureClean, family = binomial,
@@ -463,9 +462,8 @@ res.bestglm <- bestglm(Xy = featureClean, family = binomial,
 summary(res.bestglm)
 res.bestglm$BestModels
 summary(res.bestglm$BestModels)
-unloadPkg("bestglm") 
-unloadPkg("leaps") # leaps is required by bestglm, thus cannot be unloaded before bestglm
-
+unloadPkg("bestglm")
+unloadPkg("leaps")
 ```
 #### KNN
 ```{r}
@@ -495,6 +493,8 @@ pet.testLabels <- knnDataTGMFV[pet_sample==2, 9]
 ```
 
 ```{r}
+loadPkg("gmodels")
+loadPkg('FNN')
 #So now we will deploy our model 
 loadPkg("FNN")
 loadPkg("gmodels")
@@ -503,15 +503,16 @@ loadPkg("class")
 pet_pred <- knn(train = pet_training, test = pet_test, cl=pet.trainLabels, k=7)
 ```
 ```{r}
-
 petPREDCross <- CrossTable(pet.testLabels, pet_pred, prop.chisq = FALSE)
 #Looks like we got all but three correct, not bad
 ```
 ```{r}
 loadPkg("gmodels")
 loadPkg("FNN")
+
 loadPkg("caret") # confusionMatrix
 loadPkg("class")
+
 # Loop thru different k values
 
 # create an empty dataframe to store the results from confusion matrices
@@ -523,7 +524,7 @@ for (kval in 3:21) {
   print( paste("k = ", kval) )
   petPREDCross
   # 
-  cm = confusionMatrix(pet_pred, reference = pet.testLabels ) # from caret library
+  cm = caret::confusionMatrix(pet_pred, reference = pet.testLabels ) # from caret library
   # print.confusionMatrix(cm)
   # 
   cmaccu = cm$overall['Accuracy']
@@ -542,7 +543,6 @@ for (kval in 3:21) {
 xkabledply(ResultDf[ResultDf$k%%2 == 1,])
 ```
 
-# Sahara's section
 # SMART QUESTION: Can the type of animal be classified from the adoption profile?
 
 Given that the type of animal is a categorical variable this is a classification problem. The first model we can try is a Logistic Regression model. First we need a new clean dataset with the features we want and a renamed target variable for the feature selection.
@@ -604,10 +604,10 @@ prob=predict(typeLogit, type = "response" )
 datclean$prob=prob
 h <- roc(y~prob, data=datclean)
 plot(h)
-auc(h)
+#auc(h)
 ```
 
-The ROC plot confirms that this is not a great model. The AUC value is `format(auc(h))`, not at our bar of 0.8. Let's check one more measure.
+The ROC plot confirms that this is not a great model. The AUC value is 0.7, not at our bar of 0.8. Let's check one more measure.
 
 ```{r, results = 'markup'}
 loadPkg("pscl") # use pR2( ) function to calculate McFadden statistics for model eval
@@ -665,6 +665,9 @@ According to the KNN model with all features included, the best K value is 8 and
 Let's try and remove some features. We removed features by logic. For example gender is something that is consistent between types and video amount was removed in the logistic model so we removed it for this test to see if it improved anything. Again we ran through 18 possible K values from 3-20.
 
 ```{r}
+loadPkg("gmodels")
+loadPkg("FNN")
+loadPkg("caret")
 
 knndat2 = read.csv('datafile.csv')
 knndat2 = subset(knndat2, knndat2$Quantity == 1)
@@ -706,7 +709,7 @@ Slightly better than the first model, so lets stick with this one.
 ```{r}
 tpred <- knn(train = train2, test = test2, cl=typeknn2.trainLabel, k=10)
 cross <- CrossTable(typeknn2.testLabel, tpred, prop.chisq = FALSE)
-cm = confusionMatrix(tpred, reference = as.factor(typeknn2.testLabel)) # from caret library
+cm = caret::confusionMatrix(tpred, reference = as.factor(typeknn2.testLabel)) # from caret library
 cmaccu = cm$overall['Accuracy']
 
 cross
@@ -715,8 +718,8 @@ cm
 
 However, when we look closer at the predictions we can see that it just over predicted dogs. The balanced accuracy value dropped by a couple percentage points. At the end of all of this we're basically just above chance in the predictions for both models which leads us to the conclusion that the type of animal can't be predicted based on the adoption profile.
 
-# Alexis's section
 # SMART Question:  Can puppies/kittens be identified based on their adoption profile?
+
 ```{r}
 datage <- dat[ ,c('Type','Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt', 'VideoAmt', 'AdoptionSpeed') ]
 datage$puppy = NaN
@@ -734,9 +737,9 @@ As `r puppy_proportion` percent of the pets are puppies, there is a very good ba
 
 ## Logistic Model
 
-- Starting off with a full model, excluding Age as it would perfectly predict `r datage$puppy`
+- Starting off with a full model, excluding Age as it would perfectly predict Puppy.
 
-```{r results='markup'}
+```{r}
 loadPkg("bestglm")
 loadPkg("leaps")
 
@@ -791,7 +794,8 @@ ageHoslem
 unloadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluation
 ```
 
-[add analysis]
+-As the p-value is very low, indicating the recommended logistic model is not a good fit.
+
 
 ```{r results='markup'}
 loadPkg("pROC")
@@ -799,10 +803,22 @@ prob=predict(pup_logit, type = "response" )
 datage$prob=prob
 h <- roc(y~prob, data=datage)
 plot(h)
-auc(h)
+#auc(h)
 ```
 
-[add analysis]
+-The shape is decent, but the score of `format(auc(h))` is below the recommended 0.8 thresh-hold, but indicates a better fit than the Hosmer-Lemeshow test would indicate. 
+
+```{r, results = 'markup'}
+loadPkg("pscl") # use pR2( ) function to calculate McFadden statistics for model eval
+typePR = pR2(pup_logit)
+typePR
+unloadPkg("pscl") 
+```
+
+The McFadden score of `r format(round(typePR['McFadden'] * 100), 0)`% is pretty low.
+
+
+Lets see if a classification tree can give a better score. 
 
 ## Classification Tree
 
@@ -831,20 +847,22 @@ Confusion Matrix for Classification Tree
 
 ```{r}
 loadPkg("caret") 
-cm_puppy_tree = confusionMatrix( predict(puppy_tree, type = "class"), reference = datage$y )
+cm_puppy_tree = caret::confusionMatrix( predict(puppy_tree, type = "class"), reference = datage$y )
 print('Overall: ')
 cm_puppy_tree$overall
 print('Class: ')
 cm_puppy_tree$byClass
 unloadPkg("caret")
+xkabledply(cm_puppy_tree$table, "confusion matrix")
 ```
 
 
 Plot Tree
 
 ```{r}
-plot(puppy_tree, uniform=TRUE, main="Classification Tree for Puppy")
-text(puppy_tree, use.n=TRUE, all=TRUE, cex=.8) # Kind of a useless graph!!!
+loadPkg("rpart.plot")
+loadPkg("rattle")
+fancyRpartPlot(puppy_tree)
 ```
 
 
