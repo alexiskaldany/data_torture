@@ -390,13 +390,14 @@ petLogitHoslem = hoslem.test(dataTGMFV$AdoptionSpeed, fitted(petFeaturetableAll)
 unloadPkg("ResourceSelection")
 petLogitHoslem
 ```
+
 ```{r}
 loadPkg("pROC") # receiver operating characteristic curve, gives the diagnostic ability of a binary classifier system as its discrimination threshold is varied. The curve is on sensitivity/recall/true-positive-rate vs false_alarm/false-positive-rate/fall-out.
-prob=predict(petFeaturetableAll, type = "response" )
-dataTGMFV$prob=prob
-h <- roc(AdoptionSpeed~prob, data=dataTGMFV)
-auc(h) # area-under-curve prefer 0.8 or higher.
-plot(h)
+#prob=predict(petFeaturetableAll, type = "response" )
+#dataTGMFV$prob=prob
+#h <- roc(AdoptionSpeed~prob, data=dataTGMFV)
+#auc(h) # area-under-curve prefer 0.8 or higher.
+#plot(h)
 # unloadPkg("pROC")
 ```
 #### McFadden
