@@ -39,9 +39,10 @@ library('gridExtra')
 library('leaps')
 library('vtable')
 library('pscl')  
+library('FNN')
 
 ## Loading data
-data = read.csv('datafile.csv',encoding = "UTF-8")s
+data = read.csv('datafile.csv',encoding = "UTF-8")
 
 initialrows = nrow(data)
 
@@ -323,20 +324,45 @@ ggplot(data=new_dat, aes(AdoptionSpeed)) +
 ```
 
 ```{r}
-mylogit <- glm(new_dat$AdoptionSpeed ~ new_dat$Type + new_dat$MaturitySize+ new_dat$Vaccinated + new_dat$Gender, data = new_dat, family = binomial(link = "logit"))
-summary(mylogit)
+logit <- glm(AdoptionSpeed ~ Type + MaturitySize + Vaccinated + Gender, data = new_dat, family = "binomial")
+summary(logit)
 
+```
+```{r}
+loadPkg("regclass")
+xkabledply(confusion_matrix(logit), title = "Confusion matrix from Logit Model" )
+```
+```{r}
+loadPkg("ResourceSelection")
+LogitHoslem = hoslem.test(new_dat$AdoptionSpeed,fitted(logit)) # Hosmer and Lemeshow test, a chi-squared test
+unloadPkg("ResourceSelection")
+LogitHoslem
+```
+
+
+```{r}
+loadPkg("pROC")
+prob=predict(logit, type = "response" )
+new_dat$prob=prob
+h <- roc(AdoptionSpeed~prob, data=new_dat)
+auc(h) 
+plot(h, main = "ROC curve of model")
 ```
 
 
 
 ```{r}
-prdt<-data.frame(Type=factor(2),Gender=factor(1),MaturitySize=factor(3),
-                 Vaccinated=factor(1))
-prdt
-X <- predict(mylogit,newdata=prdt,typle="response")
-X
+preds <- with(new_dat,data.frame(Type=as.factor(1),MaturitySize=as.factor(3),Gender=as.factor(2),Vaccinated=as.factor(1)))
 
+d3 <- cbind(preds, predict(logit, newdata = preds, type = "link",se = TRUE))
+
+d3 <- within(d3, {
+    PredictedProb <- plogis(fit)
+    LL <- plogis(fit - (1.96 * se.fit))
+    UL <- plogis(fit + (1.96 * se.fit))
+})
+
+d3
 
 ```
 
@@ -704,7 +730,7 @@ As `r puppy_proportion` percent of the pets are puppies, there is a very good ba
 
 ## Logistic Model
 
-- Starting off with a full model, excluding Age as it would perfectly predict datage$puppy
+- Starting off with a full model, excluding Age as it would perfectly predict `r datage$puppy`
 
 ```{r results='markup'}
 loadPkg("bestglm")
@@ -733,12 +759,11 @@ Creating Best Logistic Model
 ```{r results='markup'}
 pup_logit <- glm(y ~ Type + Gender + MaturitySize + FurLength + Vaccinated + VideoAmt + AdoptionSpeed, data = datage, family = "binomial")
 xkabledply(pup_logit, title = paste("Logistic Regression : Puppy ~ type +gender+size+fur+vaccinated+AdoptSpd+videos"))
-summary(pup_logit)
 ```
 
 Confusion Matrix for Logistic Model:
 
-```{r results='markup'}
+```{r}
 loadPkg("regclass")
 xkabledply( confusion_matrix(pup_logit), title = "Confusion matrix from Logit Model" )
 ```
@@ -762,7 +787,7 @@ ageHoslem
 unloadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluation
 ```
 
-As the p-value is very low, indicating the recommended logistic model is not a good fit.
+[add analysis]
 
 ```{r results='markup'}
 loadPkg("pROC")
@@ -773,18 +798,7 @@ plot(h)
 auc(h)
 ```
 
-The shape is decent, but the score of `format(auc(h))` is below the recommended 0.8 thresh-hold, but indicates a better fit than the Hosmer-Lemeshow test would indicate. 
-
-```{r, results = 'markup'}
-loadPkg("pscl") # use pR2( ) function to calculate McFadden statistics for model eval
-typePR = pR2(pup_logit)
-typePR
-unloadPkg("pscl") 
-```
-
-The McFadden score of `r format(round(typePR['McFadden'] * 100), 0)`% is pretty low.
-
-Lets see if a classification tree can give a better score. 
+[add analysis]
 
 ## Classification Tree
 
@@ -800,7 +814,6 @@ puppy_tree_vac_adopt <- rpart(y ~ Vaccinated+ AdoptionSpeed ,data = datage, meth
 printcp(puppy_tree_vac_adopt)
 ```
 
-Split
 ```{r results='markup'}
 plotcp(puppy_tree) # visualize cross-validation results 
 ```
@@ -812,7 +825,7 @@ summary(puppy_tree) # detailed summary of splits
 
 Confusion Matrix for Classification Tree
 
-```{r results='markup'}
+```{r}
 loadPkg("caret") 
 cm_puppy_tree = confusionMatrix( predict(puppy_tree, type = "class"), reference = datage$y )
 print('Overall: ')
@@ -820,20 +833,14 @@ cm_puppy_tree$overall
 print('Class: ')
 cm_puppy_tree$byClass
 unloadPkg("caret")
-
-xkabledply(cm_puppy_tree$table, "confusion matrix")
 ```
 
 
 Plot Tree
 
 ```{r}
-loadPkg("rpart.plot")
-loadPkg("rattle")
-#plot(puppy_tree, uniform=TRUE, main="Classification Tree for Puppy")
-#text(puppy_tree, use.n=TRUE, all=TRUE, cex=.8) # Kind of a useless graph!!!
-
-fancyRpartPlot(puppy_tree)
+plot(puppy_tree, uniform=TRUE, main="Classification Tree for Puppy")
+text(puppy_tree, use.n=TRUE, all=TRUE, cex=.8) # Kind of a useless graph!!!
 ```
 
 
