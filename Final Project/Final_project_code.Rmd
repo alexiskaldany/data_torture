@@ -39,6 +39,7 @@ library('gridExtra')
 library('leaps')
 library('vtable')
 library('pscl')  
+library('FNN')
 
 ## Loading data
 data = read.csv('datafile.csv',encoding = "UTF-8")
@@ -266,18 +267,105 @@ anova_vac
 ```
 
 #Kaiyuan's section
-#SMART QUESTION:What is the probability that a large, female, vaccinated dog would get adopted quickly (adoption speed of 1 or 2). 
+#SMART QUESTION:What is the probability that a large, female, vaccinated dog would get adopted quickly (adoption speed of 0 and 1). 
 ```{r}
-logit <- glm(data$AdoptionSpeed ~ data$Type + data$MaturitySize+ data$Vaccinated + data$Gender, data = data, family = "binomial")
+##data preparation
+new_dat = dat[c('Type',  'Gender', 'MaturitySize', 'Vaccinated', 'AdoptionSpeed')]
+xkabledply(summary(new_dat))
 ```
 ```{r}
-xkabledply(logit, title = paste("Logistic Regression :", format(formula(logit)) ))
+library(ggplot2)
+ggplot(data=new_dat, aes(AdoptionSpeed)) + 
+  geom_bar(breaks=seq(0, 4, by=1),
+                 col="red",
+                 aes(fill=..count..)) +
+  labs(title="AdoptionSpeed of pets", x = "AdoptionSpeed") + 
+  scale_fill_gradient("Count", low="lightblue", high="#FF9999")
+
+```
+
+```{r}
+###group adoption speed 0 and 1
+levels(new_dat$AdoptionSpeed)[levels(new_dat$AdoptionSpeed)==1] <-0
+summary(new_dat)
+
+```
+
+
+```{r}
+###group adoption speed 3 and 4
+levels(new_dat$AdoptionSpeed)[levels(new_dat$AdoptionSpeed)==4] <-3
+summary(new_dat)
+
+```
+
+
+```{r}
+###group adoption speed 2 and 3
+levels(new_dat$AdoptionSpeed)[levels(new_dat$AdoptionSpeed)==3] <-2
+xkabledply(summary(new_dat))
+
 ```
 ```{r}
-pdt<-data.frame(Type=1,MaturitySize=3,Gender=2,Vaccinated=1)
-predict_female <- predict(logit,pdt,typle="response")
-predict_female
+levels(new_dat$AdoptionSpeed) <- c("0", "1")
+summary(new_dat)
+
 ```
+
+
+
+```{r}
+ggplot(data=new_dat, aes(AdoptionSpeed)) + 
+  geom_bar(breaks=seq(0, 4, by=1),
+                 col="red",
+                 aes(fill=..count..)) +
+  labs(title="AdoptionSpeed of pets", x = "AdoptionSpeed") + 
+  scale_fill_gradient("Count", low="lightblue", high="#FF9999")
+```
+
+```{r}
+logit <- glm(AdoptionSpeed ~ Type + MaturitySize + Vaccinated + Gender, data = new_dat, family = "binomial")
+summary(logit)
+
+```
+```{r}
+loadPkg("regclass")
+xkabledply(confusion_matrix(logit), title = "Confusion matrix from Logit Model" )
+```
+```{r}
+loadPkg("ResourceSelection")
+LogitHoslem = hoslem.test(new_dat$AdoptionSpeed,fitted(logit)) # Hosmer and Lemeshow test, a chi-squared test
+unloadPkg("ResourceSelection")
+LogitHoslem
+```
+
+
+```{r}
+loadPkg("pROC")
+prob=predict(logit, type = "response" )
+new_dat$prob=prob
+h <- roc(AdoptionSpeed~prob, data=new_dat)
+auc(h) 
+plot(h, main = "ROC curve of model")
+```
+
+
+
+```{r}
+preds <- with(new_dat,data.frame(Type=as.factor(1),MaturitySize=as.factor(3),Gender=as.factor(2),Vaccinated=as.factor(1)))
+
+d3 <- cbind(preds, predict(logit, newdata = preds, type = "link",se = TRUE))
+
+d3 <- within(d3, {
+    PredictedProb <- plogis(fit)
+    LL <- plogis(fit - (1.96 * se.fit))
+    UL <- plogis(fit + (1.96 * se.fit))
+})
+
+d3
+
+```
+
 
 
 # Yixi's section
