@@ -41,7 +41,7 @@ library('vtable')
 library('pscl')  
 
 ## Loading data
-data = read.csv('datafile.csv',encoding = "UTF-8")s
+data = read.csv('datafile.csv',encoding = "UTF-8")
 
 initialrows = nrow(data)
 
