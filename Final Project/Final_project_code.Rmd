@@ -39,9 +39,10 @@ library('gridExtra')
 library('leaps')
 library('vtable')
 library('pscl')  
+library('FNN')
 
 ## Loading data
-data = read.csv('datafile.csv',encoding = "UTF-8")s
+data = read.csv('datafile.csv',encoding = "UTF-8")
 
 initialrows = nrow(data)
 
