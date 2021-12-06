@@ -365,7 +365,7 @@ d3
 ```
 
 
-# SMART QUESTION: Does animal Type, Gender, MaturitySize, FurLength, and Vaccination status influence the adoption speed significantly, and what is the best model (Logistic Regression, Knn) when considering these variables?
+# SMART QUESTION: Does animal profile influence the adoption speed significantly, and what is the best model (Logistic Regression, Knn) when considering these variables?
 ```{r}
 dataTGMFV = dat[, c('Age','Type','Gender','MaturitySize','FurLength','Vaccinated','PhotoAmt','VideoAmt','AdoptionSpeed')]
 dataTGMFV$AdoptionSpeed[dat$AdoptionSpeed == 0|dat$AdoptionSpeed == 1] = 0
@@ -403,7 +403,9 @@ loadPkg("ModelMetrics")
 xkabledply( confusion_matrix(petFeaturetableAll), title = "Confusion matrix from Logit Model" )
 pred_ = predict(petFeaturetableAll, dataTGMFV[1:8], type="response")
 unloadPkg("regclass")
+
 confusionMatrix( pred_, as.factor(dataTGMFV$AdoptionSpeed))
+
 unloadPkg("ModelMetrics")
 ```
 ```{r}
@@ -413,12 +415,16 @@ unloadPkg("ResourceSelection")
 petLogitHoslem
 ```
 ```{r}
+unloadPkg("pROC")
 loadPkg("pROC") # receiver operating characteristic curve, gives the diagnostic ability of a binary classifier system as its discrimination threshold is varied. The curve is on sensitivity/recall/true-positive-rate vs false_alarm/false-positive-rate/fall-out.
-prob=predict(petFeaturetableAll, type = "response" )
-dataTGMFV$prob=prob
-h <- roc(AdoptionSpeed~prob, data=dataTGMFV)
-#auc(h) # area-under-curve prefer 0.8 or higher.
-plot(h)
+
+probOfTGMFV=predict(petFeaturetableAll, type = "response" )
+dataTGMFV$prob=probOfTGMFV
+aucRocOfTGMFV <- roc(AdoptionSpeed~prob, data=dataTGMFV)
+auc(aucRocOfTGMFV) # area-under-curve prefer 0.8 or higher.
+plot(aucRocOfTGMFV)
+unloadPkg("pROC")
+ main
 ```
 #### McFadden
 
@@ -461,9 +467,7 @@ unloadPkg("leaps")
 ```
 #### KNN
 ```{r}
-loadPkg("gmodels")
-loadPkg("FNN")
-loadPkg("caret") # confusionMatrix
+
 #first we want to scale the data so KNN will operate correctly
 knnDataTGMFV = dataTGMFV[1:9]
 knnDataTGMFV$Type = as.numeric(knnDataTGMFV$Type)
@@ -492,6 +496,10 @@ pet.testLabels <- knnDataTGMFV[pet_sample==2, 9]
 loadPkg("gmodels")
 loadPkg('FNN')
 #So now we will deploy our model 
+loadPkg("FNN")
+loadPkg("gmodels")
+loadPkg("caret") # confusionMatrix
+loadPkg("class")
 pet_pred <- knn(train = pet_training, test = pet_test, cl=pet.trainLabels, k=7)
 ```
 ```{r}
@@ -501,8 +509,9 @@ petPREDCross <- CrossTable(pet.testLabels, pet_pred, prop.chisq = FALSE)
 ```{r}
 loadPkg("gmodels")
 loadPkg("FNN")
-loadPkg("caret")
-confusionMatrix
+
+loadPkg("caret") # confusionMatrix
+loadPkg("class")
 
 # Loop thru different k values
 
