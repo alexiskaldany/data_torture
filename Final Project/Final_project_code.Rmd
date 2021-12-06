@@ -365,7 +365,7 @@ d3
 ```
 
 
-# SMART QUESTION: Does animal Type, Gender, MaturitySize, FurLength, and Vaccination status influence the adoption speed significantly, and what is the best model (Logistic Regression, Knn) when considering these variables?
+# SMART QUESTION: Does animal profile influence the adoption speed significantly, and what is the best model (Logistic Regression, Knn) when considering these variables?
 ```{r}
 dataTGMFV = dat[, c('Age','Type','Gender','MaturitySize','FurLength','Vaccinated','PhotoAmt','VideoAmt','AdoptionSpeed')]
 dataTGMFV$AdoptionSpeed[dat$AdoptionSpeed == 0|dat$AdoptionSpeed == 1] = 0
