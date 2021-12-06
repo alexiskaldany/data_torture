@@ -711,7 +711,9 @@ cm
 However, when we look closer at the predictions we can see that it just over predicted dogs. The balanced accuracy value dropped by a couple percentage points. At the end of all of this we're basically just above chance in the predictions for both models which leads us to the conclusion that the type of animal can't be predicted based on the adoption profile.
 
 # Alexis's section
+
 # SMART Question:  Can puppies/kittens be identified based on their adoption profile?
+
 ```{r}
 datage <- dat[ ,c('Type','Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt', 'VideoAmt', 'AdoptionSpeed') ]
 datage$puppy = NaN
@@ -729,9 +731,9 @@ As `r puppy_proportion` percent of the pets are puppies, there is a very good ba
 
 ## Logistic Model
 
-- Starting off with a full model, excluding Age as it would perfectly predict `r datage$puppy`
+- Starting off with a full model, excluding Age as it would perfectly predict Puppy.
 
-```{r results='markup'}
+```{r}
 loadPkg("bestglm")
 loadPkg("leaps")
 
@@ -786,7 +788,8 @@ ageHoslem
 unloadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluation
 ```
 
-[add analysis]
+-As the p-value is very low, indicating the recommended logistic model is not a good fit.
+
 
 ```{r results='markup'}
 loadPkg("pROC")
@@ -797,7 +800,19 @@ plot(h)
 auc(h)
 ```
 
-[add analysis]
+-The shape is decent, but the score of `format(auc(h))` is below the recommended 0.8 thresh-hold, but indicates a better fit than the Hosmer-Lemeshow test would indicate. 
+
+```{r, results = 'markup'}
+loadPkg("pscl") # use pR2( ) function to calculate McFadden statistics for model eval
+typePR = pR2(pup_logit)
+typePR
+unloadPkg("pscl") 
+```
+
+The McFadden score of `r format(round(typePR['McFadden'] * 100), 0)`% is pretty low.
+
+
+Lets see if a classification tree can give a better score. 
 
 ## Classification Tree
 
@@ -832,14 +847,16 @@ cm_puppy_tree$overall
 print('Class: ')
 cm_puppy_tree$byClass
 unloadPkg("caret")
+xkabledply(cm_puppy_tree$table, "confusion matrix")
 ```
 
 
 Plot Tree
 
 ```{r}
-plot(puppy_tree, uniform=TRUE, main="Classification Tree for Puppy")
-text(puppy_tree, use.n=TRUE, all=TRUE, cex=.8) # Kind of a useless graph!!!
+loadPkg("rpart.plot")
+loadPkg("rattle")
+fancyRpartPlot(puppy_tree)
 ```
 
 
