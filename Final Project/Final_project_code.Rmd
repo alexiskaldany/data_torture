@@ -366,6 +366,9 @@ d3
 
 
 # SMART QUESTION: Does animal profile influence the adoption speed significantly, and what is the best model (Logistic Regression, Knn) when considering these variables?
+
+We research this question because although all pets are cute, there are still some pets are not popular, so we make this model to see what influence the AdoptionSpeed, and see how we can improve it, or let the website of adoption to make some activities to show the cute aspect of the relative not popular pets to adopters.\
+
 ```{r}
 dataTGMFV = dat[, c('Age','Type','Gender','MaturitySize','FurLength','Vaccinated','PhotoAmt','VideoAmt','AdoptionSpeed')]
 dataTGMFV$AdoptionSpeed[dat$AdoptionSpeed == 0|dat$AdoptionSpeed == 1] = 0
@@ -390,7 +393,7 @@ plot(reg.best10, scale = "bic", main = "BIC")
 plot(reg.best10, scale = "Cp", main = "Cp")
 # summary(reg.best10)
 ```
-These are the result of feature selection.\
+These are the results of feature selection.\
 
 
 ```{r results='markup'}
@@ -413,6 +416,8 @@ confusionMatrix( pred_, as.factor(dataTGMFV$AdoptionSpeed))
 
 unloadPkg("ModelMetrics")
 ```
+This is the Confusion Matrix.\
+
 ```{r}
 loadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluation
 petLogitHoslem = hoslem.test(dataTGMFV$AdoptionSpeed, fitted(petFeaturetableAll)) # Hosmer and Lemeshow test, a chi-squared test
@@ -442,7 +447,7 @@ petLogitpr2 = pR2(petFeaturetableAll)
 petLogitpr2
 unloadPkg("pscl") 
 ```
-With the McFadden value of `r petLogitpr2['McFadden']`, which is analogous to the coefficient of determination $R^2$, only about 2% of the variations in y is explained by the explanatory variables in the model. 
+With the McFadden value of `r petLogitpr2['McFadden']`, which is analogous to the coefficient of determination $R^2$, only about 3% of the variations in y is explained by the explanatory variables in the model. 
 
 ```{r}
 featureClean = dat[ , c('Age','Type','Gender','MaturitySize','FurLength','Vaccinated','PhotoAmt','VideoAmt')]
@@ -461,7 +466,7 @@ plot(reg.leaps, scale = "adjr2", main = "Adjusted R^2")
 plot(reg.leaps, scale = "bic", main = "BIC")
 plot(reg.leaps, scale = "Cp", main = "Cp")
 ```
-
+Doing feature selection again.\
 ```{r}
 loadPkg("bestglm")
 res.bestglm <- bestglm(Xy = featureClean, family = binomial,
@@ -516,6 +521,8 @@ pet_pred <- knn(train = pet_training, test = pet_test, cl=pet.trainLabels, k=7)
 petPREDCross <- CrossTable(pet.testLabels, pet_pred, prop.chisq = FALSE)
 #Looks like we got all but three correct, not bad
 ```
+This is the Confusion Matrix.\
+
 ```{r}
 loadPkg("gmodels")
 loadPkg("FNN")
