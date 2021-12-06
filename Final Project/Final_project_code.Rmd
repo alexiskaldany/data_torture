@@ -41,6 +41,7 @@ library('vtable')
 library('pscl')  
 library('FNN')
 
+
 ## Loading data
 data = read.csv('datafile.csv',encoding = "UTF-8")
 
@@ -341,12 +342,12 @@ LogitHoslem
 
 
 ```{r}
-loadPkg("pROC")
-prob=predict(logit, type = "response" )
-new_dat$prob=prob
-h <- roc(AdoptionSpeed~prob, data=new_dat)
-auc(h) 
-plot(h, main = "ROC curve of model")
+#loadPkg("pROC")
+#prob=predict(logit, type = "response" )
+#new_dat$prob=prob
+#h <- roc(AdoptionSpeed~prob, data=new_dat)
+#auc(h) 
+#plot(h, main = "ROC curve of model")
 ```
 
 
@@ -407,8 +408,9 @@ loadPkg("regclass")
 loadPkg("ModelMetrics")
 xkabledply( confusion_matrix(petFeaturetableAll), title = "Confusion matrix from Logit Model" )
 pred_ = predict(petFeaturetableAll, dataTGMFV[1:8], type="response")
+
+#confusionMatrix( pred_, as.factor(dataTGMFV$AdoptionSpeed))
 unloadPkg("regclass")
-confusionMatrix( pred_, as.factor(dataTGMFV$AdoptionSpeed))
 ```
 ```{r}
 loadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluation
@@ -418,7 +420,11 @@ petLogitHoslem
 ```
 
 ```{r}
+<<<<<<< Updated upstream
 loadPkg("pROC") # receiver operating characteristic curve, gives the diagnostic ability of a binary classifier system as its discrimination threshold is varied. The curve is on sensitivity/recall/true-positive-rate vs false_alarm/false-positive-rate/fall-out.
+=======
+#loadPkg("pROC") # receiver operating characteristic curve, gives the diagnostic ability of a binary classifier system as its discrimination threshold is varied. The curve is on sensitivity/recall/true-positive-rate vs false_alarm/false-positive-rate/fall-out.
+>>>>>>> Stashed changes
 #prob=predict(petFeaturetableAll, type = "response" )
 #dataTGMFV$prob=prob
 #h <- roc(AdoptionSpeed~prob, data=dataTGMFV)
@@ -495,6 +501,7 @@ pet.testLabels <- knnDataTGMFV[pet_sample==2, 9]
 ```
 
 ```{r}
+loadPkg("gmodels")
 #So now we will deploy our model 
 pet_pred <- knn(train = pet_training, test = pet_test, cl=pet.trainLabels, k=7)
 ```
