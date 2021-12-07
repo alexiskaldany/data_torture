@@ -55,11 +55,13 @@ samp <- sample(2, nrow(dat), replace=TRUE, prob=c(0.7, 0.3))
 train <- dat[samp==1, 1:9]
 test <- dat[samp==2, 1:9]
 
-typeknn.trainFeatures = dat[samp == 1, c(2:9)]
-typeknn.testFeatures = dat[samp == 2, c(2:9)]
-typeknn.trainLabel = dat[samp==1, 1]
-typeknn.testLabel = dat[samp==2, 1]
+#typeknn.trainFeatures = dat[samp == 1, c(2:9)]
+#typeknn.testFeatures = dat[samp == 2, c(2:9)]
+#typeknn.trainLabel = dat[samp==1, 1]
+#typeknn.testLabel = dat[samp==2, 1]
 ```
+
+# Introduction
 
 # Background EDA
 
