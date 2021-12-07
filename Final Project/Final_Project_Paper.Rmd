@@ -1,9 +1,5 @@
 ---
-<<<<<<< HEAD
 title: "PetFinder Adoption Final Report"
-=======
-title: "PetFinder Adoption Final Paper"
->>>>>>> f9f82238d5e098ccc8378d2dee2bcfa55038eaf2
 author: "Group 3: Data Torturers (Alexis Kaldany, Sahara Ensley, Yixi Liang, Kaiyuan Liang)"
 date: "`r Sys.Date()`"
 output: 
