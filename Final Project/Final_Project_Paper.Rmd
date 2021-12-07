@@ -1,5 +1,9 @@
 ---
+<<<<<<< HEAD
+title: "PetFinder Adoption Final Report"
+=======
 title: "PetFinder Adoption Final Paper"
+>>>>>>> f9f82238d5e098ccc8378d2dee2bcfa55038eaf2
 author: "Group 3: Data Torturers (Alexis Kaldany, Sahara Ensley, Yixi Liang, Kaiyuan Liang)"
 date: "`r Sys.Date()`"
 output: 
@@ -16,30 +20,13 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-# some of common options (and the defaults) are: 
-# include=T, eval=T, echo=T, results='hide'/'asis'/'markup',..., collapse=F, warning=T, message=T, error=T, cache=T, fig.width=6, fig.height=4, fig.dim=c(6,4) #inches, fig.align='left'/'center','right', 
 library(ezids)
 #knitr::opts_chunk$set(warning = F, results = "markup", message = F, echo = F)
 knitr::opts_chunk$set(warning = F, results = "hide", message = F)
 options(scientific=T, digits = 3) 
-# options(scipen=9, digits = 3) 
-# ‘scipen’: integer. A penalty to be applied when deciding to print numeric values in fixed or exponential notation.  Positive values bias towards fixed and negative towards scientific notation: fixed notation will be preferred unless it is more than ‘scipen’ digits wider.
-# use scipen=999 to prevent scientific notation at all times
 ```
 
-- Loading data and libraries
 ```{r}
-library("corrplot")
-library("ezids")
-library("gtsummary")
-library('ggridges')
-library('viridis')
-library('wesanderson')
-library('gridExtra')
-library('leaps')
-library('vtable')
-library('pscl')
-
 ## Loading data
 data = read.csv('datafile.csv',encoding = "UTF-8")
 
@@ -59,18 +46,21 @@ data = subset(data, data$Quantity == 1)
 data = subset(data, ! data$AdoptionSpeed == 4)
 
 # Only pulling the columns we want to look at
+
 dat = data[c('Type', 'Age', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt','VideoAmt', 'AdoptionSpeed')]
-summary(dat)
 
-# Adding random values
-#dat$ASnum = NaN
-#dat$ASnum[dat$AdoptionSpeed == 0] = 0
-#dat$ASnum[dat$AdoptionSpeed == 1] = floor(runif(sum(dat$AdoptionSpeed == 1), 1, 8))
-#dat$ASnum[dat$AdoptionSpeed == 2] = floor(runif(sum(dat$AdoptionSpeed == 2), 8, 31))
-#dat$ASnum[dat$AdoptionSpeed == 3] = floor(runif(sum(dat$AdoptionSpeed == 3), 31, 91))
-#dat$ASnum[dat$AdoptionSpeed == 4] = 100 -- this line isn't necessary because we exclude animals that have this adoption speed
+#summary(dat)
 
-summary(dat)
+set.seed(1000)
+samp <- sample(2, nrow(dat), replace=TRUE, prob=c(0.7, 0.3))
+
+train <- dat[samp==1, 1:9]
+test <- dat[samp==2, 1:9]
+
+typeknn.trainFeatures = dat[samp == 1, c(2:9)]
+typeknn.testFeatures = dat[samp == 2, c(2:9)]
+typeknn.trainLabel = dat[samp==1, 1]
+typeknn.testLabel = dat[samp==2, 1]
 ```
 
 # Background EDA
