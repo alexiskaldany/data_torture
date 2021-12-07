@@ -738,6 +738,10 @@ However, when we look closer at the predictions we can see that it just over pre
 
 # SMART Question:  Can puppies/kittens be identified based on their adoption profile?
 
+## Objective
+
+- The objective of this question/model is to uncover any causal relationships between the age of an animal 
+
 ```{r}
 datage <- dat[ ,c('Type','Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt', 'VideoAmt', 'AdoptionSpeed') ]
 datage$puppy = NaN
@@ -886,7 +890,7 @@ fancyRpartPlot(puppy_tree)
 ### Explanation for resulting tree
 
 - The left branch is non-puppy/kitten animals. The right branch is puppy/kitten. 
-- This model recommends going along the 
+- This model recommends going along the left branch if vaccination status is 1 or 3, which indicates the animal is respectively already vaccinated, or its vaccine status is unknown. Going right for vaccination status 2, which indicates the animal is vaccinated. The model is saying that unvaccinated animals are puppies/kittens.
 
 
 
