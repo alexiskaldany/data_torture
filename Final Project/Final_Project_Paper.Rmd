@@ -47,6 +47,8 @@ dat = data[c('Type', 'Age', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated',
 
 #summary(dat)
 
+
+## creating train test
 set.seed(1000)
 samp <- sample(2, nrow(dat), replace=TRUE, prob=c(0.7, 0.3))
 
