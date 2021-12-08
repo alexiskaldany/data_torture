@@ -728,9 +728,9 @@ However, when we look closer at the predictions we can see that it just over pre
 
 ## Objective
 
-- The objective of this question/model is to uncover any causal relationships between the age of an animal 
+- A common problem at animal shelters is difficulty in accurately determining. 
 
-```{r}
+```{r echo = FALSE}
 datage <- dat[ ,c('Type','Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt', 'VideoAmt', 'AdoptionSpeed') ]
 datage$puppy = NaN
 datage$puppy[dat$Age <= 3] = 1
@@ -749,7 +749,7 @@ As `r puppy_proportion` percent of the pets are puppies, there is a very good ba
 
 - Starting off with a full model, excluding Age as it would perfectly predict Puppy.
 
-```{r}
+```{r echo = FALSE}
 loadPkg("bestglm")
 loadPkg("leaps")
 
@@ -764,40 +764,34 @@ unloadPkg("bestglm")
 ```
 
 
-Summary of Logistic Model Feature Selection
-```{r results='markup'}
+### Logistic Model Feature Selection
+```{r echo = FALSE}
 logit_pups$BestModels
 summary(logit_pups$BestModels)
 ```
 
-Feature Selection indicates everything except PhotoAmt should be used to generate best logistic model.
+- Feature Selection indicates everything except PhotoAmt should be used to generate the best logistic model.
 
-Creating Best Logistic Model
-```{r results='markup'}
+```{r,echo = FALSE}
 pup_logit <- glm(y ~ Type + Gender + MaturitySize + FurLength + Vaccinated + VideoAmt + AdoptionSpeed, data = datage, family = "binomial")
+```
+
+```{r, echo=FALSE, results='markup'}
 xkabledply(pup_logit, title = paste("Logistic Regression : Puppy ~ type +gender+size+fur+vaccinated+AdoptSpd+videos"))
 ```
 
+- The coefficient table for the recommended logistic model has two factor levels for AdoptionSpeed considered to not be significant, otherwise all other variables are significant. 
+- Notice how strong the z-value is for Vaccinated2. This standout will return in the classification tree  performed later.
+
 Confusion Matrix for Logistic Model:
 
-```{r}
+```{r echo = FALSE, results='markup'}
 loadPkg("regclass")
 xkabledply( confusion_matrix(pup_logit), title = "Confusion matrix from Logit Model" )
 ```
 
-```{r results='markup'}
-#loadPkg("caret") 
-#cm_puppy_logi = confusionMatrix(pup_logit, type = "class", reference = datage$y )
-#print('Overall: ')
-#cm_puppy_logi$overall
-#print('Class: ')
-#cm_puppy_logi$byClass
-#unloadPkg("caret")
-```
-
-
 Checking Model Effectiveness
-```{r}
+```{r echo = FALSE}
 loadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluation
 ageHoslem = hoslem.test(datage$y, fitted(pup_logit)) # Hosmer and Lemeshow test, a chi-squared test
 ageHoslem
@@ -807,19 +801,23 @@ unloadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluat
 -As the p-value is very low, indicating the recommended logistic model is not a good fit.
 
 
-```{r results='markup'}
+```{r, echo=FALSE, include=FALSE}
 loadPkg("pROC")
 prob=predict(pup_logit, type = "response" )
 datage$prob=prob
 h <- roc(y~prob, data=datage)
 plot(h)
-#auc(h)
 ```
+
+```{r echo = FALSE}
+plot(h)
+```
+
 
 -The shape is decent, but the score of .761 is below the recommended 0.8 thresh-hold, but indicates a better fit than the Hosmer-Lemeshow test would indicate. 
 
-```{r, results = 'markup'}
-loadPkg("pscl") # use pR2( ) function to calculate McFadden statistics for model eval
+```{r, echo=FALSE, results = 'markup'}
+loadPkg("pscl")
 typePR = pR2(pup_logit)
 typePR
 unloadPkg("pscl") 
@@ -832,7 +830,7 @@ Lets see if a classification tree can give a better score.
 
 ## Classification Tree
 
-```{r}
+```{r, echo=FALSE}
 loadPkg("rpart")
 datage <- datage[, c('Type', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt', 'VideoAmt', 'AdoptionSpeed', 'y')]
 puppy_tree <- rpart(y ~ Type + Gender + MaturitySize + FurLength + Vaccinated + PhotoAmt + VideoAmt + AdoptionSpeed ,data = datage, method="class", control = list(maxdepth = 20))
@@ -855,7 +853,7 @@ summary(puppy_tree) # detailed summary of splits
 
 Confusion Matrix for Classification Tree
 
-```{r}
+```{r echo=FALSE}
 loadPkg("caret") 
 cm_puppy_tree = caret::confusionMatrix( predict(puppy_tree, type = "class"), reference = datage$y )
 print('Overall: ')
@@ -869,7 +867,7 @@ xkabledply(cm_puppy_tree$table, "confusion matrix")
 
 Plot Tree
 
-```{r}
+```{r echo=FALSE ,results='markup'}
 loadPkg("rpart.plot")
 loadPkg("rattle")
 fancyRpartPlot(puppy_tree)
@@ -878,7 +876,7 @@ fancyRpartPlot(puppy_tree)
 ### Explanation for resulting tree
 
 - The left branch is non-puppy/kitten animals. The right branch is puppy/kitten. 
-- This model recommends going along the left branch if vaccination status is 1 or 3, which indicates the animal is respectively already vaccinated, or its vaccine status is unknown. Going right for vaccination status 2, which indicates the animal is vaccinated. The model is saying that unvaccinated animals are puppies/kittens.
+- This model recommends going along the left branch if vaccination status is 1 or 3, which indicates the animal is respectively already vaccinated, or its vaccine status is unknown. Going right for vaccination status 2, which indicates the animal is vaccinated. The model is saying that un-vaccinated animals are puppies/kittens.
 
 
 
