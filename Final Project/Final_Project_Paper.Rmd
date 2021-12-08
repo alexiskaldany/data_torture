@@ -781,16 +781,16 @@ xkabledply(pup_logit, title = paste("Logistic Regression : Puppy ~ type +gender+
 ```
 
 - The coefficient table for the recommended logistic model has two factor levels for AdoptionSpeed considered to not be significant, otherwise all other variables are significant. 
-- Notice how strong the z-value is for Vaccinated2. This standout will return in the classification tree  performed later.
+- Notice how strong the z-value is for Vaccinated2. This standout will return in the classification tree performed later.
+### Logistic Model Evaluation
 
-Confusion Matrix for Logistic Model:
+#### Confusion Matrix for Logistic Model:
 
 ```{r echo = FALSE, results='markup'}
 loadPkg("regclass")
 xkabledply( confusion_matrix(pup_logit), title = "Confusion matrix from Logit Model" )
 ```
 
-Checking Model Effectiveness
 ```{r echo = FALSE}
 loadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluation
 ageHoslem = hoslem.test(datage$y, fitted(pup_logit)) # Hosmer and Lemeshow test, a chi-squared test
