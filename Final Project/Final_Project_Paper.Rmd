@@ -63,6 +63,8 @@ test <- dat[samp==2, 1:9]
 
 # Introduction
 
+In 2016 alone there were over 2 million animals that ended up in animal shelters and were not adopted. Shelters around the world work constantly to attempt to lower this number and place deserving animals in loving homes. PetFinder, an animal adoption website, assists with this goal by allowing animal profiles to be put online for people to find. Getting a profile onto PetFinder is the first step, making an effective profile is more difficult. Questions of how many photos to include, how many videos? Should they list the vaccination status of the animal? These are just some questions that can arise during this process. We determined during our last study that when the adoption speed of an animal is numerical we were not able to successfully model this speed given these aspects of the profile using linear regression. So we decided to ask more complex questions about this dataset to see if we could determine patterns in adoption profiles that could give potential insight to adoption centers as they work to get animals adopted. 
+
 # Background EDA
 
 We're using the same dataset as from the midterm assignment. The data comes from Kaggle (https://www.kaggle.com/c/petfinder-adoption-prediction/data) and includs almost 15,000 observations of 23 variables. Each observation is an adoption profile on PetFinder in Malaysia. We chose to keep `r length(dat)` features, as well as discarding any profile that contained more than one animal, and any animal that did not get adopted in the first 100 days. At the end of these cleaning measures we end up with `r nrow(dat)` observations of the `r length(dat)` features. Initially we transformed the categorical dependent variable (adoption speed) into a continuous numerical variable. For the sake of this project we are keeping it as a categorical variable for some of our analyses.
@@ -902,3 +904,8 @@ fancyRpartPlot(puppy_tree)
 - Adoption Speed Prediction: Logistic Model, Accuracy .65, McFadden = .027
 - Pet Type Prediction Accuracy: Logistic Model, .677, McFadden = .097
 - Age Type Prediction Accuracy: Logistic Model, .695, McFadden = .163
+
+# Bibliography
+Staff, A. S. P. C. A. (2019). Pet statistics. ASPCA. Retrieved November 3, 2021, from https://www.aspca.org/helping-people-pets/shelter-intake-and-surrender/pet-statistics. 
+
+Babej, M. E. (2011, May 23). Petfinder.com arranges 17 million adoptions by open branding, technology. Forbes. Retrieved November 7, 2021, from https://www.forbes.com/sites/marcbabej/2011/05/10/petfinder-com-arranges-17-million-adoptions-by-open-branding-technology/?sh=184e0d8fac4b. 
