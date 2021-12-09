@@ -17,8 +17,8 @@ output:
 
 ```{r setup, include=FALSE}
 library(ezids)
-#knitr::opts_chunk$set(warning = F, results = "markup", message = F, echo = F)
-knitr::opts_chunk$set(warning = F, results = "hide", message = F)
+knitr::opts_chunk$set(warning = F, results = "markup", message = F, echo = F)
+#knitr::opts_chunk$set(warning = F, results = "hide", message = F)
 options(scientific=T, digits = 3) 
 ```
 
@@ -553,112 +553,137 @@ The best KNN is 17.\
 
 # SMART QUESTION: Can the type of animal be classified from the adoption profile?
 
-Given that the type of animal is a categorical variable this is a classification problem. The first model we can try is a Logistic Regression model. First we need a new clean dataset with the features we want and a renamed target variable for the feature selection.
+The next question we wanted to answer switched our attention to the type of animal profile. We determined that we couldn't predict the adoption speed effectively with classification models. So we thought that we would take a different approach to determining patterns in the adoption profiles. If a classification model was able to predict the type of animal from the adoption profile then it would suggest a pattern in either the animals themselves, or the way the profiles were written. Either possibility leads to more insight about the profiles and possible interventions to ensure the maximum animals are adoptopted into loving homes.
+
+Because this is a binary classification problem we decided to use a logistic regression model and a K nearest neighbors model. Beginning with the logistic model, we ran feature selection to determine what features we should include.
+
+The results of the feature selection are as follows.
 
 ```{r, results = 'markup'}
+loadPkg("bestglm")
+
 # creating a cleaned dataset without the animal type
 datclean = dat[, c('Age', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt', 'VideoAmt', 'AdoptionSpeed')]
 
 # labeling the target variable appropriately
 datclean$y = dat[, c('Type')]
-str(datclean)
-```
-
-Now we can run the feature selection.
-```{r, results='markup'}
-loadPkg("bestglm")
 
 # feature selection
 res.bestglm <- bestglm(Xy = datclean, family = binomial,
             IC = "AIC",
             method = "exhaustive")
-#summary(res.bestglm) # printing the summary
-res.bestglm$BestModels
-#summary(res.bestglm$BestModels)
+
+res.bestglm$BestModels[1, 1:8]
 unloadPkg("bestglm") 
 ```
 
-The best model based off this feature selection is every feature except video amount. Now we can make that model.
+The features that were selected using the `AIC` criteria and the exhaustive method are every feature except for `VideoAmt`. We can now make that model and test it against the animal type. The results of this model are as follows.
 
 ```{r, results='markup'}
 typeLogit <- glm(y ~ Age + Gender + MaturitySize + FurLength + Vaccinated + AdoptionSpeed + PhotoAmt, data = datclean, family = "binomial")
 xkabledply(typeLogit, title = paste("Logistic Regression : Type ~ age+gender+size+fur+vaccinated+AdoptSpd+photos"))
 ```
 
-```{r}
+This model has multiple statistically significant coefficient values. Every feature except `Vaccination` level 3, `AdoptionSpeed` fitted with a quadratic fit and a cubic fit have p_values above our alpha of 0.05. This suggests that almost every factor is significantly impacting the models decision about the type of animal the profile represents. We can then move on and look at different metrics to determine if this model was effective. First we can look at the various accuracy metrics of the model. The confusion matrix and metrics for this model is as follows.
+
+```{r, results = 'markup'}
+## MIGHT DELETE THIS
 loadPkg("regclass")
 loadPkg("ModelMetrics")
-xkabledply( confusion_matrix(typeLogit), title = "Type Confusion matrix from Logit Model" )
-typep = predict(typeLogit, datclean, type="response")
-#confusionMatrix(typep, datclean$y)
+c = confusion_matrix(typeLogit)
+xkabledply(c, title = "Type Confusion matrix from Logit Model" )
+acc = (c[1,1] + c[2,2])/c[3,3]
+prec = c[1,1]/(c[1,1]+c[2,1])
+recall = c[1,1]/(c[1,1] + c[1,2])
+F1 = (2*(prec * recall)) / (prec + recall)
 unloadPkg("regclass")
 ```
 
+Accuracy: `r format(acc)`\
+Precision: `r format(prec)`\
+Recall: `r format(recall)`\
+F1: `r format(F1)`\
 
-There are a number of significant values for these coefficients. But let's look at other metrics to get a sense of the effectiveness of this model.
+These numbers aren't terrible, but let's look at other metrics as well.
+
+We can look at the Hoslem and Lemeshow Goodness of Fit test next.
+
+
+**H0**: The model is a good fit for our dependent variable\
+**H1**: The model is a bad fir for our dependent variable\
+
 
 ```{r, results='markup'}
-loadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluation
-typeHoslem = hoslem.test(datclean$y, fitted(typeLogit)) # Hosmer and Lemeshow test, a chi-squared test
+loadPkg("ResourceSelection")
+typeHoslem = hoslem.test(datclean$y, fitted(typeLogit)) # Hosmer and Lemeshow test for fitting
 typeHoslem
-unloadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluation
+unloadPkg("ResourceSelection")
 ```
 
-The GOF value is very low which suggests that the model isn't a great fit. But we can look closer at this with an ROC plot.
+With a p_value of `r format(typeHoslem$p.value)` we can reject the null hypothesis that this model was a good fit for our dependent variable of animal type. In order to confirm this finding we wanted to look at the Receiver Operator Curve of this model. This plot shows the true positive rate against the false positive rate. By plotting the model in this way we can see how well above chance the model preforms.
 
 ```{r, results='markup'}
-loadPkg("pROC") # receiver operating characteristic curve, gives the diagnostic ability of a binary classifier system as its discrimination threshold is varied. The curve is on sensitivity/recall/true-positive-rate vs false_alarm/false-positive-rate/fall-out.
+loadPkg("pROC")
 prob=predict(typeLogit, type = "response" )
 datclean$prob=prob
 h <- roc(y~prob, data=datclean)
+auctype = auc(h)
 plot(h)
-#auc(h)
+unloadPkg("pROC")
 ```
 
-The ROC plot confirms that this is not a great model. The AUC value is 0.7, not at our bar of 0.8. Let's check one more measure.
+We can see by looking at this plot that the model is not very effective. While it is above chance, we ideally want to see a more defined box-shape of the curve which would suggest that it is able to accurately predict the type of animal. The area under this curve confirms that the model is not great. With our AUC = `r format(auctype)`, this is below the threshold of 0.8 that we are looking for to consider a model an effective classifier.
 
-```{r, results = 'markup'}
-loadPkg("pscl") # use pR2( ) function to calculate McFadden statistics for model eval
+The final metric we can use to confirm the state of our logistic model is the McFadden score. This is a proxy for an $R^2$ value.
+
+```{r}
+loadPkg("pscl")
 typePR = pR2(typeLogit)
-typePR
 unloadPkg("pscl") 
 ```
 
-According to the McFadden score only `r format(round(typePR['McFadden'] * 100), 0)`% of the variance in Type is explained by this model, this is incredibly low. Clearly the logistic regression model is not great at classifying type, or type is not decodeable from the profile.
+With a McFadden score of `r format(typePR['McFadden'])` we can say that only `r format(typePR['McFadden'] * 100, 2)`% of the variance in Type is explained by this model.
 
-Lets try a KNN model next. First the variables need to be returned to integers to pass into the model and the numerical features need to be scaled. First we're using all the features and running a search for the optimal K. The search for K went over values 3 - 20.
+After looking at all these metrics we have confirmed that this model is not adept at classifying type based on the adoption profile of the animal. Given this, we decided to move on to the KNN model in the hopes that this model would be more effective.
 
-```{r}
+The first step to use this model is cleaning the dataset. First, the numeric variables `Age`, `Photo Amount` and `Video Amount` are scaled to center them. Then all the factor level variables are returned to numeric variables for the model.
+
+In order to determine the optimal K value for the KNN model we ran through values 3-20 and chose the K with the highest total accuracy.
+
+```{r, results='hide'}
 loadPkg("gmodels")
 loadPkg("FNN")
 loadPkg("caret")
 
-# reloading the original dataframe to cancel all the factor variables
-knndat = read.csv('datafile.csv')
-knndat = subset(knndat, knndat$Quantity == 1)
-knndat = subset(knndat, ! knndat$AdoptionSpeed == 4)
+knn_train = as.data.frame(scale(train[c('Age', 'PhotoAmt', 'VideoAmt')], center = TRUE, scale = TRUE))
+knn_test = as.data.frame(scale(test[c('Age', 'PhotoAmt', 'VideoAmt')], center = TRUE, scale = TRUE))
 
-knndat = knndat[c('Type', 'Age', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt','VideoAmt', 'AdoptionSpeed')]
+knn_train$Type = as.numeric(train$Type)
+knn_train$Gender = as.numeric(train$Gender)
+knn_train$MaturitySize = as.numeric(train$MaturitySize)
+knn_train$FurLength = as.numeric(train$FurLength)
+knn_train$Vaccinated = as.numeric(train$Vaccinated)
+knn_train$AdoptionSpeed = as.numeric(train$AdoptionSpeed)
 
-scaledknn = as.data.frame(scale(knndat[c(2, 7, 8)], center = TRUE, scale = TRUE)) # only scaling the numerical values
-scaledknn[c('Type', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'AdoptionSpeed')] = knndat[c(1, 3, 4, 5, 6, 9)]
+knn_test$Type = as.numeric(test$Type)
+knn_test$Gender = as.numeric(test$Gender)
+knn_test$MaturitySize = as.numeric(test$MaturitySize)
+knn_test$FurLength = as.numeric(test$FurLength)
+knn_test$Vaccinated = as.numeric(test$Vaccinated)
+knn_test$AdoptionSpeed = as.numeric(test$AdoptionSpeed)
 
-#sampling for train and test
-set.seed(1000)
-knn_sample <- sample(2, nrow(scaledknn), replace=TRUE, prob=c(0.7, 0.3))
+trainLabel = knn_train$Type
+testLabel = knn_test$Type
 
-train <- scaledknn[knn_sample==1, 1:3, 5:9]
-test <- scaledknn[knn_sample==2, 1:3, 5:9]
-
-typeknn.trainLabel = scaledknn[knn_sample==1, 4]
-typeknn.testLabel = scaledknn[knn_sample==2, 4]
+knn_train = knn_train[c("Age", 'PhotoAmt', 'VideoAmt', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'AdoptionSpeed')]
+knn_test = knn_test[c("Age", 'PhotoAmt', 'VideoAmt', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'AdoptionSpeed')]
 
 ResultDf = data.frame( k=numeric(0), Total.Accuracy= numeric(0), row.names = NULL )
 
 for (kval in 3:20) {
-  tpred <- knn(train = train, test = test, cl=typeknn.trainLabel, k=kval)
-  cross <- CrossTable(typeknn.testLabel, tpred, prop.chisq = FALSE)
-  cm = caret::confusionMatrix(tpred, as.factor(typeknn.testLabel)) # from caret library
+  tpred <- knn(train = knn_train, test = knn_test, cl=trainLabel, k=kval)
+  cross <- CrossTable(testLabel, tpred, prop.chisq = FALSE)
+  cm = caret::confusionMatrix(tpred, as.factor(testLabel)) # from caret library
   
   cmaccu = cm$overall['Accuracy']
   cmt = data.frame(k=kval, Total.Accuracy = cmaccu, row.names = NULL ) # initialize a row of the metrics 
@@ -668,40 +693,22 @@ for (kval in 3:20) {
 ResultDf[which.max(ResultDf$Total.Accuracy),]
 ```
 
-According to the KNN model with all features included, the best K value is 8 and it produces an accuracy of `r ResultDf[which.max(ResultDf$Total.Accuracy),]$Total.Accuracy`.
+The K value that was determined to be the best for this model was k = 18 with a total accuracy of `r ResultDf[which.max(ResultDf$Total.Accuracy),]$Total.Accuracy`.
 
-Let's try and remove some features. We removed features by logic. For example gender is something that is consistent between types and video amount was removed in the logistic model so we removed it for this test to see if it improved anything. Again we ran through 18 possible K values from 3-20.
+To make sure that we're getting the best possible model we tried one more KNN model before looking closer at the results. We removed `Video Amount` from the feature list since it was removed in the logistic regression model. We did the same run through of K values from 3-20.
 
-```{r}
-loadPkg("gmodels")
-loadPkg("FNN")
-loadPkg("caret")
+```{r, results='hide'}
 
-knndat2 = read.csv('datafile.csv')
-knndat2 = subset(knndat2, knndat2$Quantity == 1)
-knndat2 = subset(knndat2, ! knndat2$AdoptionSpeed == 4)
-knndat2 = knndat2[c('Type', 'Age', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt', 'AdoptionSpeed')]
-
-scaledknn2 = as.data.frame(scale(knndat2[c(2, 6)], center = TRUE, scale = TRUE)) # only scaling the numerical values
-scaledknn2[c('Type', 'MaturitySize', 'FurLength', 'Vaccinated', 'AdoptionSpeed')] = knndat2[c(1, 3, 4, 5, 7)]
-
-#sampling for train and test
-set.seed(1000)
-knn_sample2 <- sample(2, nrow(scaledknn2), replace=TRUE, prob=c(0.7, 0.3))
-
-train2 <- scaledknn2[knn_sample2==1, 1:2, 4:7]
-test2 <- scaledknn2[knn_sample2==2, 1:2, 4:7]
-
-typeknn2.trainLabel = scaledknn2[knn_sample2==1, 3]
-typeknn2.testLabel = scaledknn2[knn_sample2==2, 3]
+knn_train2 = knn_train[c("Age", 'PhotoAmt', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'AdoptionSpeed')]
+knn_test2 = knn_test[c("Age", 'PhotoAmt', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'AdoptionSpeed')]
 
 ResultDf2 = data.frame( k=numeric(0), Total.Accuracy= numeric(0), row.names = NULL )
 
 for (kval in 3:20) {
-  tpred <- knn(train = train2, test = test2, cl=typeknn2.trainLabel, k=kval)
-  cross <- CrossTable(typeknn2.testLabel, tpred, prop.chisq = FALSE)
+  tpred <- knn(train = knn_train2, test = knn_test2, cl=trainLabel, k=kval)
+  cross <- CrossTable(testLabel, tpred, prop.chisq = FALSE)
   print( paste("k = ", kval) )
-  cm = caret::confusionMatrix(tpred, reference = as.factor(typeknn2.testLabel)) # from caret library
+  cm = caret::confusionMatrix(tpred, reference = as.factor(testLabel)) # from caret library
   cmaccu = cm$overall['Accuracy']
   cmt = data.frame(k=kval, Total.Accuracy = cmaccu, row.names = NULL ) # initialize a row of the metrics 
   ResultDf2 = rbind(ResultDf2, cmt)
@@ -711,20 +718,25 @@ ResultDf2[which.max(ResultDf2$Total.Accuracy),]
 
 ```
 
-Slightly better than the first model, so lets stick with this one.
+The K value that was determined to be the best for this model was k = 20 with a total accuracy of `r ResultDf2[which.max(ResultDf2$Total.Accuracy),]$Total.Accuracy`. This accuracy is very slightly better than the previous model, so we will continue with this model going forward.
 
+Taking a closer look at this second model we can pull out a number of statistics.
 
-```{r}
-tpred <- knn(train = train2, test = test2, cl=typeknn2.trainLabel, k=10)
-cross <- CrossTable(typeknn2.testLabel, tpred, prop.chisq = FALSE)
-cm = caret::confusionMatrix(tpred, reference = as.factor(typeknn2.testLabel)) # from caret library
+```{r, results = 'markup'}
+tpred <- knn(train = knn_train2, test = knn_test2, cl=trainLabel, k=20)
+cross <- CrossTable(testLabel, tpred, prop.chisq = FALSE)
+cm = caret::confusionMatrix(tpred, reference = as.factor(testLabel)) # from caret library
 cmaccu = cm$overall['Accuracy']
-
-cross
-cm
 ```
 
-However, when we look closer at the predictions we can see that it just over predicted dogs. The balanced accuracy value dropped by a couple percentage points. At the end of all of this we're basically just above chance in the predictions for both models which leads us to the conclusion that the type of animal can't be predicted based on the adoption profile.
+Accuracy: `r format(cm$overall['Accuracy'])`\
+Precision: `r format(cm$byClass['Precision'])`\
+Recall: `r format(cm$byClass['Recall'])`\
+F1: `r format(cm$byClass['F1'])`\
+
+All of these numbers are higher than our Logistic regression model so we can confirm that this model is slightly better at decoding type of animal from the adoption profile. While the model is better than chance, it's still not incredibly effective. This suggests that while there might be some discernible pattern to the profiles of the dogs and cats put on petfinder, it is not drastic enough that the model is incredibly accurate. 
+
+That being said, future studies should look into this pattern to see what the differences are specifically and whether or not they have an effect on adoption speed.
 
 # SMART Question:  Can puppies/kittens be identified based on their adoption profile?
 
