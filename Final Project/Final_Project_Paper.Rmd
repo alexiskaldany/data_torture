@@ -1,5 +1,5 @@
 ---
-title: "PetFinder Adoption Analysis - Modeling"
+title: "PetFinder Adoption Final Report"
 author: "Group 3: Data Torturers (Alexis Kaldany, Sahara Ensley, Yixi Liang, Kaiyuan Liang)"
 date: "`r Sys.Date()`"
 output: 
@@ -16,13 +16,895 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-# some of common options (and the defaults) are: 
-# include=T, eval=T, echo=T, results='hide'/'asis'/'markup',..., collapse=F, warning=T, message=T, error=T, cache=T, fig.width=6, fig.height=4, fig.dim=c(6,4) #inches, fig.align='left'/'center','right', 
 library(ezids)
-# knitr::opts_chunk$set(warning = F, results = "markup", message = F)
-knitr::opts_chunk$set(warning = F, results = "hide", message = F, echo = F)
+knitr::opts_chunk$set(warning = F, results = "markup", message = F, echo = F)
+#knitr::opts_chunk$set(warning = F, results = "hide", message = F)
 options(scientific=T, digits = 3) 
-# options(scipen=9, digits = 3) 
-# ‘scipen’: integer. A penalty to be applied when deciding to print numeric values in fixed or exponential notation.  Positive values bias towards fixed and negative towards scientific notation: fixed notation will be preferred unless it is more than ‘scipen’ digits wider.
-# use scipen=999 to prevent scientific notation at all times
 ```
+
+```{r}
+## Loading data
+data = read.csv('datafile.csv',encoding = "UTF-8")
+
+initialrows = nrow(data)
+
+data$AdoptionSpeed <- factor(data$AdoptionSpeed, order=T, levels = c(0,1,2,3,4))
+
+# converting the data types we want - categorical
+data$Type = as.factor(data$Type)
+data$MaturitySize = as.factor(data$MaturitySize)
+data$FurLength = as.factor(data$FurLength)
+data$Vaccinated = as.factor(data$Vaccinated)
+data$Gender = as.factor(data$Gender)
+
+# Only looking at profiles with 1 animal
+data = subset(data, data$Quantity == 1)
+data = subset(data, ! data$AdoptionSpeed == 4)
+
+# Only pulling the columns we want to look at
+
+dat = data[c('Type', 'Age', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt','VideoAmt', 'AdoptionSpeed')]
+
+#summary(dat)
+
+
+## creating train test
+set.seed(1000)
+samp <- sample(2, nrow(dat), replace=TRUE, prob=c(0.7, 0.3))
+
+train <- dat[samp==1, 1:9]
+test <- dat[samp==2, 1:9]
+
+#typeknn.trainFeatures = dat[samp == 1, c(2:9)]
+#typeknn.testFeatures = dat[samp == 2, c(2:9)]
+#typeknn.trainLabel = dat[samp==1, 1]
+#typeknn.testLabel = dat[samp==2, 1]
+```
+
+# Introduction
+
+In 2016 alone there were over 2 million animals that ended up in animal shelters and were not adopted. Shelters around the world work constantly to attempt to lower this number and place deserving animals in loving homes. PetFinder, an animal adoption website, assists with this goal by allowing animal profiles to be put online for people to find. Getting a profile onto PetFinder is the first step, making an effective profile is more difficult. Questions of how many photos to include, how many videos? Should they list the vaccination status of the animal? These are just some questions that can arise during this process. We determined during our last study that when the adoption speed of an animal is numerical we were not able to successfully model this speed given these aspects of the profile using linear regression. So we decided to ask more complex questions about this dataset to see if we could determine patterns in adoption profiles that could give potential insight to adoption centers as they work to get animals adopted. 
+
+# Background EDA
+
+We're using the same dataset as from the midterm assignment. The data comes from Kaggle (https://www.kaggle.com/c/petfinder-adoption-prediction/data) and includs almost 15,000 observations of 23 variables. Each observation is an adoption profile on PetFinder in Malaysia. We chose to keep `r length(dat)` features, as well as discarding any profile that contained more than one animal, and any animal that did not get adopted in the first 100 days. At the end of these cleaning measures we end up with `r nrow(dat)` observations of the `r length(dat)` features. Initially we transformed the categorical dependent variable (adoption speed) into a continuous numerical variable. For the sake of this project we are keeping it as a categorical variable for some of our analyses.
+
+As a refresher on the basic features of the dataset we can look at the distribution of the various variables.
+
+First here is our dependent variable Adoption Speed, plotted by number of occurences since it is categorical.
+```{r histogram of AdoptionSpeed}
+loadPkg("ggplot2")
+#Histogram
+ggplot(data=dat, aes(AdoptionSpeed)) + 
+  geom_bar(breaks=seq(0, 4, by=1),
+                 col="red",
+                 aes(fill=..count..)) +
+  labs(title="AdoptionSpeed of pets", x = "AdoptionSpeed") + 
+  scale_fill_gradient("Count", low="green", high="red")
+
+```
+
+We can also look at the other numerical features.
+```{r Age}
+tmpDatAge = dat
+tmpDatAge$Age = as.numeric(dat$Age)
+
+ggplot(data=tmpDatAge, aes(Age)) + 
+  geom_histogram(breaks=seq(0, 100, by=5),
+                 col="red",
+                 aes(fill=..count..)) +
+  labs(title="Histogram of Age of pets", x="Age(in months)") + 
+  scale_fill_gradient("Count", low="green", high="red")
+#Boxplot
+ggplot(data = tmpDatAge,aes(y = Age))+
+  geom_boxplot() + 
+  geom_boxplot( colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+  labs(title="Age boxplot using `ggplot`",x="", y = "Age")
+
+#Q-Q plot
+qqnorm(tmpDatAge$Age, main="Q-Q plot of Age of pets", ylab = "Age(in months)",col="blue")
+qqline(tmpDatAge$Age)
+```
+
+```{r PhotoAmt}
+tmpPhotoAmt = dat
+tmpPhotoAmt$PhotoAmt = as.numeric(tmpPhotoAmt$PhotoAmt)
+
+ggplot(data=tmpPhotoAmt, aes(PhotoAmt)) + 
+  geom_histogram(breaks=seq(0, 30, by=2),
+                 col="red",
+                 aes(fill=..count..)) +
+  labs(title="Histogram of PhotoAmt of pets") + 
+  scale_fill_gradient("Count", low="green", high="red")
+
+#Boxplot
+ggplot(data = tmpPhotoAmt,aes(y = PhotoAmt))+
+  geom_boxplot() + 
+  geom_boxplot( colour="orange", fill="#7777cc", outlier.colour="red", outlier.shape=8, outlier.size=4) +
+  labs(title="PhotoAmt boxplot using `ggplot`",x="", y = "Number of Photoes")
+
+#Q-Q plot
+qqnorm(tmpPhotoAmt$PhotoAmt, main="Q-Q plot of PhotoAmt of pets", ylab = "PhotoAmt",col="blue")
+qqline(tmpPhotoAmt$PhotoAmt)
+```
+
+Next we can see the distributions of the categorical variables.
+
+```{r Type}
+dog = nrow(dat[dat$Type=="1",])
+cat = nrow(dat[dat$Type=="2",])
+totalamount = dog+cat
+
+percentDog = format(dog/totalamount * 100, digits = 4)
+percentCat = format(cat/totalamount * 100, digits = 4)
+
+Prop <- c(dog,cat)
+# Prepare a color palette. Here with R color brewer:
+library(RColorBrewer)
+myPalette <- brewer.pal(5, "RdYlGn") 
+
+# You can change the border of each area with the classical parameters:
+pie(Prop , labels = c(paste("Dog: ",percentDog,"%"), paste("Cat: ",percentCat,"%")),
+    main = "Pie plot of Type of pets", border="white", col=myPalette )
+```
+The second is `Gender`. There are two genders: `Male` and `Female`.  
+```{r Gender}
+#pie plot
+male = nrow(dat[dat$Gender=="1",])
+female = nrow(dat[dat$Gender=="2",])
+percentMale = format(male/(male+female) * 100, digits = 4)
+percentFemale = format(female/(male+female) * 100, digits = 4)
+Prop <- c(male,female)
+# Prepare a color palette. Here with R color brewer:
+library(RColorBrewer)
+myPalette <- brewer.pal(3, "Pastel1") 
+
+# You can change the border of each area with the classical parameters:
+pie(Prop , labels = c(paste("Male: ", percentMale,"%"),paste("Female: ",percentFemale,"%")), main = "Pie plot of Gender", border="white", col=myPalette )
+```
+The third is `MaturitySize`. There are four levels, namely `Small`,` Medium`, `Large`, and `ExtraLarge`.    
+```{r MaturitySize}
+small = nrow(dat[dat$MaturitySize=="1",])
+medium = nrow(dat[dat$MaturitySize=="2",])
+large = nrow(dat[dat$MaturitySize=="3",])
+extraLarge = nrow(dat[dat$MaturitySize=="4",])
+totalamount = small+medium+large+extraLarge
+
+percentSmall = format(small/totalamount * 100, digits = 4)
+percentMedium = format(medium/totalamount * 100, digits = 4)
+percentLarge = format(large/totalamount * 100, digits = 4)
+percentExtraLarge = format(extraLarge/totalamount * 100, digits = 4)
+#pie plot
+Prop <- c(small,medium,large,extraLarge)
+# Prepare a color palette. Here with R color brewer:
+library(RColorBrewer)
+myPalette <- brewer.pal(8, "Spectral") 
+
+# You can change the border of each area with the classical parameters:
+pie(Prop , labels = c(paste("Small: ",percentSmall,"%"), paste("Medium: ",percentMedium,"%"), paste("Large: ",percentLarge,"%"), paste("Extra Large: ",percentExtraLarge,"%")), main = "Pie plot of MaturitySize", border="white", col=myPalette )
+
+```
+The fourth is `FurLength`. There are three levels, namely `Short`, `Medium`, and `Long`.  
+```{r FurLength}
+
+short = nrow(dat[dat$FurLength=="1",])
+medium = nrow(dat[dat$FurLength=="2",])
+long = nrow(dat[dat$FurLength=="3",])
+totalamount = short+medium+long
+
+percentShort = format(short/totalamount * 100, digits = 4)
+percentMedium = format(medium/totalamount * 100, digits = 4)
+percentLong = format(long/totalamount * 100, digits = 4)
+
+
+#pie plot
+Prop <- c(short,medium,long)
+# Prepare a color palette. Here with R color brewer:
+library(RColorBrewer)
+myPalette <- brewer.pal(3, "Set2") 
+
+# You can change the border of each area with the classical parameters:
+pie(Prop , labels = c(paste("Short: ",percentShort,"%"), paste("Medium: ",percentMedium,"%"), paste("Long: ", percentLong,"%")), main = "Pie plot of FurLength", border="white", col=myPalette )
+```
+The fifth is `Vaccinated`. There are three levels, namely `Vaccinated`, `Unvaccinated`, and `Not Specified`.    
+```{r Vaccinated}
+vaccinatedYes = nrow(dat[dat$Vaccinated=="1",])
+vaccinatedNo = nrow(dat[dat$Vaccinated=="2",])
+vaccinatedNotSure = nrow(dat[dat$Vaccinated=="3",])
+totalamount = vaccinatedYes+vaccinatedNo+vaccinatedNotSure
+
+percentVaccinatedYes = format(vaccinatedYes/totalamount * 100, digits = 4)
+percentVaccinatedNo = format(vaccinatedNo/totalamount * 100, digits = 4)
+percentVaccinatedNotSure = format(vaccinatedNotSure/totalamount * 100, digits = 4)
+
+#pie plot
+Prop <- c(vaccinatedYes,vaccinatedNo,vaccinatedNotSure)
+# Prepare a color palette. Here with R color brewer:
+library(RColorBrewer)
+myPalette <- brewer.pal(11,"Paired") 
+
+# You can change the border of each area with the classical parameters:
+pie(Prop , labels = c(paste("Vaccinated: ",percentVaccinatedYes, "%"), paste("Unvaccinated: ",percentVaccinatedNo, "%"), paste("Not Specified: ",percentVaccinatedNotSure, "%")), main = "Pie plot of Vaccinated", border="white", col=myPalette )
+```
+
+After this we did some EDA to see what features affected adoption speed. We initially had a numerical dependent variable so we converted it to a continuous numerical feature. We then ran ANOVAs on a number of the features against the now numerical adoption speed. We discovered that if we disregarded the asumption of equal variance, every feature significantly impacted adoption speed. 
+
+```{r}
+numericaldat = dat
+numericaldat$ASnum = NaN
+numericaldat$ASnum[numericaldat$AdoptionSpeed == 0] = 0
+numericaldat$ASnum[numericaldat$AdoptionSpeed == 1] = floor(runif(sum(numericaldat$AdoptionSpeed == 1), 1, 8))
+numericaldat$ASnum[numericaldat$AdoptionSpeed == 2] = floor(runif(sum(numericaldat$AdoptionSpeed == 2), 8, 31))
+numericaldat$ASnum[numericaldat$AdoptionSpeed == 3] = floor(runif(sum(numericaldat$AdoptionSpeed == 3), 31, 91))
+dogs = subset(numericaldat, numericaldat$Type == 1) # only the dogs
+cats = subset(numericaldat, numericaldat$Type == 2) # only the cats
+# 2 sample t-test
+dc_t = t.test(dogs$ASnum, cats$ASnum)
+dc_t
+male = subset(numericaldat, numericaldat$Gender == 1) # only the male dogs
+female = subset(numericaldat, numericaldat$Gender == 2) # only the female dogs
+# 2 sample t-test
+mf_t = t.test(male$ASnum, female$ASnum)
+mf_t
+# anova on size
+anova_size = anova(aov(data = numericaldat, ASnum ~ MaturitySize))
+anova_size
+# anova for fur length
+anova_fur = anova(aov(data = numericaldat, ASnum ~ FurLength))
+anova_fur
+# vaccination anova
+anova_vac = anova(aov(data = numericaldat, ASnum ~ Vaccinated))
+anova_vac
+```
+
+#SMART QUESTION: What is the probability that a large, female, vaccinated dog would get adopted quickly (adoption speed of 0 and 1). 
+```{r}
+##data preparation
+new_dat = dat[c('Type',  'Gender', 'MaturitySize', 'Vaccinated', 'AdoptionSpeed')]
+xkabledply(summary(new_dat))
+```
+```{r}
+library(ggplot2)
+ggplot(data=new_dat, aes(AdoptionSpeed)) + 
+  geom_bar(breaks=seq(0, 4, by=1),
+                 col="red",
+                 aes(fill=..count..)) +
+  labs(title="AdoptionSpeed of pets", x = "AdoptionSpeed") + 
+  scale_fill_gradient("Count", low="lightblue", high="#FF9999")
+
+```
+
+```{r}
+###group adoption speed 0 and 1
+levels(new_dat$AdoptionSpeed)[levels(new_dat$AdoptionSpeed)==1] <-0
+summary(new_dat)
+
+```
+
+
+```{r}
+###group adoption speed 3 and 4
+levels(new_dat$AdoptionSpeed)[levels(new_dat$AdoptionSpeed)==4] <-3
+summary(new_dat)
+
+```
+
+
+```{r}
+###group adoption speed 2 and 3
+levels(new_dat$AdoptionSpeed)[levels(new_dat$AdoptionSpeed)==3] <-2
+xkabledply(summary(new_dat))
+
+```
+```{r}
+levels(new_dat$AdoptionSpeed) <- c("0", "1")
+summary(new_dat)
+
+```
+
+
+
+```{r}
+ggplot(data=new_dat, aes(AdoptionSpeed)) + 
+  geom_bar(breaks=seq(0, 4, by=1),
+                 col="red",
+                 aes(fill=..count..)) +
+  labs(title="AdoptionSpeed of pets", x = "AdoptionSpeed") + 
+  scale_fill_gradient("Count", low="lightblue", high="#FF9999")
+```
+
+```{r}
+logit <- glm(AdoptionSpeed ~ Type + MaturitySize + Vaccinated + Gender, data = new_dat, family = "binomial")
+summary(logit)
+
+```
+```{r}
+loadPkg("regclass")
+xkabledply(confusion_matrix(logit), title = "Confusion matrix from Logit Model" )
+```
+```{r}
+loadPkg("ResourceSelection")
+LogitHoslem = hoslem.test(new_dat$AdoptionSpeed,fitted(logit)) # Hosmer and Lemeshow test, a chi-squared test
+unloadPkg("ResourceSelection")
+LogitHoslem
+```
+
+
+```{r}
+loadPkg("pROC")
+prob=predict(logit, type = "response" )
+new_dat$prob=prob
+h <- roc(AdoptionSpeed~prob, data=new_dat)
+#auc(h) 
+plot(h, main = "ROC curve of model")
+```
+
+
+
+```{r}
+preds <- with(new_dat,data.frame(Type=as.factor(1),MaturitySize=as.factor(3),Gender=as.factor(2),Vaccinated=as.factor(1)))
+
+d3 <- cbind(preds, predict(logit, newdata = preds, type = "link",se = TRUE))
+
+d3 <- within(d3, {
+    PredictedProb <- plogis(fit)
+    LL <- plogis(fit - (1.96 * se.fit))
+    UL <- plogis(fit + (1.96 * se.fit))
+})
+
+d3
+
+```
+
+
+# SMART QUESTION: Does animal profile influence the adoption speed significantly, and what is the best model (Logistic Regression, Knn) when considering these variables?
+
+We research this question because although all pets are cute, there are still some pets are not popular, so we make this model to see what influence the AdoptionSpeed, and see how we can improve it, or let the website of adoption to make some activities to show the cute aspect of the relative not popular pets to adopters.\
+
+```{r}
+dataTGMFV = dat[, c('Age','Type','Gender','MaturitySize','FurLength','Vaccinated','PhotoAmt','VideoAmt','AdoptionSpeed')]
+dataTGMFV$AdoptionSpeed[dat$AdoptionSpeed == 0|dat$AdoptionSpeed == 1] = 0
+dataTGMFV$AdoptionSpeed[dat$AdoptionSpeed == 2|dat$AdoptionSpeed == 3|dat$AdoptionSpeed == 4 ] = 1
+# dataTGMFV$AdoptionSpeed = droplevels(dataTGMFV$AdoptionSpeed)
+dataTGMFV$AdoptionSpeed = factor(dataTGMFV$AdoptionSpeed)
+str(dataTGMFV)
+```
+
+### Exhaustive search  
+
+```{r}
+#This is essentially best fit 
+reg.best10 <- regsubsets(AdoptionSpeed~. , data = dataTGMFV, nvmax = 10, nbest = 1, method = "exhaustive")  # leaps::regsubsets() - Model selection by exhaustive (default) search, forward or backward stepwise, or sequential replacement
+#The plot will show the Adjust R^2 when using the variables across the bottom
+```
+```{r results='markup'}
+plot(reg.best10, scale = "adjr2", main = "Adjusted R^2")
+plot(reg.best10, scale = "r2", main = "R^2")
+# In the "leaps" package, we can use scale=c("bic","Cp","adjr2","r2")
+plot(reg.best10, scale = "bic", main = "BIC")
+plot(reg.best10, scale = "Cp", main = "Cp")
+# summary(reg.best10)
+```
+These are the results of feature selection.\
+
+
+```{r results='markup'}
+# petFeaturetable1 = glm(AdoptionSpeed ~ Age+Type+Gender+MaturitySize+FurLength+Vaccinated+PhotoAmt+VideoAmt, data = dataTGMFV, family = "binomial")
+petFeaturetableAll = glm(AdoptionSpeed ~Age+Type+Gender+MaturitySize+FurLength+Vaccinated+PhotoAmt, data = dataTGMFV, family = "binomial")
+# petFeaturetableR2 = glm(AdoptionSpeed ~ Type+Gender+MaturitySize+FurLength+Vaccinated, data = dataTGMFV, family = "binomial")
+# petFeaturetable = glm(AdoptionSpeed ~Vaccinated, data = dataTGMFV, family = "binomial")
+summary(petFeaturetableAll)
+```
+From the model of glm, I know that videoAmt is not statistically significant, so I remove this variable from the model.\
+
+```{r, results='markup'}
+loadPkg("regclass")
+loadPkg("ModelMetrics")
+xkabledply( confusion_matrix(petFeaturetableAll), title = "Confusion matrix from Logit Model" )
+pred_ = predict(petFeaturetableAll, dataTGMFV[1:8], type="response")
+unloadPkg("regclass")
+
+confusionMatrix( pred_, as.factor(dataTGMFV$AdoptionSpeed))
+
+unloadPkg("ModelMetrics")
+```
+This is the Confusion Matrix.\
+
+```{r}
+loadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluation
+petLogitHoslem = hoslem.test(dataTGMFV$AdoptionSpeed, fitted(petFeaturetableAll)) # Hosmer and Lemeshow test, a chi-squared test
+unloadPkg("ResourceSelection")
+petLogitHoslem
+```
+```{r}
+unloadPkg("pROC")
+loadPkg("pROC") # receiver operating characteristic curve, gives the diagnostic ability of a binary classifier system as its discrimination threshold is varied. The curve is on sensitivity/recall/true-positive-rate vs false_alarm/false-positive-rate/fall-out.
+
+probOfTGMFV=predict(petFeaturetableAll, type = "response" )
+dataTGMFV$prob=probOfTGMFV
+aucRocOfTGMFV <- roc(AdoptionSpeed~prob, data=dataTGMFV)
+auc(aucRocOfTGMFV) # area-under-curve prefer 0.8 or higher.
+plot(aucRocOfTGMFV)
+unloadPkg("pROC")
+
+```
+The result of Roc/Auc show that this is not a very good model Area under the curve: `r aucRocOfTGMFV$auc[1]`(less than 0.8).\
+
+
+#### McFadden
+
+```{r}
+loadPkg("pscl") # use pR2( ) function to calculate McFadden statistics for model eval
+petLogitpr2 = pR2(petFeaturetableAll)
+petLogitpr2
+unloadPkg("pscl") 
+```
+With the McFadden value of `r petLogitpr2['McFadden']`, which is analogous to the coefficient of determination $R^2$, only about 3% of the variations in y is explained by the explanatory variables in the model. 
+
+```{r}
+featureClean = dat[ , c('Age','Type','Gender','MaturitySize','FurLength','Vaccinated','PhotoAmt','VideoAmt')]
+featureClean$y = dataTGMFV$AdoptionSpeed # copy Holiday column and call it 'y'
+#convert some columns into factos as appropriate
+
+featureClean$y <- ifelse(featureClean$y == 1,TRUE,FALSE)
+featureClean$y = factor(featureClean$y)
+str(featureClean)
+```
+
+```{r}
+loadPkg("leaps")
+reg.leaps <- regsubsets(y~., data = featureClean, nbest = 1, method = "exhaustive")  # leaps, 
+plot(reg.leaps, scale = "adjr2", main = "Adjusted R^2")
+plot(reg.leaps, scale = "bic", main = "BIC")
+plot(reg.leaps, scale = "Cp", main = "Cp")
+```
+Doing feature selection again.\
+```{r}
+loadPkg("bestglm")
+res.bestglm <- bestglm(Xy = featureClean, family = binomial,
+            IC = "AIC",                 # Information criteria for
+            method = "exhaustive")
+summary(res.bestglm)
+res.bestglm$BestModels
+summary(res.bestglm$BestModels)
+unloadPkg("bestglm")
+unloadPkg("leaps")
+```
+The result of bestglm is also remove VideoAmt.\
+
+#### KNN
+```{r}
+
+#first we want to scale the data so KNN will operate correctly
+knnDataTGMFV = dataTGMFV[1:9]
+knnDataTGMFV$Type = as.numeric(knnDataTGMFV$Type)
+knnDataTGMFV$Gender = as.numeric(knnDataTGMFV$Gender)
+knnDataTGMFV$MaturitySize = as.numeric(knnDataTGMFV$MaturitySize)
+knnDataTGMFV$FurLength = as.numeric(knnDataTGMFV$FurLength)
+knnDataTGMFV$Vaccinated = as.numeric(knnDataTGMFV$Vaccinated)
+# knnDataTGMFV$AdoptionSpeed = dat$AdoptionSpeed
+str(knnDataTGMFV)
+
+scaledPet <- as.data.frame(scale(knnDataTGMFV[1:8], center = TRUE, scale = TRUE))
+#We also need to create test and train data sets, we will do this slightly differently by using the sample function. The 2 says create 2 data sets essentially, replacement means we can reset the random sampling across each vector and the probability gives sample the weight of the splits, 2/3 for train, 1/3 for test. 
+set.seed(1000)
+pet_sample <- sample(2, nrow(scaledPet), replace=TRUE, prob=c(0.67, 0.33))
+#We then just need to use the new variable to create the test/train outputs, selecting the first five rows as they are the numeric data in the pet data set and we want to predict AdoptionSpeed 
+pet_training <- scaledPet[pet_sample==1, 1:8]
+pet_test <- scaledPet[pet_sample==2, 1:8]
+```
+```{r}
+#Now we need to create our 'Y' variables or labels need to input into the KNN function
+pet.trainLabels <- knnDataTGMFV[pet_sample==1, 9]
+pet.testLabels <- knnDataTGMFV[pet_sample==2, 9]
+```
+
+```{r}
+loadPkg("gmodels")
+loadPkg('FNN')
+#So now we will deploy our model 
+loadPkg("FNN")
+loadPkg("gmodels")
+loadPkg("caret") # confusionMatrix
+loadPkg("class")
+pet_pred <- knn(train = pet_training, test = pet_test, cl=pet.trainLabels, k=7)
+```
+```{r results='markup'}
+petPREDCross <- CrossTable(pet.testLabels, pet_pred, prop.chisq = FALSE)
+#Looks like we got all but three correct, not bad
+```
+This is the Confusion Matrix.\
+
+```{r}
+loadPkg("gmodels")
+loadPkg("FNN")
+
+loadPkg("caret") # confusionMatrix
+loadPkg("class")
+
+# Loop thru different k values
+
+# create an empty dataframe to store the results from confusion matrices
+ResultDf = data.frame( k=numeric(0), Total.Accuracy= numeric(0), row.names = NULL )
+
+for (kval in 3:21) {
+  pet_pred <- knn(train = pet_training, test = pet_test, cl=pet.trainLabels, k=kval)
+  petPREDCross <- CrossTable(pet.testLabels, pet_pred, prop.chisq = FALSE)
+  print( paste("k = ", kval) )
+  petPREDCross
+  # 
+  cm = caret::confusionMatrix(pet_pred, reference = pet.testLabels ) # from caret library
+  # print.confusionMatrix(cm)
+  # 
+  cmaccu = cm$overall['Accuracy']
+  print( paste("Total Accuracy = ", cmaccu ) )
+  # print("Other metrics : ")
+  # print(cm$byClass)
+  # 
+  cmt = data.frame(k=kval, Total.Accuracy = cmaccu, row.names = NULL ) # initialize a row of the metrics 
+  # cmt = cbind( cmt, data.frame( t(cm$byClass) ) ) # the dataframe of the transpose, with k valued added in front
+  ResultDf = rbind(ResultDf, cmt)
+  print( xkabledply(   as.matrix(cm), title = paste("ConfusionMatrix for k = ",kval ) ) )
+  print( xkabledply(data.frame(cm$byClass), title=paste("k = ",kval)) )
+}
+```
+```{r results='markup'}
+xkabledply(ResultDf[ResultDf$k%%2 == 1,])
+```
+The best KNN is 17.\
+
+# SMART QUESTION: Can the type of animal be classified from the adoption profile?
+
+The next question we wanted to answer switched our attention to the type of animal profile. We determined that we couldn't predict the adoption speed effectively with classification models. So we thought that we would take a different approach to determining patterns in the adoption profiles. If a classification model was able to predict the type of animal from the adoption profile then it would suggest a pattern in either the animals themselves, or the way the profiles were written. Either possibility leads to more insight about the profiles and possible interventions to ensure the maximum animals are adoptopted into loving homes.
+
+Because this is a binary classification problem we decided to use a logistic regression model and a K nearest neighbors model. Beginning with the logistic model, we ran feature selection to determine what features we should include.
+
+The results of the feature selection are as follows.
+
+```{r, results = 'markup'}
+loadPkg("bestglm")
+
+# creating a cleaned dataset without the animal type
+datclean = dat[, c('Age', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt', 'VideoAmt', 'AdoptionSpeed')]
+
+# labeling the target variable appropriately
+datclean$y = dat[, c('Type')]
+
+# feature selection
+res.bestglm <- bestglm(Xy = datclean, family = binomial,
+            IC = "AIC",
+            method = "exhaustive")
+
+res.bestglm$BestModels[1, 1:8]
+unloadPkg("bestglm") 
+```
+
+The features that were selected using the `AIC` criteria and the exhaustive method are every feature except for `VideoAmt`. We can now make that model and test it against the animal type. The results of this model are as follows.
+
+```{r, results='markup'}
+typeLogit <- glm(y ~ Age + Gender + MaturitySize + FurLength + Vaccinated + AdoptionSpeed + PhotoAmt, data = datclean, family = "binomial")
+xkabledply(typeLogit, title = paste("Logistic Regression : Type ~ age+gender+size+fur+vaccinated+AdoptSpd+photos"))
+```
+
+This model has multiple statistically significant coefficient values. Every feature except `Vaccination` level 3, `AdoptionSpeed` fitted with a quadratic fit and a cubic fit have p_values above our alpha of 0.05. This suggests that almost every factor is significantly impacting the models decision about the type of animal the profile represents. We can then move on and look at different metrics to determine if this model was effective. First we can look at the various accuracy metrics of the model. The confusion matrix and metrics for this model is as follows.
+
+```{r, results = 'markup'}
+## MIGHT DELETE THIS
+loadPkg("regclass")
+loadPkg("ModelMetrics")
+c = confusion_matrix(typeLogit)
+xkabledply(c, title = "Type Confusion matrix from Logit Model" )
+acc = (c[1,1] + c[2,2])/c[3,3]
+prec = c[1,1]/(c[1,1]+c[2,1])
+recall = c[1,1]/(c[1,1] + c[1,2])
+F1 = (2*(prec * recall)) / (prec + recall)
+unloadPkg("regclass")
+```
+
+Accuracy: `r format(acc)`\
+Precision: `r format(prec)`\
+Recall: `r format(recall)`\
+F1: `r format(F1)`\
+
+These numbers aren't terrible, but let's look at other metrics as well.
+
+We can look at the Hoslem and Lemeshow Goodness of Fit test next.
+
+
+**H0**: The model is a good fit for our dependent variable\
+**H1**: The model is a bad fir for our dependent variable\
+
+
+```{r, results='markup'}
+loadPkg("ResourceSelection")
+typeHoslem = hoslem.test(datclean$y, fitted(typeLogit)) # Hosmer and Lemeshow test for fitting
+typeHoslem
+unloadPkg("ResourceSelection")
+```
+
+With a p_value of `r format(typeHoslem$p.value)` we can reject the null hypothesis that this model was a good fit for our dependent variable of animal type. In order to confirm this finding we wanted to look at the Receiver Operator Curve of this model. This plot shows the true positive rate against the false positive rate. By plotting the model in this way we can see how well above chance the model preforms.
+
+```{r, results='markup'}
+loadPkg("pROC")
+prob=predict(typeLogit, type = "response" )
+datclean$prob=prob
+h <- roc(y~prob, data=datclean)
+auctype = auc(h)
+plot(h)
+unloadPkg("pROC")
+```
+
+We can see by looking at this plot that the model is not very effective. While it is above chance, we ideally want to see a more defined box-shape of the curve which would suggest that it is able to accurately predict the type of animal. The area under this curve confirms that the model is not great. With our AUC = `r format(auctype)`, this is below the threshold of 0.8 that we are looking for to consider a model an effective classifier.
+
+The final metric we can use to confirm the state of our logistic model is the McFadden score. This is a proxy for an $R^2$ value.
+
+```{r}
+loadPkg("pscl")
+typePR = pR2(typeLogit)
+unloadPkg("pscl") 
+```
+
+With a McFadden score of `r format(typePR['McFadden'])` we can say that only `r format(typePR['McFadden'] * 100, 2)`% of the variance in Type is explained by this model.
+
+After looking at all these metrics we have confirmed that this model is not adept at classifying type based on the adoption profile of the animal. Given this, we decided to move on to the KNN model in the hopes that this model would be more effective.
+
+The first step to use this model is cleaning the dataset. First, the numeric variables `Age`, `Photo Amount` and `Video Amount` are scaled to center them. Then all the factor level variables are returned to numeric variables for the model.
+
+In order to determine the optimal K value for the KNN model we ran through values 3-20 and chose the K with the highest total accuracy.
+
+```{r, results='hide'}
+loadPkg("gmodels")
+loadPkg("FNN")
+loadPkg("caret")
+
+knn_train = as.data.frame(scale(train[c('Age', 'PhotoAmt', 'VideoAmt')], center = TRUE, scale = TRUE))
+knn_test = as.data.frame(scale(test[c('Age', 'PhotoAmt', 'VideoAmt')], center = TRUE, scale = TRUE))
+
+knn_train$Type = as.numeric(train$Type)
+knn_train$Gender = as.numeric(train$Gender)
+knn_train$MaturitySize = as.numeric(train$MaturitySize)
+knn_train$FurLength = as.numeric(train$FurLength)
+knn_train$Vaccinated = as.numeric(train$Vaccinated)
+knn_train$AdoptionSpeed = as.numeric(train$AdoptionSpeed)
+
+knn_test$Type = as.numeric(test$Type)
+knn_test$Gender = as.numeric(test$Gender)
+knn_test$MaturitySize = as.numeric(test$MaturitySize)
+knn_test$FurLength = as.numeric(test$FurLength)
+knn_test$Vaccinated = as.numeric(test$Vaccinated)
+knn_test$AdoptionSpeed = as.numeric(test$AdoptionSpeed)
+
+trainLabel = knn_train$Type
+testLabel = knn_test$Type
+
+knn_train = knn_train[c("Age", 'PhotoAmt', 'VideoAmt', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'AdoptionSpeed')]
+knn_test = knn_test[c("Age", 'PhotoAmt', 'VideoAmt', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'AdoptionSpeed')]
+
+ResultDf = data.frame( k=numeric(0), Total.Accuracy= numeric(0), row.names = NULL )
+
+for (kval in 3:20) {
+  tpred <- knn(train = knn_train, test = knn_test, cl=trainLabel, k=kval)
+  cross <- CrossTable(testLabel, tpred, prop.chisq = FALSE)
+  cm = caret::confusionMatrix(tpred, as.factor(testLabel)) # from caret library
+  
+  cmaccu = cm$overall['Accuracy']
+  cmt = data.frame(k=kval, Total.Accuracy = cmaccu, row.names = NULL ) # initialize a row of the metrics 
+  ResultDf = rbind(ResultDf, cmt)
+}
+
+ResultDf[which.max(ResultDf$Total.Accuracy),]
+```
+
+The K value that was determined to be the best for this model was k = 18 with a total accuracy of `r ResultDf[which.max(ResultDf$Total.Accuracy),]$Total.Accuracy`.
+
+To make sure that we're getting the best possible model we tried one more KNN model before looking closer at the results. We removed `Video Amount` from the feature list since it was removed in the logistic regression model. We did the same run through of K values from 3-20.
+
+```{r, results='hide'}
+
+knn_train2 = knn_train[c("Age", 'PhotoAmt', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'AdoptionSpeed')]
+knn_test2 = knn_test[c("Age", 'PhotoAmt', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'AdoptionSpeed')]
+
+ResultDf2 = data.frame( k=numeric(0), Total.Accuracy= numeric(0), row.names = NULL )
+
+for (kval in 3:20) {
+  tpred <- knn(train = knn_train2, test = knn_test2, cl=trainLabel, k=kval)
+  cross <- CrossTable(testLabel, tpred, prop.chisq = FALSE)
+  print( paste("k = ", kval) )
+  cm = caret::confusionMatrix(tpred, reference = as.factor(testLabel)) # from caret library
+  cmaccu = cm$overall['Accuracy']
+  cmt = data.frame(k=kval, Total.Accuracy = cmaccu, row.names = NULL ) # initialize a row of the metrics 
+  ResultDf2 = rbind(ResultDf2, cmt)
+}
+
+ResultDf2[which.max(ResultDf2$Total.Accuracy),]
+
+```
+
+The K value that was determined to be the best for this model was k = 20 with a total accuracy of `r ResultDf2[which.max(ResultDf2$Total.Accuracy),]$Total.Accuracy`. This accuracy is very slightly better than the previous model, so we will continue with this model going forward.
+
+Taking a closer look at this second model we can pull out a number of statistics.
+
+```{r, results = 'markup'}
+tpred <- knn(train = knn_train2, test = knn_test2, cl=trainLabel, k=20)
+cross <- CrossTable(testLabel, tpred, prop.chisq = FALSE)
+cm = caret::confusionMatrix(tpred, reference = as.factor(testLabel)) # from caret library
+cmaccu = cm$overall['Accuracy']
+```
+
+Accuracy: `r format(cm$overall['Accuracy'])`\
+Precision: `r format(cm$byClass['Precision'])`\
+Recall: `r format(cm$byClass['Recall'])`\
+F1: `r format(cm$byClass['F1'])`\
+
+All of these numbers are higher than our Logistic regression model so we can confirm that this model is slightly better at decoding type of animal from the adoption profile. While the model is better than chance, it's still not incredibly effective. This suggests that while there might be some discernible pattern to the profiles of the dogs and cats put on petfinder, it is not drastic enough that the model is incredibly accurate. 
+
+That being said, future studies should look into this pattern to see what the differences are specifically and whether or not they have an effect on adoption speed.
+
+# SMART Question:  Can puppies/kittens be identified based on their adoption profile?
+
+## Objective
+
+```{r echo = FALSE}
+datage <- dat[ ,c('Type','Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt', 'VideoAmt', 'AdoptionSpeed') ]
+datage$puppy = NaN
+datage$puppy[dat$Age <= 3] = 1
+datage$puppy[dat$Age > 3] = 0
+datage$puppy = as.factor(datage$puppy)
+puppies = subset(datage, datage$puppy == 1)
+older = subset(datage, datage$puppy ==0)
+puppy_proportion = nrow(puppies) * 100/nrow(dat)
+```
+
+A common problem at animal shelters is difficulty in accurately determining the age of the pet. Many families/prospective pet adopters have specific preferences for younger or older animals. Determining if the other data can generate an accurate prediction of whether or not an animal is very young or not seem like a reasonable first step in determining if age can at all be predicted using this data. As `r puppy_proportion` percent of the pets are young, if there is any hope is predicting age beginning with a relatively balanced output is valuable. 
+
+To answer the SMART question, let us consider the general problem. There is a categorical dependent variable, and a mixture of numerical and categorical independent variables. A Logistic Regression makes a great deal of sense in this situation. A classification-tree model is an option if left unsatisfied with the logistic model's outcome.
+
+
+
+## Logistic Model
+
+```{r echo = FALSE}
+loadPkg("bestglm")
+loadPkg("leaps")
+
+datage$y <- datage$puppy
+datage <- datage[, c('Type', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt', 'VideoAmt', 'AdoptionSpeed', 'y')]
+datage <- na.omit(datage)
+logit_pups <- bestglm(Xy = datage, family = binomial, IC = "AIC", method = "exhaustive")
+unloadPkg("bestglm") 
+```
+
+
+- Logistic Model Feature Selection
+```{r results='markup',echo = FALSE}
+logit_pups$BestModels[1, 1:8]
+```
+Starting off with a full model, excluding Age as it would be collinear to puppy. Feature Selection indicates all variables should be kept. 
+
+```{r,echo = FALSE}
+pup_logit <- glm(y ~ ., data = datage, family = "binomial")
+```
+
+```{r, echo=FALSE, results='markup'}
+xkabledply(pup_logit, title = paste("Logistic Regression : Puppy ~ All variables"))
+```
+
+The coefficient table for the recommended logistic model has two factor levels for AdoptionSpeed considered to not be significant, otherwise all other variables are significant. Notice how strong the z-value is for Vaccinated2. This standout will return in the classification tree performed later.
+
+### Logistic Model Evaluation
+
+#### Confusion Matrix for Logistic Model
+
+```{r echo = FALSE, results='markup'}
+loadPkg("regclass")
+loadPkg("ModelMetrics")
+xkabledply(confusion_matrix(pup_logit), title = "Confusion matrix from Logit Model" )
+cm_pup = confusion_matrix(pup_logit)
+acc = (cm_pup[1,1] + cm_pup[2,2])/c[3,3]
+prec = cm_pup[1,1]/(cm_pup[1,1]+cm_pup[2,1])
+recall = cm_pup[1,1]/(cm_pup[1,1] + cm_pup[1,2])
+F1 = (2*(prec * recall)) / (prec + recall)
+```
+Accuracy: `r format(acc)`\
+Precision: `r format(prec)`\
+Recall: `r format(recall)`\
+F1: `r format(F1)`\
+
+Not the worst confusion matrix ever seen. Model over predicts old dogs and under predicts puppies. Additional tests will be needed to determine model quality. 
+
+
+
+```{r echo = FALSE}
+loadPkg("ResourceSelection") 
+ageHoslem = hoslem.test(datage$y, fitted(pup_logit))
+unloadPkg("ResourceSelection")
+```
+#### Hosmer and Lemeshow goodness of fit (GOF) test
+**H0** = Model predictions are not statistically different to actual values.
+**H1** = Model predictions are statistically different than actual values.
+
+-The p-value of the test is `r format(typeHoslem$p.value)`, which is very low. The null hypothesis is rejected, and the alternative hypothesis accepted. According to this test the generated model is not a good fit. Based on this finding, as well as the values generated from the confusion matrix, confidence in the model is declining. 
+
+#### Reciever-Operator Curve
+
+```{r, echo=FALSE,results='markup'}
+loadPkg("pROC")
+prob=predict(pup_logit, type = "response" )
+datage$prob=prob
+h <- roc(y~prob, data=datage)
+pup_auc <- auc(h)
+plot(h)
+```
+
+
+The shape is decent, closer to a parable, doesn't exactly follow the diagonal. However, an AUC score of `r format(auctype)` is below the recommended 0.8 thresh-hold, but indicates a better fit than the Hosmer-Lemeshow test would suggest. 
+
+The McFadden score of `r format(round(typePR['McFadden'] * 100), 0)`% is pretty low. As the McFadden score is essentially a pseudo $R^2$ value for logistic models, only `r format(round(typePR['McFadden'] * 100), 0)`% of the variation in the data is explained by the model.
+
+With an accuracy score of `r format(acc)`, a GOF test indicating the models do not fit together, an AUC `r format(auctype)` < 0.8, and a fairly low pseudo $R^2$ value, it is safe to conclude that the dataset can only very weakly predict the age of an animal using a logistic model.
+
+Let's see if a classification tree can give a better score. It is possible the logistic model is just inappropriate for this dataset. 
+
+## Classification Tree
+
+
+
+```{r, echo=FALSE}
+loadPkg("rpart")
+datage <- datage[, c('Type', 'Gender', 'MaturitySize', 'FurLength', 'Vaccinated', 'PhotoAmt', 'VideoAmt', 'AdoptionSpeed', 'y')]
+puppy_tree <- rpart(y ~ Type + Gender + MaturitySize + FurLength + Vaccinated + PhotoAmt + VideoAmt + AdoptionSpeed ,data = datage, method="class", control = list(maxdepth = 20))
+```
+
+Using all possible variables against the dependent variable, with max depth set to 20.
+
+### Classification Tree Model Evaluation
+
+```{r echo=FALSE, results='markup'}
+printcp(puppy_tree)
+```
+The above summary gives the surprising conclusion that only Vaccinated will be used in the classification tree. Considering Vaccinated is a categorical variable of three levels, there really cannot be more than three end leafs, with 2 splits at most.
+
+Confusion Matrix for Classification Tree
+
+```{r echo=FALSE}
+loadPkg("caret") 
+cm_puppy_tree = caret::confusionMatrix( predict(puppy_tree, type = "class"), reference = datage$y )
+unloadPkg("caret")
+xkabledply(cm_puppy_tree$table, "confusion matrix")
+```
+Accuracy = `r round(cm_puppy_tree$overall["Accuracy"]*100, digits=2)`%\
+Precision = `r round(cm_puppy_tree$byClass['Precision']*100, digits=2)`%\
+Recall = `r round(cm_puppy_tree$byClass['Recall']*100, digits=2)`%\
+F1 = `r round(cm_puppy_tree$overall["F1"]*100, digits=2)`%\
+
+The recall rate of the classification tree is higher, and the precision rate lower, than the logistic model, but they have similar levels of accuracy. It is surprising that Vaccinated alone is able to generate similar levels of accuracy as the logistic model which incorporates every possible variable. 
+
+### Tree Plot
+
+```{r echo=FALSE ,results='markup'}
+loadPkg("rpart.plot")
+loadPkg("rattle")
+fancyRpartPlot(puppy_tree)
+```
+
+The left branch is non-puppy/kitten animals. The right branch is puppy/kitten.This model recommends going along the left branch if vaccination status is 1 or 3, which indicates the animal is respectively already vaccinated, or its vaccine status is unknown. Going right for vaccination status 2, which indicates the animal is vaccinated. The model is saying that un-vaccinated animals are puppies/kittens.
+
+
+
+## Conclusion for SMART Question 3:
+
+Both the logistic and the classification tree models generated similar outcomes when judging by accuracy. The conclusion which must be drawn is the other data in this set is largely incapable of predicting whether an animal is a puppy/kitten or an older more mature animal.  
+
+
+# Conclusion of Paper
+
+- Targeted Prediction Accuracy: .675
+
+- Adoption Speed Prediction: Logistic Model, Accuracy .65, McFadden = .027
+- Pet Type Prediction Accuracy: Logistic Model, .677, McFadden = .097
+- Age Type Prediction Accuracy: Logistic Model, .695, McFadden = .163
+
+# Bibliography
+Staff, A. S. P. C. A. (2019). Pet statistics. ASPCA. Retrieved November 3, 2021, from https://www.aspca.org/helping-people-pets/shelter-intake-and-surrender/pet-statistics. 
+
+Babej, M. E. (2011, May 23). Petfinder.com arranges 17 million adoptions by open branding, technology. Forbes. Retrieved November 7, 2021, from https://www.forbes.com/sites/marcbabej/2011/05/10/petfinder-com-arranges-17-million-adoptions-by-open-branding-technology/?sh=184e0d8fac4b. 
