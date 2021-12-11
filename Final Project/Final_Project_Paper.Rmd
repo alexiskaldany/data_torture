@@ -371,6 +371,7 @@ str(dataTGMFV)
 ```
 Firstly, we do some feature selection. 
 
+## Feature Selection
 ##### Exhaustive search  
 
 ```{r results='hide'}
@@ -383,7 +384,7 @@ plot(reg.best10, scale = "bic", main = "BIC")
 plot(reg.best10, scale = "Cp", main = "Cp")
 #summary(reg.best10)
 ```
-These are the results of feature selection. From the result we can see Adjusted R^2, BIC, and Cp do not select photoAmt, and R^2 select all of them.\
+These are the results of feature selection. From the results we can see Adjusted R^2, BIC, and Cp do not select photoAmt, and R^2 select all of them.\
 
 Doing feature selection again.\
 
@@ -414,14 +415,14 @@ unloadPkg(regclass)
 unloadPkg("bestglm")
 unloadPkg("leaps")
 ```
-The result of bestglm is remove VideoAmt. As a result, we put all the variables into the logistic regression first to see whether they are all statistical significant.\
+The result of bestglm in AIC is remove VideoAmt. As a result, we put all the variables into the logistic regression first to see whether they are all statistical significant.\
 
 ## Logistic Regression
 ```{r results='markup'}
 petFeaturetableAll = glm(AdoptionSpeed ~Age+Type+Gender+MaturitySize+FurLength+Vaccinated+PhotoAmt, data = dataTGMFV, family = "binomial")
 xkabledply(petFeaturetableAll, title = "Logistic Regression : Type ~ age+gender+size+fur+vaccinated+AdoptSpd+photos")
 ```
-From the model of glm, I know that videoAmt is not statistically significant, so I remove this variable from the model.\
+From the model of glm, I know that videoAmt is not statistically significant, so I remove this variable from the model. Let us do some model evaluation to see if the model is good or not.\
 
 ```{r, results='markup'}
 loadPkg("regclass")
@@ -432,9 +433,9 @@ pred_ = predict(petFeaturetableAll, dataTGMFV[1:8], type="response")
 # calculate Accuracy, Precision, Recall rate, Specificity, F1 score
 
 accuracy = (cm[1,1] + cm[2,2])/cm[3,3]
-precision = cm[1,1]/(cm[1,1]+cm[2,1])
-recallRate = cm[1,1]/(cm[1,1] + cm[1,2])
-specificity = (cm[1,1]+cm[1,2])/cm[1,3]
+precision = cm[2,2]/cm[3,2]
+recallRate = cm[2,2]/cm[2,3]
+specificity = cm[1,2]/cm[1,3]
 flScore = (2*precision*recallRate) / (precision+recallRate)
 
 unloadPkg("regclass")
@@ -446,25 +447,27 @@ Precision = `r precision`.\
 Recall rate = `r recallRate`.\
 Specificity = `r specificity`.\
 F1 score = `r flScore`.\
+We can see the Accuarcy is `r accuracy`, which means this is not a bad model.\
 
-
+##### Hosmer and Lemeshow test 
 ```{r}
 loadPkg("ResourceSelection") # function hoslem.test( ) for logit model evaluation
 petLogitHoslem = hoslem.test(dataTGMFV$AdoptionSpeed, fitted(petFeaturetableAll)) # Hosmer and Lemeshow test, a chi-squared test
-unloadPkg("ResourceSelection")
 petLogitHoslem
+unloadPkg("ResourceSelection")
 ```
+The p-value of `r petLogitHoslem$p.value` is relatively small. Small p-values mean that the model is a poor fit. And the next evaluation is AUC/ROC.\
+
+##### AUC/ROC
 ```{r}
 unloadPkg("pROC")
 loadPkg("pROC") # receiver operating characteristic curve, gives the diagnostic ability of a binary classifier system as its discrimination threshold is varied. The curve is on sensitivity/recall/true-positive-rate vs false_alarm/false-positive-rate/fall-out.
-
 probOfTGMFV=predict(petFeaturetableAll, type = "response" )
 dataTGMFV$prob=probOfTGMFV
 aucRocOfTGMFV <- roc(AdoptionSpeed~prob, data=dataTGMFV)
 auc(aucRocOfTGMFV) # area-under-curve prefer 0.8 or higher.
 plot(aucRocOfTGMFV)
 unloadPkg("pROC")
-
 ```
 The result of AUC/ROC show that this is not a very good model Area under the curve: `r aucRocOfTGMFV$auc[1]`(less than 0.8). After looking at AUC/ROC, let us try McFadden.\
 
@@ -477,14 +480,14 @@ petLogitpr2 = pR2(petFeaturetableAll)
 petLogitpr2
 unloadPkg("pscl") 
 ```
-```{r}
-
+```{r results='markup'}
+petLogitpr2
 ```
 With the McFadden value of `r petLogitpr2['McFadden']`, which is analogous to the coefficient of determination $R^2$, only about `r format(petLogitpr2['McFadden'], digits = 2)` of the variations in y is explained by the explanatory variables in the model. 
 
 
 
-## KNN
+## K Nearest Neighbor
 ```{r results='hide'}
 
 #first we want to scale the data so KNN will operate correctly
@@ -510,26 +513,10 @@ pet_test <- scaledPet[pet_sample==2, 1:8]
 pet.trainLabels <- knnDataTGMFV[pet_sample==1, 9]
 pet.testLabels <- knnDataTGMFV[pet_sample==2, 9]
 ```
-
-```{r}
-loadPkg("gmodels")
-loadPkg('FNN')
-#So now we will deploy our model 
-loadPkg("FNN")
-loadPkg("gmodels")
-loadPkg("caret") # confusionMatrix
-loadPkg("class")
-pet_pred <- knn(train = pet_training, test = pet_test, cl=pet.trainLabels, k=7)
-```
-```{r}
-petPREDCross <- CrossTable(pet.testLabels, pet_pred, prop.chisq = FALSE)
-petPREDCross
-```
-This is the Confusion Matrix.\
-
+ 
 ```{r results='hide'}
-loadPkg("gmodels")
 loadPkg("FNN")
+loadPkg("gmodels")
 loadPkg("caret") # confusionMatrix
 loadPkg("class")
 # Loop thru different k values
@@ -546,10 +533,39 @@ for (kval in 3:21) {
 
 }
 ```
+
+
+
 ```{r results='markup'}
-xkabledply(ResultDf[ResultDf$k%%2 == 1,])
+ResultDf = ResultDf[ResultDf$k%%2 == 1,]
+xkabledply(ResultDf)
+bestK = ResultDf[which.max(ResultDf$Total.Accuracy),"k"]
+
+loadPkg("ggplot2")
+
+ggplot(ResultDf,
+       aes(x = k, y = Total.Accuracy)) +
+  geom_line(color = "orange", size = 1.5) +
+  geom_point(size = 3) +
+  labs(title = "accuracy vs k")
 ```
-The best KNN is 17.\
+The best KNN is `r ResultDf[which.max(ResultDf$Total.Accuracy),"k"]`, so let us see the confusion matrix.\
+
+
+```{r}
+pet_pred <- knn(train = pet_training, test = pet_test, cl=pet.trainLabels, k=bestK)
+petPREDCross <- CrossTable(pet.testLabels, pet_pred, prop.chisq = FALSE)
+cm = caret::confusionMatrix(pet_pred, reference = as.factor(pet.testLabels)) # from caret library
+cmaccu = cm$overall['Accuracy']
+```
+Accuracy = `r format(cm$overall['Accuracy'])`.\
+Precision = `r format(cm$byClass['Precision'])`.\
+Recall rate =  `r format(cm$byClass['Recall'])`.\
+Specificity =  `r format(cm$byClass['Specificity'])`.\
+F1 score = `r format(cm$byClass['F1'])`.\
+Accuracy = `r format(cm$overall['Accuracy'])`,so this model also looks not good enough.\
+
+As a result,  we need more variables and data to predict `AdoptionSpeed`. 
 
 # SMART QUESTION: Can the type of animal be classified from the adoption profile?
 
