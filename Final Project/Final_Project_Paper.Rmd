@@ -347,7 +347,7 @@ LogitHoslem = hoslem.test(new_dat$AdoptionSpeed,fitted(logit)) # Hosmer and Leme
 unloadPkg("ResourceSelection")
 LogitHoslem
 ```
-p-value <2e-16
+The result of GOF test is p-value <2e-16, which indicates that this model may not be good fit based on the given predictor and dependent vairable.So, the last step is the run the ROC curve to see if the roc score is greater than 0.8. If the score is greater than 0.8 it might be a good fit.
 
 
 #### ROC Curve
