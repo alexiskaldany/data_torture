@@ -263,9 +263,11 @@ anova_vac = anova(aov(data = numericaldat, ASnum ~ Vaccinated))
 anova_vac
 ```
 
-#SMART QUESTION: What is the probability that a large, female, vaccinated dog would get adopted quickly (adoption speed of 0 and 1). 
+# SMART QUESTION: What is the probability that a large, female, vaccinated dog would get adopted quickly (adoption speed of 0 and 1). 
 
-The purpose of this smart question is to predict the probability for specific pets when we want to know if this pet can be quickly adopted. Before the data processsing, there are 331 pets at the the adoption speed of 0, 2439 pets at the the adoption speed of 1,3163 pets at the the adoption speed of 2,2552 pets at the the adoption speed of 3,no pets at the the adoption speed of 4.
+Objective:It has always been a tough problem to know when the pets will be adopted, so that the pet adoption organization could prepare the pet food and resources accordingly instead of hopping the pet will be adopted at some day. For example, if the pet adoption organization know when a large female vaccinated dog will have a have chance to get adopted quickly,within a week,the organization will save a lot of funding to prepare resources for this pet,and they could use these saved resources to keep other pets alive. This is our goal for this smart question,What is the probability that a large, female, vaccinated dog would get adopted quickly (adoption speed of 0 and 1).
+
+Before the data processing, there are 331 pets at the the adoption speed of 0, 2439 pets at the the adoption speed of 1,3163 pets at the the adoption speed of 2,2552 pets at the the adoption speed of 3,no pets at the the adoption speed of 4.
 ```{r}
 ##data preparation
 new_dat = dat[c('Type',  'Gender', 'MaturitySize', 'Vaccinated', 'AdoptionSpeed')]
