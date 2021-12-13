@@ -65,6 +65,21 @@ test <- dat[samp==2, 1:9]
 
 In 2016 alone there were over 2 million animals that ended up in animal shelters and were not adopted. Shelters around the world work constantly to attempt to lower this number and place deserving animals in loving homes. PetFinder, an animal adoption website, assists with this goal by allowing animal profiles to be put online for people to find. Getting a profile onto PetFinder is the first step, making an effective profile is more difficult. There are a number of questions that need to be answered about the profile. How many photos to include, how many videos, should they list the vaccination status of the animal, etc? We determined during our last study that when the adoption speed of an animal is numerical we were not able to successfully predict this speed given the descriptors of the profile. Given this, we decided to ask more complex questions about this dataset to see if we could determine patterns in adoption profiles that could give potential insight to adoption centers as they work to get animals adopted.
 
+In this report we decided to ask 4 different questions to further our understanding of animal adoption profiles. First we will go through our preprocessing steps followed by a quick refresher of our EDA from our previous report. Next we will test our ability to predict adoption speed by looking at the probability that a large, female, vaccinated dog would get adopted quickly. Following this we'll look closer at our model of adoption speed prediction and determine if the profile significantly influences adoption speed, and what is the best model would be to analyse it. Next we'll switch our focus and ask if the type of animal (Dog or Cat) can be categorized based off the adoption profile in order to determine if there are underlying patterns to the profiles that we had not discovered. Finally, we'll ask if the young animals (puppies and kittens) can be identified based on their profile, again to determine if there are any patterns or differences in these profiles. 
+
+The goal of our report is to shed light on animal adoption profiles and the speed at which animals get adopted. Our hope is that any pattern in the profiles could allow shelters to correct the profiles they create to increase the chance of a quick adoptions, or potentially lead to proper community interventions to protect the animals before they need a profile in the first place. 
+
+The outline of our report is as follows:\
+
+1. Preprocessing\
+2. Background EDA\
+3. What is the probability that a large, female, vaccinated dog would get adopted quickly?\
+4. Does animal profile influence the adoption speed significantly, and what is the best model (Logistic Regression, Knn) when considering these variables?\
+5. Can the type of animal be classified from the adoption profile?\
+6. Can puppies/kittens be identified based on their adoption profile?\
+7. Conclusions\
+8. Bibliography
+
 # Preprocessing
 
 We're using the same dataset as from the midterm assignment. The data comes from Kaggle (https://www.kaggle.com/c/petfinder-adoption-prediction/data) and includes almost 15,000 observations of 23 variables. Each observation is an adoption profile on PetFinder in Malaysia. We chose to keep `r length(dat)` features, as well as discarding any profile that contained more than one animal, and any animal that did not get adopted in the first 100 days. At the end of these cleaning measures we end up with `r nrow(dat)` observations of the `r length(dat)` features. Initially we transformed the categorical dependent variable (adoption speed) into a continuous numerical variable. For the sake of this project we are keeping it as a categorical variable for some of our analyses.
@@ -340,6 +355,7 @@ loadPkg("regclass")
 xkabledply(confusion_matrix(logit), title = "Confusion matrix from Logit Model" )
 ```
 Accuracy: 0.6708
+
 #### GOF Test
 ```{r}
 loadPkg("ResourceSelection")
@@ -594,9 +610,17 @@ As a result,  we need more variables and data to predict `AdoptionSpeed`.
 
 # SMART QUESTION: Can the type of animal be classified from the adoption profile?
 
+## Objective
+
 The next question we wanted to answer switched our attention to the type of animal profile. We determined that we couldn't predict the adoption speed effectively with classification models. So we thought that we would take a different approach to determining patterns in the adoption profiles. If a classification model was able to predict the type of animal from the adoption profile then it would suggest a pattern in either the animals themselves, or the way the profiles were written. Either possibility leads to more insight about the profiles and possible interventions to ensure the maximum animals are adoptopted into loving homes.
 
-Because this is a binary classification problem we decided to use a logistic regression model and a K nearest neighbors model. Beginning with the logistic model, we ran feature selection to determine what features we should include.
+Because this is a binary classification problem we decided to use a logistic regression model and a K nearest neighbors model. 
+
+## Logistic Regression
+
+Beginning with the logistic model, we ran feature selection to determine what features we should include.
+
+### Feature Selection
 
 The results of the feature selection are as follows.
 
@@ -614,18 +638,27 @@ res.bestglm <- bestglm(Xy = datclean, family = binomial,
             IC = "AIC",
             method = "exhaustive")
 
-res.bestglm$BestModels[1, 1:8]
+#res.bestglm$BestModels[1, 1:8]
+xkabledply(res.bestglm$BestModels, title="result of bestglm using AIC")
 unloadPkg("bestglm") 
 ```
 
-The features that were selected using the `AIC` criteria and the exhaustive method are every feature except for `VideoAmt`. We can now make that model and test it against the animal type. The results of this model are as follows.
+The features that were selected using the `AIC` criteria and the exhaustive method are every feature except for `VideoAmt`.
+
+### Model Results
+
+We can now make that model and test it against the animal type. The results of this model are as follows.
 
 ```{r, results='markup'}
 typeLogit <- glm(y ~ Age + Gender + MaturitySize + FurLength + Vaccinated + AdoptionSpeed + PhotoAmt, data = datclean, family = "binomial")
 xkabledply(typeLogit, title = paste("Logistic Regression : Type ~ age+gender+size+fur+vaccinated+AdoptSpd+photos"))
 ```
 
-This model has multiple statistically significant coefficient values. Every feature except `Vaccination` level 3, `AdoptionSpeed` fitted with a quadratic fit and a cubic fit have p_values above our alpha of 0.05. This suggests that almost every factor is significantly impacting the models decision about the type of animal the profile represents. We can then move on and look at different metrics to determine if this model was effective. First we can look at the various accuracy metrics of the model. The confusion matrix and metrics for this model is as follows.
+This model has multiple statistically significant coefficient values. Every feature except `Vaccination` level 3, `AdoptionSpeed` fitted with a quadratic fit and a cubic fit have p_values above our alpha of 0.05. This suggests that almost every factor is significantly impacting the models decision about the type of animal the profile represents. We can then move on and look at different metrics to determine if this model was effective. 
+
+### Confusion Matrix and Accuracy
+
+First we can look at the various accuracy metrics of the model. The confusion matrix and metrics for this model is as follows.
 
 ```{r, results = 'markup'}
 ## MIGHT DELETE THIS
@@ -640,12 +673,14 @@ F1 = (2*(prec * recall)) / (prec + recall)
 unloadPkg("regclass")
 ```
 
-Accuracy: `r format(acc)`\
-Precision: `r format(prec)`\
-Recall: `r format(recall)`\
-F1: `r format(F1)`\
+**Accuracy**: `r format(acc)`\
+**Precision**: `r format(prec)`\
+**Recall**: `r format(recall)`\
+**F1**: `r format(F1)`\
 
 These numbers aren't terrible, but let's look at other metrics as well.
+
+### GOF
 
 We can look at the Hoslem and Lemeshow Goodness of Fit test next.
 
@@ -661,7 +696,11 @@ typeHoslem
 unloadPkg("ResourceSelection")
 ```
 
-With a p_value of `r format(typeHoslem$p.value)` we can reject the null hypothesis that this model was a good fit for our dependent variable of animal type. In order to confirm this finding we wanted to look at the Receiver Operator Curve of this model. This plot shows the true positive rate against the false positive rate. By plotting the model in this way we can see how well above chance the model preforms.
+With a p_value of `r format(typeHoslem$p.value)` we can reject the null hypothesis that this model was a good fit for our dependent variable of animal type. 
+
+### ROC Plot
+
+In order to confirm this finding we wanted to look at the Receiver Operator Curve of this model. This plot shows the true positive rate against the false positive rate. By plotting the model in this way we can see how well above chance the model preforms.
 
 ```{r, results='markup'}
 loadPkg("pROC")
@@ -675,9 +714,11 @@ unloadPkg("pROC")
 
 We can see by looking at this plot that the model is not very effective. While it is above chance, we ideally want to see a more defined box-shape of the curve which would suggest that it is able to accurately predict the type of animal. The area under this curve confirms that the model is not great. With our AUC = `r format(auctype)`, this is below the threshold of 0.8 that we are looking for to consider a model an effective classifier.
 
+### McFadden Score
+
 The final metric we can use to confirm the state of our logistic model is the McFadden score. This is a proxy for an $R^2$ value.
 
-```{r}
+```{r, results = 'hide'}
 loadPkg("pscl")
 typePR = pR2(typeLogit)
 unloadPkg("pscl") 
@@ -685,9 +726,16 @@ unloadPkg("pscl")
 
 With a McFadden score of `r format(typePR['McFadden'])` we can say that only `r format(typePR['McFadden'] * 100, 2)`% of the variance in Type is explained by this model.
 
+## KNN
+
+
 After looking at all these metrics we have confirmed that this model is not adept at classifying type based on the adoption profile of the animal. Given this, we decided to move on to the KNN model in the hopes that this model would be more effective.
 
+### Data Preparation
+
 The first step to use this model is cleaning the dataset. First, the numeric variables `Age`, `Photo Amount` and `Video Amount` are scaled to center them. Then all the factor level variables are returned to numeric variables for the model.
+
+### K Selection - Model 1
 
 In order to determine the optimal K value for the KNN model we ran through values 3-20 and chose the K with the highest total accuracy.
 
@@ -733,8 +781,18 @@ for (kval in 3:20) {
 
 ResultDf[which.max(ResultDf$Total.Accuracy),]
 ```
+```{r}
+ggplot(ResultDf,
+       aes(x = k, y = Total.Accuracy)) +
+  geom_line(color = "orange", size = 1.5) +
+  geom_point(size = 3) +
+  labs(title = "accuracy vs k")
+```
 
-The K value that was determined to be the best for this model was k = 18 with a total accuracy of `r ResultDf[which.max(ResultDf$Total.Accuracy),]$Total.Accuracy`.
+
+The K value that was determined to be the best for this model was k = `r ResultDf[which.max(ResultDf$Total.Accuracy),]$k` with a total accuracy of `r ResultDf[which.max(ResultDf$Total.Accuracy),]$Total.Accuracy`.
+
+### K Selection - Model 2
 
 To make sure that we're getting the best possible model we tried one more KNN model before looking closer at the results. We removed `Video Amount` from the feature list since it was removed in the logistic regression model. We did the same run through of K values from 3-20.
 
@@ -758,24 +816,37 @@ for (kval in 3:20) {
 ResultDf2[which.max(ResultDf2$Total.Accuracy),]
 
 ```
+```{r}
+ggplot(ResultDf2,
+       aes(x = k, y = Total.Accuracy)) +
+  geom_line(color = "orange", size = 1.5) +
+  geom_point(size = 3) +
+  labs(title = "accuracy vs k")
+```
 
-The K value that was determined to be the best for this model was k = 20 with a total accuracy of `r ResultDf2[which.max(ResultDf2$Total.Accuracy),]$Total.Accuracy`. This accuracy is very slightly better than the previous model, so we will continue with this model going forward.
+
+The K value that was determined to be the best for this model was k = `r ResultDf2[which.max(ResultDf2$Total.Accuracy),]$k` with a total accuracy of `r ResultDf2[which.max(ResultDf2$Total.Accuracy),]$Total.Accuracy`. This accuracy is very slightly better than the previous model, so we will continue with this model going forward.
+
+### KNN Model Results
 
 Taking a closer look at this second model we can pull out a number of statistics.
 
 ```{r, results = 'markup'}
-tpred <- knn(train = knn_train2, test = knn_test2, cl=trainLabel, k=20)
+kval = ResultDf2[which.max(ResultDf2$Total.Accuracy),]$k
+tpred <- knn(train = knn_train2, test = knn_test2, cl=trainLabel, k=kval)
 cross <- CrossTable(testLabel, tpred, prop.chisq = FALSE)
 cm = caret::confusionMatrix(tpred, reference = as.factor(testLabel)) # from caret library
 cmaccu = cm$overall['Accuracy']
 ```
 
-Accuracy: `r format(cm$overall['Accuracy'])`\
-Precision: `r format(cm$byClass['Precision'])`\
-Recall: `r format(cm$byClass['Recall'])`\
-F1: `r format(cm$byClass['F1'])`\
+**Accuracy**: `r format(cm$overall['Accuracy'])`\
+**Precision**: `r format(cm$byClass['Precision'])`\
+**Recall**: `r format(cm$byClass['Recall'])`\
+**F1**: `r format(cm$byClass['F1'])`\
 
-All of these numbers are higher than our Logistic regression model so we can confirm that this model is slightly better at decoding type of animal from the adoption profile. While the model is better than chance, it's still not incredibly effective. This suggests that while there might be some discernible pattern to the profiles of the dogs and cats put on petfinder, it is not drastic enough that the model is incredibly accurate. 
+## Conclusions
+
+All of the metrics for our KNN model were higher than our Logistic regression model, so we can confirm that this model is slightly better at decoding type of animal from the adoption profile. While the model is better than chance, it's still not incredibly effective. This suggests that while there might be some discernible pattern to the profiles of the dogs and cats put on petfinder, it is not drastic enough that the model is incredibly accurate. 
 
 That being said, future studies should look into this pattern to see what the differences are specifically and whether or not they have an effect on adoption speed.
 
@@ -930,7 +1001,7 @@ The left branch is non-puppy/kitten animals. The right branch is puppy/kitten.Th
 
 
 
-## Conclusion for SMART Question 3:
+## Conclusion for SMART Question 4:
 
 Both the logistic and the classification tree models generated similar outcomes when judging by accuracy. The conclusion which must be drawn is the other data in this set is largely incapable of predicting whether an animal is a puppy/kitten or an older more mature animal.  
 
