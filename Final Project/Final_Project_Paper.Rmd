@@ -339,6 +339,7 @@ In this part, we will use confusion matrix, Hosmer and Lemeshow goodness of fit 
 loadPkg("regclass")
 xkabledply(confusion_matrix(logit), title = "Confusion matrix from Logit Model" )
 ```
+Accuracy: 0.6708
 #### GOF Test
 ```{r}
 loadPkg("ResourceSelection")
@@ -346,6 +347,8 @@ LogitHoslem = hoslem.test(new_dat$AdoptionSpeed,fitted(logit)) # Hosmer and Leme
 unloadPkg("ResourceSelection")
 LogitHoslem
 ```
+p-value <2e-16
+
 
 #### ROC Curve
 ```{r}
@@ -353,10 +356,10 @@ loadPkg("pROC")
 prob=predict(logit, type = "response" )
 new_dat$prob=prob
 h <- roc(AdoptionSpeed~prob, data=new_dat)
-#auc(h) 
+score<-auc(h) 
 plot(h, main = "ROC curve of model")
 ```
-
+From the ROC Score `r format(score)` is < 0.8, which proves the prediction from this model may not be a accurate prediction. 
 
 
 ```{r}
