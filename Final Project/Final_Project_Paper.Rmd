@@ -359,7 +359,7 @@ h <- roc(AdoptionSpeed~prob, data=new_dat)
 score<-auc(h) 
 plot(h, main = "ROC curve of model")
 ```
-From the ROC Score `r format(score)` is < 0.8, which proves the prediction from this model may not be a accurate prediction. 
+From the ROC Score `r format(score)` is < 0.8, which proves the prediction from this model may not be a accurate prediction. So in the future, we probably will use different combination of variables or different models to improve accuracy and prediction.
 
 
 ```{r}
