@@ -332,10 +332,14 @@ summary(logit)
 From this logistic model, we can most of variables are statistically significant except MaturitySize3,MaturitySize4,and Vaccinated3. We will run the logistic model evaluation to see if this model is accurate or not.
 
 ### Model Evaluation
+In this part, we will use confusion matrix, Hosmer and Lemeshow goodness of fit (GOF) test, and ROC curve to examin the model accuracy.
+
+#### Confusion Matrix
 ```{r}
 loadPkg("regclass")
 xkabledply(confusion_matrix(logit), title = "Confusion matrix from Logit Model" )
 ```
+#### GOF Test
 ```{r}
 loadPkg("ResourceSelection")
 LogitHoslem = hoslem.test(new_dat$AdoptionSpeed,fitted(logit)) # Hosmer and Lemeshow test, a chi-squared test
@@ -343,7 +347,7 @@ unloadPkg("ResourceSelection")
 LogitHoslem
 ```
 
-
+#### ROC Curve
 ```{r}
 loadPkg("pROC")
 prob=predict(logit, type = "response" )
