@@ -362,6 +362,8 @@ plot(h, main = "ROC curve of model")
 From the ROC Score `r format(score)` is < 0.8, which proves the prediction from this model may not be a accurate prediction. So in the future, we probably will use different combination of variables or different models to improve accuracy and prediction.
 
 
+#### Make prediction
+This is our last step, to predict when a large, female, vaccinated dog would get adopted quickly (adoption speed of 0 and 1). The first step is to create a data frame of these specific conditions, then put it into the model to see the prediction.
 ```{r}
 preds <- with(new_dat,data.frame(Type=as.factor(1),MaturitySize=as.factor(3),Gender=as.factor(2),Vaccinated=as.factor(1)))
 
