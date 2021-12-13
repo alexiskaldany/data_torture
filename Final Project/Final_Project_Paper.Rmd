@@ -264,6 +264,8 @@ anova_vac
 ```
 
 #SMART QUESTION: What is the probability that a large, female, vaccinated dog would get adopted quickly (adoption speed of 0 and 1). 
+
+The purpose of this smart question is to predict the probability for specific pets when we want to know if this pet can be quickly adopted. Before the data processsing, there are 331 pets at the the adoption speed of 0, 2439 pets at the the adoption speed of 1,3163 pets at the the adoption speed of 2,2552 pets at the the adoption speed of 3,no pets at the the adoption speed of 4.
 ```{r}
 ##data preparation
 new_dat = dat[c('Type',  'Gender', 'MaturitySize', 'Vaccinated', 'AdoptionSpeed')]
@@ -279,7 +281,7 @@ ggplot(data=new_dat, aes(AdoptionSpeed)) +
   scale_fill_gradient("Count", low="lightblue", high="#FF9999")
 
 ```
-
+In order to answer this question, the first step is to group the adoption speed 1 and 0. After grouping, we can see that 2770 pets are grouped in to 0.
 ```{r}
 ###group adoption speed 0 and 1
 levels(new_dat$AdoptionSpeed)[levels(new_dat$AdoptionSpeed)==1] <-0
@@ -287,7 +289,7 @@ summary(new_dat)
 
 ```
 
-
+The next step is to group the adoption speed 3 and 4. After grouping, we can see that 2552 pets are grouped in to 3.
 ```{r}
 ###group adoption speed 3 and 4
 levels(new_dat$AdoptionSpeed)[levels(new_dat$AdoptionSpeed)==4] <-3
@@ -295,13 +297,14 @@ summary(new_dat)
 
 ```
 
-
+Then, group the adoption speed 2 and 3. After grouping, we can see that 5715 pets are grouped in to 2.
 ```{r}
 ###group adoption speed 2 and 3
 levels(new_dat$AdoptionSpeed)[levels(new_dat$AdoptionSpeed)==3] <-2
 xkabledply(summary(new_dat))
 
 ```
+Lastly, we set the final levels of these 2 levels to 0 and 1.
 ```{r}
 levels(new_dat$AdoptionSpeed) <- c("0", "1")
 summary(new_dat)
