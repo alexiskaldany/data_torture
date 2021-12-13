@@ -378,6 +378,7 @@ d3 <- within(d3, {
 d3
 
 ```
+### Conclusion
 From the predicted probability, we can see that the predicted probability is 0.676, which means the probability of large, female, vaccinated dog would get adopted quickly will get adopted within one week is 67.6%. Since this is not an accurate model, we will seek for other solutions to improve the overall accuracy to make a precise prediction.
 
 
